@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 2
-status: planning control plane complete / implementation not started
+revision: 3
+status: Phase 0 scaffold implemented / mandatory browser baseline blocked
 
 ## Purpose
 
@@ -118,24 +118,32 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Current verified state
 
-- Repository exists and is writable.
-- Repository has been initialized on `main` with a README.
-- The Living Frontier currently provides a mature systemic open-world Three.js architecture and validation tooling.
-- Squirtle Lab contains the Squirtle source asset bundle and its own build contract.
+- Destination identity: `westkitty/Squirtle_Frontier`, branch `arena/01a0f3be-squirtle-frontier`; initial HEAD `1203240775c3b91ecca64647fe96f257a84b156a`.
+- Read-only reference snapshots: Living Frontier `bdea0434d99b1d0d902fd00826b17a7126731471`; Squirtle Lab `a8face4e8969254940cc5ff5c120e3decf555a57`. Neither source repository modified.
+- Build guide and master prompt already exist; stale pending items removed.
+- Original Squirtle ZIP preserved and hash verified. OpenCollada structural inspection: 26 joints, two materials, zero animation elements; not a rendered asset acceptance.
+- `npm run check`: source syntax/authority checks and seven tests pass, including 100 CPU-side chunk crossings and teardown, deterministic RNG/terrain, fixed-step bounds, semantic save roundtrip and storage failure handling.
+- `npm run build` passes, with a recorded >500 kB bundle warning.
+- `npm audit` reports zero known vulnerabilities following non-force dependency repair.
+- Vite starts on `0.0.0.0:5173`; HTTP HTML/manifest requests and an Arena-style Host header succeed. Browser rendering remains unverified.
 
 ## Implemented but unverified
 
-None.
+- Renderer/inspection camera, semantic HUD, keyboard input, separate settings, terrain streaming adapter and complete baseline teardown.
+- Self-hosted asset-manager infrastructure with empty runtime manifest; no imported model instances yet.
+- Browser baseline tool for timing/resource counts and screenshots. No browser run reached a page.
 
-## Known not working
+## Known not working / blocker
 
-None yet; gameplay implementation has not started.
+- Chromium installation failed with CDN TLS ECONNRESET. One bounded curl fallback also failed with SSL_ERROR_SYSCALL. Browser test fails at launch because executable is absent.
+- Mandatory Phase 0 browser/render/performance validation cannot complete in the current environment. No screenshot inspected, no GPU resource stability or FPS measured.
+- Phase 1 prerequisites are not satisfied. Do not proceed to locomotion or Phase 2.
 
-## Pending
+## Scope limits and pending
 
-- Add authoritative staged build guide.
-- Add LM Arena master build prompt.
-- Establish architecture baseline from The Living Frontier.
-- Import and validate Squirtle assets.
-- Build and evaluate the prototype gate.
-- Only after a passing gate, expand into production phases.
+- Current rendered scaffold is an inspection rig, not a trainer or Squirtle controller.
+- Full save recovery, offline simulation, PlayableCreature, GLB conversion, movement, touch controls, watershed, ecology, settlement, Lab and Deep Record remain pending.
+- Asset licensing/redistribution clearance is not implied by the supplied fan-source archive.
+- Restore browser capability, run `npm start` and `npm run browser`, inspect rendered screenshot, record resource/timing evidence; only then evaluate Phase 0 gate.
+- Human ten-minute movement enjoyment and real-device mobile validation remain external evidence requirements for later gates.
+- Detailed evidence: `docs/architecture/BASELINE.md`, `docs/assets/SQUIRTLE_INTAKE.md`, `docs/performance/BASELINE.md`.

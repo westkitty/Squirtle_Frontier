@@ -1,0 +1,19 @@
+{
+  "name": "squirtle-frontier",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tools/*.test.mjs",
+    "check": "node tools/arch-check.mjs && npm test",
+    "start": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "browser": "node tools/browser-baseline.mjs"
+  },
+  "dependencies": {
+    "three": "^0.160.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0",
+    "vite": "^6.4.1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "archiveSha256": "f7c767ab46286d1bde6791157ddfb797643eba7dccae602cca14b8b3c92ac5a6",
+  "file": "source/Pokemon XY/Squirtle/Squirtle_OpenCollada.DAE",
+  "asset": "<ns0:asset xmlns:ns0=\"http://www.collada.org/2005/11/COLLADASchema\">\n    <ns0:contributor>\n      <ns0:author>RandomTBush</ns0:author>\n      <ns0:authoring_tool>OpenCOLLADA for 3ds Max;  Version: 1.3.1;  Revision: 847M;  Platform: x64;  Configuration: Release_Max2009_static</ns0:authoring_tool>\n    </ns0:contributor>\n    <ns0:created>2015-03-04T18:45:43</ns0:created>\n    <ns0:modified>2015-03-04T18:45:43</ns0:modified>\n    <ns0:unit name=\"inch\" meter=\"0.0254\" />\n    <ns0:up_axis>Z_UP</ns0:up_axis>\n  </ns0:asset>\n  ",
+  "geometryCount": 1,
+  "controllers": 1,
+  "jointNodes": 26,
+  "animations": 0,
+  "clips": 0,
+  "materials": 2,
+  "provenance": "Game: Pok\u00e9mon X/Y\r\nSubject: #007 Squirtle\r\nCopyright: Nintendo, Game Freak, Creatures Inc.\r\nModel Ripper: Random Talking Bush\r\nHosting Permissions: The Models Resource\r\nNotes: Special thanks to Ploaj for supplying the necessary files for these models!"
+}
