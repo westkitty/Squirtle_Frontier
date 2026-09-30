@@ -13,7 +13,9 @@
     "asset:convert": "node tools/asset-convert.mjs",
     "perf": "node tools/movement-perf.mjs",
     "browser:watershed": "node tools/watershed-browser.mjs",
-    "browser:habitat": "node tools/habitat-browser.mjs"
+    "browser:habitat": "node tools/habitat-browser.mjs",
+    "browser:world": "node tools/world-browser.mjs",
+    "browser:recovery": "node tools/recovery-browser.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

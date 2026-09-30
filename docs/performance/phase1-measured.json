@@ -1,45 +1,45 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-09-30T20:53:16.001Z",
+  "date": "2026-09-30T21:18:03.464Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 116.70000000000073,
+      "medianMs": 133.30000000000018,
       "p95Ms": 316.6999999999989,
       "memory": {
-        "geometries": 20,
+        "geometries": 22,
         "textures": 6
       },
       "render": {
-        "frame": 145,
-        "calls": 34,
-        "triangles": 31290,
+        "frame": 143,
+        "calls": 35,
+        "triangles": 31302,
         "points": 0,
         "lines": 0
       },
-      "heap": 18200000,
+      "heap": 16100000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "quality": "low",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 66.70000000000073,
-      "p95Ms": 150.10000000000218,
+      "medianMs": 83.30000000000291,
+      "p95Ms": 166.59999999999854,
       "memory": {
-        "geometries": 20,
+        "geometries": 22,
         "textures": 6
       },
       "render": {
-        "frame": 273,
-        "calls": 34,
-        "triangles": 31290,
+        "frame": 271,
+        "calls": 35,
+        "triangles": 31302,
         "points": 0,
         "lines": 0
       },
-      "heap": 18200000,
+      "heap": 16100000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     }
   ],

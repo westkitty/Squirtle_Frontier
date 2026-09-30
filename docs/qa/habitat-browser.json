@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 11,
+        "geometries": 13,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 13,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 11,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -149,16 +149,16 @@
   "return": {
     "place": "lab",
     "ecosystem": {
-      "reeds": 0.9999999978474963,
-      "insects": 0.9999999957187775,
-      "prey": 0.838577149470763,
-      "predators": 0.46121359235772286,
+      "reeds": 0.9682056258262124,
+      "insects": 0.944393330833349,
+      "prey": 0.767194595247201,
+      "predators": 0.39492407796375273,
       "cistern": 1,
-      "labWater": 0.9999999999999203,
-      "labReeds": 0.9999986053045499,
-      "labInsects": 0.9999972285538101,
-      "labFrogs": 0.8385933498186912,
-      "eligibleSeconds": 1626
+      "labWater": 0.9772806735949614,
+      "labReeds": 0.8342919076849326,
+      "labInsects": 0.769460040838197,
+      "labFrogs": 0.7228520046639972,
+      "eligibleSeconds": 1580
     }
   },
   "restSeconds": 300,
@@ -174,9 +174,9 @@
       "textures": 0
     },
     "render": {
-      "frame": 108,
+      "frame": 110,
       "calls": 13,
-      "triangles": 12104,
+      "triangles": 11312,
       "points": 0,
       "lines": 0
     },

@@ -4,9 +4,9 @@ A systemic browser game in development where **you directly control Squirtle, no
 
 ## Current slice
 
-**Early causal slice: Stillwater Reach and the Listening Basin.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. No quest checklist is required. The authored pond is still not the full terrain-derived watershed.
+**Early playable frontier: Stillwater Reach, the Listening Basin and Deep Record.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. No quest checklist is required. The authored pond is still not the full terrain-derived watershed.
 
-Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its saved graph now drives pond current/tint and nearby Water Jet debris clearing. Hold F (or touch Sense) in water to locate the disturbance. Repair now propagates to wetland growth, aggregate prey/predators, a settlement trough and delayed Lab basin colonization. The stone doorway on the western bank leads to the Lab. Rest near the wooden platform inside (R or contextual button) to let five minutes pass through the same simulation. Buildings and animals remain procedural placeholders.
+Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its saved graph now drives pond current/tint and nearby Water Jet debris clearing. Hold F (or touch Sense) in water to locate the disturbance. Repair now propagates to wetland growth, aggregate prey/predators, a settlement trough and delayed Lab basin colonization. The stone doorway on the western bank leads to the Lab. Rest near the wooden platform inside (R or contextual button) to let five minutes pass through the same simulation. A flooded Deep Record shaft is reached by diving to the centre of the Lab basin and pressing R. Weather changes source flow; lightning can ignite a bounded eastern-bank fire patch and rain washes ash downstream. Water Jet suppresses fire or opens the western side groove, which diverts flow away from the wetland. Memory shows only surveyed cells and known places; a marked Lab frog can acquire persistent familiarity. Art and wildlife behavior are still provisional.
 
 ## Run
 
@@ -27,7 +27,7 @@ Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 | Current Sense | Hold F in water | Hold Sense |
 | Enter / leave Lab | R near doorway | Contextual doorway button |
 
-Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 3 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Recovery/export UI and transactional multi-tab locking remain pending.
+Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 4 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings now include export, confirmed import and explicit backup restoration. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Atomic multi-tab locking remains pending.
 
 ## Validate
 
@@ -39,6 +39,8 @@ BROWSER_BUNDLED=1 npm run browser
 BROWSER_BUNDLED=1 npm run perf
 BROWSER_BUNDLED=1 npm run browser:watershed
 BROWSER_BUNDLED=1 npm run browser:habitat
+BROWSER_BUNDLED=1 npm run browser:world
+BROWSER_BUNDLED=1 npm run browser:recovery
 ```
 
 Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance.

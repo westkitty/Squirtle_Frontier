@@ -10,7 +10,7 @@ export const CHANNEL_STAGES = [
 const topology = [
   {
     id: "spring",
-    downstream: ["landslide"],
+    downstream: ["landslide", "outlet"],
     source: 1,
     capacity: 1,
     slope: 0.3,
@@ -61,7 +61,7 @@ export class Watershed {
       restoration: 0,
     }));
   }
-  update(dt) {
+  update(dt, { diversion = 0, sourceContamination = 0, sourceScale = 1 } = {}) {
     if (!Number.isFinite(dt) || dt < 0 || dt > 1)
       throw new Error("Watershed requires bounded simulation steps");
     const incoming = new Map(
@@ -69,14 +69,18 @@ export class Watershed {
     );
     for (const n of this.nodes) {
       const upstream = incoming.get(n.id),
-        supply = upstream.flow + n.source * n.seasonalModifier;
+        supply = upstream.flow + n.source * n.seasonalModifier * sourceScale;
       n.flow = Math.min(n.capacity * (1 - n.blockage), supply);
       n.active = n.flow > 0.01;
       n.wetness = clamp(
         n.wetness +
           (Math.min(1, n.flow) - n.wetness) * (1 - Math.exp(-dt / 12)),
       );
-      n.contamination = supply ? upstream.contamination / supply : 0;
+      n.contamination = supply
+        ? (upstream.contamination +
+            n.source * sourceContamination * sourceScale) /
+          supply
+        : 0;
       n.sediment = clamp(
         (supply ? upstream.sediment / supply : 0) + n.blockage * n.flow * 0.2,
       );
@@ -90,7 +94,13 @@ export class Watershed {
       );
       for (const id of n.downstream) {
         const target = incoming.get(id),
-          share = n.flow / n.downstream.length;
+          share =
+            n.flow *
+            (n.id === "spring"
+              ? id === "outlet"
+                ? diversion
+                : 1 - diversion
+              : 1 / n.downstream.length);
         target.flow += share;
         target.sediment += share * n.sediment;
         target.contamination += share * n.contamination;
@@ -109,7 +119,7 @@ export class Watershed {
   snapshot() {
     return structuredClone(this.nodes);
   }
-  static restore(data) {
+  static restore(data, legacy = false) {
     const result = new Watershed();
     if (!Array.isArray(data) || data.length !== result.nodes.length)
       throw new Error("Invalid watershed topology");
@@ -134,7 +144,14 @@ export class Watershed {
       ])
         if (n[key] !== expected[key])
           throw new Error("Unsupported watershed topology");
-      if (JSON.stringify(n.downstream) !== JSON.stringify(expected.downstream))
+      if (
+        !(
+          legacy &&
+          i === 0 &&
+          JSON.stringify(n.downstream) === '["landslide"]'
+        ) &&
+        JSON.stringify(n.downstream) !== JSON.stringify(expected.downstream)
+      )
         throw new Error("Invalid downstream links");
       for (const key of [...unit, "flow", "seasonalModifier", "erosion"])
         if (

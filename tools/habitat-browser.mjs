@@ -70,6 +70,11 @@ try {
     (t) => window.__SF.state.elapsed >= t + 300,
     beforeRest,
   );
+  // Browser key-repeat events must not turn one held press into repeated rests.
+  for (let i = 0; i < 10; i++) {
+    await page.keyboard.down("KeyR");
+    await page.waitForTimeout(40);
+  }
   await page.keyboard.up("KeyR");
   const rested = await page.evaluate(() => window.__SF.state.elapsed);
   assert.ok(
@@ -77,7 +82,7 @@ try {
     "held action must not repeat fast-forward",
   );
   report.restSeconds = 300;
-  await page.screenshot({path:"artifacts/lab-rest.png"});
+  await page.screenshot({ path: "artifacts/lab-rest.png" });
   for (let i = 0; i < 12; i++) {
     await page.evaluate(() => window.__SF.enterPlace("frontier"));
     await page.waitForFunction(
@@ -88,7 +93,7 @@ try {
     const s = await page.evaluate(() => window.__SF.stats());
     assert.equal(s.chunks.active, 0);
     assert.equal(s.assets.references, 1);
-    assert.ok(s.memory.geometries <= 17);
+    assert.ok(s.memory.geometries <= 19);
     report.cycles.push({ memory: s.memory, assets: s.assets });
   }
   await page.evaluate(() => window.__SF.dispose());

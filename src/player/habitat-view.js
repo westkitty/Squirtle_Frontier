@@ -216,8 +216,63 @@ export class HabitatView {
     );
     this.reeds = this.pool(this.cylinder, this.green, 48);
     this.animals = this.pool(this.sphere, this.animalMat, 12);
+    this.visitor = new THREE.Group();
+    this.group.add(this.visitor);
+    this.visitorMat = this.own(
+      new THREE.MeshStandardMaterial({ color: 0xc3b465, roughness: 1 }),
+    );
+    this.mesh(
+      this.sphere,
+      this.visitorMat,
+      0,
+      0.12,
+      0,
+      0.18,
+      0.12,
+      0.24,
+      this.visitor,
+    );
+    this.mesh(
+      this.sphere,
+      this.visitorMat,
+      0,
+      0.18,
+      0.17,
+      0.16,
+      0.1,
+      0.13,
+      this.visitor,
+    );
+    for (const x of [-0.15, 0.15])
+      this.mesh(
+        this.sphere,
+        this.visitorMat,
+        x,
+        0.045,
+        -0.1,
+        0.1,
+        0.045,
+        0.16,
+        this.visitor,
+      );
+    this.visitor.position.set(0, 0, 3.6);
   }
-  update(ecosystem, body, time) {
+  update(ecosystem, body, time, notable = null) {
+    if (this.visitor) {
+      this.visitor.visible = !!notable;
+      if (notable) {
+        const desired =
+          notable.fear > 0.25 ? 4.5 : notable.familiarity > 0.3 ? 3.5 : 4;
+        const angle = Math.atan2(body.x, body.z);
+        this.visitor.position.set(
+          Math.sin(angle) * desired,
+          0,
+          Math.cos(angle) * desired,
+        );
+        this.visitor.rotation.y = angle + Math.PI;
+        this.visitorMat.color.setHSL(0.12 + notable.marking * 0.015, 0.4, 0.55);
+      }
+    }
     const amount = this.lab ? ecosystem.labReeds : ecosystem.reeds;
     const life = this.lab ? ecosystem.labFrogs : ecosystem.prey;
     const center = this.lab ? { x: 0, z: 0 } : WETLAND;

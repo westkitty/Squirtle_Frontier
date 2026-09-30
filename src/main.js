@@ -1,3 +1,7 @@
+import { bindRecovery } from "./recovery-ui.js";
+import { WorldEffects } from "./player/world-effects.js";
+import { DeepRecord, recordRegion } from "./player/deep-record.js";
+import { LANDMARKS } from "./simulation/place-memory.js";
 import * as THREE from "three";
 import { pixelRatioFor } from "./render-quality.js";
 import { WorldState } from "./worldstate.js";
@@ -14,7 +18,11 @@ import { stepBody } from "./player/squirtle-controller.js";
 import { CreatureCamera } from "./player/creature-camera.js";
 import { region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
-import { applyWaterJet, senseWater } from "./simulation/water-interaction.js";
+import {
+  applyWaterJet,
+  applyWorldJet,
+  senseWater,
+} from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
 import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
@@ -61,6 +69,7 @@ async function boot() {
       scenery = new MovementScenery(frontierGroup, streaming),
       watershedView = new WatershedPresentation(frontierGroup),
       habitat = new HabitatView(frontierGroup),
+      effects = new WorldEffects(frontierGroup),
       liveRegion = {
         ...region,
         water: (x, z) => {
@@ -71,11 +80,25 @@ async function boot() {
         },
       },
       rig = new CreatureCamera(camera, liveRegion);
+    let record = null;
     let lab = null,
       interactionHeld = false;
     const enterPlace = (place, relocate = true) => {
-      if (place === "lab") {
-        if (relocate) state.frontierReturn = { x: body.x, z: body.z };
+      record?.dispose();
+      record = null;
+      if (place === "record") {
+        lab?.dispose();
+        lab = null;
+        streaming.suspend();
+        frontierGroup.visible = false;
+        record = new DeepRecord(scene, state.seed);
+        rig.env = recordRegion;
+        Object.assign(body, createBody(0, 0, -0.3));
+        body.grounded = false;
+        body.mode = "swim";
+      } else if (place === "lab") {
+        if (relocate && state.place === "frontier")
+          state.frontierReturn = { x: body.x, z: body.z };
         streaming.suspend();
         frontierGroup.visible = false;
         lab ??= new HabitatView(scene, { lab: true });
@@ -101,11 +124,16 @@ async function boot() {
       rig.initial = true;
       input.clear();
       document.querySelector("h1").textContent =
-        place === "lab" ? "The Listening Basin" : "Stillwater Reach";
+        place === "record"
+          ? "The Deep Record"
+          : place === "lab"
+            ? "The Listening Basin"
+            : "Stillwater Reach";
     };
-    if (state.place === "lab") enterPlace("lab", false);
+    if (state.place !== "frontier") enterPlace(state.place, false);
     const abort = new AbortController(),
       options = { signal: abort.signal };
+    bindRecovery(state, status, abort.signal);
     let disposed = false,
       creature = null,
       disposePromise = null;
@@ -120,6 +148,8 @@ async function boot() {
       scenery.dispose();
       watershedView.dispose();
       habitat.dispose();
+      effects.dispose();
+      record?.dispose();
       lab?.dispose();
       audio.dispose();
       disposePromise = assets.disposeAll().finally(() => renderer.dispose());
@@ -155,12 +185,19 @@ async function boot() {
     );
     document.addEventListener("pointerdown", () => audio.unlock(), options);
     document.addEventListener("keydown", () => audio.unlock(), options);
-    for (const name of ["help", "settings"])
+    for (const name of ["help", "settings", "memory"])
       document.querySelector(`#${name}-toggle`).addEventListener(
         "click",
         () => {
           const panel = document.querySelector(`#${name}`);
           panel.hidden = !panel.hidden;
+          for (const other of ["help", "settings", "memory"]) {
+            if (other === name) continue;
+            document.querySelector(`#${other}`).hidden = true;
+            document
+              .querySelector(`#${other}-toggle`)
+              .setAttribute("aria-expanded", "false");
+          }
           document
             .querySelector(`#${name}-toggle`)
             .setAttribute("aria-expanded", String(!panel.hidden));
@@ -168,6 +205,21 @@ async function boot() {
         },
         options,
       );
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.code !== "Escape") return;
+        for (const name of ["help", "settings", "memory"]) {
+          document.querySelector(`#${name}`).hidden = true;
+          document
+            .querySelector(`#${name}-toggle`)
+            .setAttribute("aria-expanded", "false");
+        }
+        input.clear();
+        renderer.domElement.focus();
+      },
+      options,
+    );
     for (const [id, key, type] of [
       ["sensitivity", "sensitivity", "number"],
       ["invert", "invertY", "boolean"],
@@ -208,7 +260,7 @@ async function boot() {
     document.querySelector("#reset").addEventListener(
       "click",
       () => {
-        if (state.place === "lab") enterPlace("frontier");
+        if (state.place !== "frontier") enterPlace("frontier");
         Object.assign(body, createBody(-10, 18, heightAt(-10, 18)));
         rig.initial = true;
         input.clear();
@@ -236,6 +288,8 @@ async function boot() {
             enter: "Enter basin · R",
             leave: "Leave basin · R",
             rest: "Rest five minutes · R",
+            record: "Enter the Deep Record · R",
+            "record-exit": "Return to the basin · R",
           }[action] || "";
         if (controls.interact && !interactionHeld && action) {
           if (action === "rest") {
@@ -248,24 +302,56 @@ async function boot() {
             status.textContent = r.ok
               ? "Five quiet minutes. The watershed continued while you rested."
               : r.message;
-          } else enterPlace(action === "enter" ? "lab" : "frontier");
+          } else
+            enterPlace(
+              action === "record"
+                ? "record"
+                : action === "enter" || action === "record-exit"
+                  ? "lab"
+                  : "frontier",
+            );
         }
         interactionHeld = !!controls.interact;
-        const env = state.place === "lab" ? labRegion : liveRegion;
+        const env =
+          state.place === "record"
+            ? recordRegion
+            : state.place === "lab"
+              ? labRegion
+              : liveRegion;
         stepBody(body, { ...controls, ...world }, env, dt);
         if (state.place === "lab") {
           body.x = Math.max(-7.5, Math.min(7.5, body.x));
           body.z = Math.max(-7.5, Math.min(7.5, body.z));
-        } else applyWaterJet(state.watershed, body, dt);
+        } else if (state.place === "record") {
+          const r = Math.hypot(body.x, body.z);
+          if (r > 3.4) {
+            body.x *= 3.4 / r;
+            body.z *= 3.4 / r;
+          }
+          status.textContent = record.describe(body.y);
+        } else {
+          applyWaterJet(state.watershed, body, dt);
+          applyWorldJet(state.frontier, body, dt);
+        }
+        const previousTick = state.frontier.tick;
         state.update(dt);
+        if (state.frontier.tick !== previousTick)
+          state.memory.observe(
+            body,
+            state.place,
+            state.frontier.tick,
+            state.ecosystem,
+          );
+        if (state.place === "frontier") effects.update(state, body);
         if (state.place === "frontier")
           habitat.update(state.ecosystem, body, state.elapsed);
-        lab?.update(state.ecosystem, body, state.elapsed);
+        lab?.update(state.ecosystem, body, state.elapsed, state.memory.notable);
         const signal = controls.sense
           ? senseWater(
               state.watershed,
               body,
               !!liveRegion.water(body.x, body.z) && body.y < 0.3,
+              state.frontier,
             )
           : null;
         watershedView.update(state.watershed, body, !!signal, state.elapsed);
@@ -310,22 +396,56 @@ async function boot() {
         });
         const underwater =
           camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
-          (state.place === "lab" ? labRegion : liveRegion).water(
-            camera.position.x,
-            camera.position.z,
-          );
+          (state.place === "record"
+            ? recordRegion
+            : state.place === "lab"
+              ? labRegion
+              : liveRegion
+          ).water(camera.position.x, camera.position.z);
         scene.fog.color.set(
           underwater
             ? "#246c69"
-            : state.place === "lab"
+            : state.place !== "frontier"
               ? "#597b76"
               : "#9bb9aa",
         );
-        scene.fog.density = underwater ? 0.13 : 0.025;
+        scene.fog.density = underwater
+          ? 0.13
+          : 0.025 + state.frontier.weather.rain * 0.015;
+        sun.intensity = 2.4 - state.frontier.weather.rain * 0.9;
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
         hudTime++;
         if (hudTime % 3 === 0) {
+          document.querySelector("#weather").textContent =
+            state.place === "frontier"
+              ? state.frontier.weather.type
+              : "Sheltered";
+          if (!document.querySelector("#memory").hidden) {
+            document.querySelector("#remembered").textContent =
+              state.memory.places
+                .map((id) => LANDMARKS.find((l) => l.id === id).name)
+                .join(" · ") || "Explore to remember places.";
+            const n = state.memory.notable;
+            document.querySelector("#companion").textContent = n
+              ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
+              : "No familiar visitor yet. Life needs water and time.";
+            document.querySelector("#survey").replaceChildren(
+              ...Object.keys(state.memory.cells).map((key) => {
+                const [x, z] = key.split(",").map(Number),
+                  r = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "rect",
+                  );
+                r.setAttribute("x", String((x + 14) * 5));
+                r.setAttribute("y", String((z + 14) * 5));
+                r.setAttribute("width", "5");
+                r.setAttribute("height", "5");
+                r.setAttribute("fill", "#96bbaa");
+                return r;
+              }),
+            );
+          }
           document.querySelector("#mode").textContent = {
             land:
               Math.hypot(body.vx, body.vz) > 0.2

@@ -19,9 +19,12 @@
       <header>
         <div class="eyebrow"><span class="mark">◈</span> SQUIRTLE FRONTIER</div>
         <h1>Stillwater Reach</h1>
-        <p>A small body. A wide world.</p>
+        <p>A small body. A wide world. <span id="weather"></span></p>
       </header>
       <nav aria-label="Field controls">
+        <button id="memory-toggle" aria-expanded="false" aria-controls="memory">
+          Memory
+        </button>
         <button id="help-toggle" aria-expanded="false" aria-controls="help">
           Controls <span>?</span></button
         ><button
@@ -32,11 +35,25 @@
           Settings
         </button>
       </nav>
+      <aside id="memory" hidden>
+        <h2>Places remembered</h2>
+        <svg
+          id="survey"
+          viewBox="0 0 145 145"
+          role="img"
+          aria-label="Visited five-metre survey cells; unexplored ground is blank"
+        ></svg>
+        <p id="remembered"></p>
+        <p id="companion"></p>
+      </aside>
       <aside id="help" hidden>
         <h2>Follow your own current</h2>
         <p>
-          No objectives here. Find the shore, gather speed, and get to know your
-          shell.
+          Dive to the centre of the Lab basin to enter the Deep Record. Water
+          Jet can open the old groove beside the western doorway, or suppress
+          fire on the eastern bank. Diverting flow helps the outlet but leaves
+          less for the wetland. No objectives here. Find the shore, gather
+          speed, and get to know your shell.
         </p>
         <dl>
           <dt>W A S D / arrows</dt>
@@ -99,6 +116,19 @@
           </select></label
         ><button id="save">Remember this place</button
         ><button id="reset">Return to the bank</button>
+        <hr />
+        <h2>World recovery</h2>
+        <button id="export-save">Export stored save</button
+        ><label
+          >Import saved world<input
+            id="import-save"
+            type="file"
+            accept=".json,application/json" /></label
+        ><button id="recover-save">Restore previous backup</button>
+        <p class="small">
+          Replacement requires confirmation and preserves existing bytes in
+          local quarantine. Export first for an external copy.
+        </p>
       </aside>
       <button id="interact" data-action="interact" hidden>
         Enter basin · R

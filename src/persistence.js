@@ -1,3 +1,5 @@
+import { FrontierSystems } from "./simulation/frontier-systems.js";
+import { PlaceMemory } from "./simulation/place-memory.js";
 import { Watershed } from "./simulation/watershed.js";
 import { Ecosystem } from "./simulation/ecosystem.js";
 export const SAVE_KEY = "squirtle_frontier_baseline_v1";
@@ -12,7 +14,7 @@ const position = (p) =>
 function decode(text, seed) {
   const s = JSON.parse(text);
   if (
-    ![1, 2, 3].includes(s.version) ||
+    ![1, 2, 3, 4].includes(s.version) ||
     s.seed !== seed ||
     !Number.isFinite(s.elapsed) ||
     s.elapsed < 0 ||
@@ -20,21 +22,29 @@ function decode(text, seed) {
   )
     throw new Error("Unsupported or damaged save");
   const watershed =
-    s.version === 1 ? new Watershed() : Watershed.restore(s.watershed);
+    s.version === 1
+      ? new Watershed()
+      : Watershed.restore(s.watershed, s.version < 4);
   const ecosystem =
     s.version < 3 ? new Ecosystem(seed) : Ecosystem.restore(s.ecosystem, seed);
   if (
-    s.version === 3 &&
+    s.version >= 3 &&
     (!Number.isFinite(s.savedAt) ||
       s.savedAt < 0 ||
       !Number.isFinite(s.ecoRemainder) ||
       s.ecoRemainder < 0 ||
       s.ecoRemainder >= 1 ||
-      !["frontier", "lab"].includes(s.place) ||
+      !["frontier", "lab", "record"].includes(s.place) ||
       !position(s.frontierReturn))
   )
     throw new Error("Invalid world clock or location");
-  return { s, watershed, ecosystem };
+  const frontier =
+    s.version < 4
+      ? new FrontierSystems(seed, Math.round(s.elapsed - (s.ecoRemainder || 0)))
+      : FrontierSystems.restore(s.frontier, seed);
+  const memory =
+    s.version < 4 ? new PlaceMemory(seed) : PlaceMemory.restore(s.memory, seed);
+  return { s, watershed, ecosystem, frontier, memory };
 }
 export function advanceOffline(state, seconds) {
   if (!Number.isFinite(seconds) || seconds < 0)
@@ -88,19 +98,21 @@ export function load(
       decoded = decode(backup, state.seed);
       recovered = true;
     }
-    const { s, watershed, ecosystem } = decoded;
+    const { s, watershed, ecosystem, frontier, memory } = decoded;
     state.watershed = watershed;
     state.ecosystem = ecosystem;
+    state.frontier = frontier;
+    state.memory = memory;
     state.elapsed = s.elapsed;
-    state.ecoRemainder = s.version === 3 ? s.ecoRemainder : 0;
+    state.ecoRemainder = s.version >= 3 ? s.ecoRemainder : 0;
     state.player = { x: s.player.x, z: s.player.z };
-    state.place = s.version === 3 ? s.place : "frontier";
+    state.place = s.version >= 3 ? s.place : "frontier";
     state.frontierReturn =
-      s.version === 3 ? { ...s.frontierReturn } : { x: -10, z: 18 };
+      s.version >= 3 ? { ...s.frontierReturn } : { x: -10, z: 18 };
     state.storageText = text;
     state.persistenceBlocked = recovered;
     const gap =
-      offline && s.version === 3 && Number.isFinite(now)
+      offline && s.version >= 3 && Number.isFinite(now)
         ? Math.max(0, (now - s.savedAt) / 1000)
         : 0;
     const advanced = advanceOffline(state, gap);
@@ -126,5 +138,33 @@ export function load(
       ok: false,
       message: `${error.message}; original retained and saving paused.`,
     };
+  }
+}
+
+// Explicit replacement always quarantines the prior bytes first. Quota failure aborts.
+export const QUARANTINE_KEY = SAVE_KEY + "_quarantine";
+export function exportSave(storage, key = SAVE_KEY) {
+  return storage.getItem(key) || "";
+}
+export function replaceSave(state, storage, text) {
+  try {
+    if (typeof text !== "string" || text.length > 2_000_000)
+      throw new Error("Save exceeds import limit");
+    decode(text, state.seed);
+    const previous = storage.getItem(SAVE_KEY);
+    if (previous) storage.setItem(QUARANTINE_KEY, previous);
+    storage.setItem(SAVE_KEY, text);
+    // Existing page must reload; its state must not overwrite the imported generation.
+    state.persistenceBlocked = true;
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+}
+export function recoverBackup(state, storage) {
+  try {
+    return replaceSave(state, storage, storage.getItem(BACKUP_KEY));
+  } catch (error) {
+    return { ok: false, message: error.message };
   }
 }

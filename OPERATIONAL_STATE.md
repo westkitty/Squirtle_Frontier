@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 10
+revision: 11
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -118,22 +118,24 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Current verified state (supersedes historical checkpoints below)
 
-- Destination branch: `arena/01a0f3be-squirtle-frontier`. Source reference revisions remain Living Frontier `bdea0434d99b1d0d902fd00826b17a7126731471`, Squirtle Lab `a8face4e8969254940cc5ff5c120e3decf555a57`; neither modified.
-- Cached validated Squirtle GLB: 981,708 bytes, 26 joints, no source clips. Independent body controller supports land/swim/dive/shell slide/Water Jet with PlayableCreature presentation isolation.
-- Authored saved watershed graph drives local repair, pond current/tint, wetland vegetation/prey/predator aggregates, settlement cistern and delayed Lab reed/insect/frog colonization. Regional simulation now uses one-second ticks inside the single authoritative loop; body physics stays 60 Hz.
-- Physical western-bank doorway at (-11,5), R or contextual touch button, enters a separate authored Lab basin with swimming/diving, rest platform and object placeholder. No frontier chunks remain loaded inside Lab; cached movement scenery is hidden. Lab-owned resources disposed on exit; one Squirtle reference retained.
-- Version 3 save migrates v1/v2, saves region/player/graph/ecology/clock, bounds offline catch-up to six hours, preserves future timestamps on clock rollback, consumes offline time on successful load, rejects stale-tab writes. Corrupt primary can recover backup read-only. Fully transactional multi-tab locking and recovery UI remain pending.
-- `npm run check`: 35 tests pass. Build passes with ~611 kB bundle warning. Movement + repair browser journeys pass. Added habitat browser journey verifies keyboard doorway entry, artificial 30-minute saved-clock absence, colonization, 12 scene return cycles and zero-resource teardown. Setup teleports/artificial repair are explicit test fixtures, not a fully walked end-to-end causal playthrough.
-- Frontier geometry budget <=21 (nine chunks + seven movement + two watershed + three habitat); textures six. Lab test sampled <=17 geometries, zero chunks, one asset ref. Ordinary software-renderer median ~117 ms high / ~67 ms low, p95 ~317 / ~150 ms at 960x640; NOT hardware/mobile performance or a target pass.
-- Opened Lab before/after colonization and frontier-bank screenshots: material changes/reeds/animal placeholders visible. Presentation is crude; no natural habitat, animation or final visual acceptance claimed.
-- Human enjoyment, heard audio, actual touch usability and real GPU/mobile performance remain unverified. User waived progression gates; these are NOT passed.
+- Branch `arena/01a0f3be-squirtle-frontier`; source repositories remain read-only. Previously pushed rest/causal slice: `ad926ed`.
+- Direct Squirtle control, cached GLB and one authoritative loop retained. Body updates at 60 Hz; regional hydrology/ecology/weather/fire use integer one-second ticks, identical during bounded offline return.
+- Authored spring/landslide/wetland/outlet graph plus optional spring-to-outlet diversion. Nearby aimed Jet initiates the side groove, whose short local path descends sampled terrain. Diversion improves blocked-outlet supply but takes water from wetland after full repair. This is not a full generated watershed network or staged collision terrain.
+- Deterministic weather drives source supply, bounded 4x4 fire spread/fuel/ash/wetness and ash runoff. Jet suppresses nearby fire. Rain/fire/channel presentation uses two extra shared geometries and fixed instance limits. No global fluid or continuous erosion.
+- Player-only surveyed cells/landmarks, bounded 90-sample regional history, and one Lab frog identity/familiarity/fear persist. Offline time does not discover map cells or create encounters. Visitor mesh reacts simply to familiarity/fear; full AI and named settlement behavior remain pending.
+- Deep Record reached from the submerged Lab centre (R), then Q/E to descend/ascend through eight seeded aggregate historical strata; exit near surface. Lab/Record/frontier are mutually rendered, exterior chunks unload, shared Squirtle stays cached. Record reload resumes at surface; full body-pose persistence remains pending.
+- Version 4 save migrates versions 1–3; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
+- 43 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
+- Frontier geometry bound <=23; ordinary run 22 geometries / six textures / 35 calls. Software median ~133 ms high / ~83 ms low, p95 ~317 / ~167 ms at 960x640: FPS target NOT met here; hardware/mobile performance unknown.
+- Opened Deep Record, fire, map, marked-visitor and touch-settings screenshots. Found and repaired mobile nav/title overlap. Caption/controls visible, world remains crude geometry; marked visitor was partly occluded by avatar in captured pose, not a complete visual acceptance.
+- Keyboard-focus regression exposed by Memory panel repaired: canvas is focusable and receives focus on pointer interaction. Escape dismisses panels, opening one closes others, repeated keydown does not retrigger rest, touch clear releases captures/resets stick.
+- User waived approval gates; human enjoyment, audio, real touch usability and device performance remain unverified, NOT passed. No public deployment claimed.
 
-## Remaining scope
+## Remaining scope / completion truth
 
-- Full game/prototype NOT complete. Terrain-derived watershed, alternate channel, staged terrain geometry, weather/fire, micro-route network, notable actor behaviors, full settlements, surveyed map/place memory and Deep Record remain outstanding.
-- Current near-animal meshes are population-driven ephemeral visual proxies, not complete AI. Settlement is a building/trough fixture, not human behavior. Lab home interaction includes grounded five-minute rest at the platform; object play remains a placeholder. Lab walls/furnishings use conservative circular body/camera proxies; accurate box/contact interactions remain pending.
-- No live deployment claimed. Preview remains development-only.
-- Evidence: `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, `docs/performance/phase1-measured.json`, historical Phase 1/asset evidence.
+Full project NOT finished. Major remaining work: world-scale terrain-derived watershed/alternate route topology, staged terrain/collision changes, traversable micro-route network, production wildlife/settlement behavior, richer Lab play, polished/accessible presentation and controls, robust concurrent storage, measured hardware FPS, asset/legal review for distribution, and full end-to-end causal/human QA. Current systems are bounded foundations, not sufficient evidence to claim excellent movement or final production completion.
+
+Evidence: `docs/qa/WORLD_SYSTEMS.md`, `docs/qa/world-browser.json`, `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, performance and historical asset evidence.
 
 ## Historical checkpoints
 

@@ -9,11 +9,13 @@ export class Input {
     this.actions = {};
     this.pointers = new Map();
     this.canvas = canvas;
+    canvas.tabIndex = 0;
     const options = { signal: this.abort.signal };
     addEventListener(
       "keydown",
       (e) => {
-        if (e.target.closest("input,select,button")) return;
+        if (e.repeat) return;
+        if (e.target.closest("input,select,button,textarea")) return;
         if (
           ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
             e.code,
@@ -39,6 +41,7 @@ export class Input {
         "pointerdown",
         (e) => {
           e.preventDefault();
+          if (type === "look") canvas.focus({ preventScroll: true });
           element.setPointerCapture(e.pointerId);
           this.pointers.set(e.pointerId, {
             type,
@@ -125,7 +128,13 @@ export class Input {
     this.stick = { x: 0, z: 0 };
     this.lookX = 0;
     this.lookY = 0;
+    for (const [id, p] of this.pointers) {
+      if (p.element.hasPointerCapture(id)) p.element.releasePointerCapture(id);
+    }
     this.pointers.clear();
+    const stick = document.querySelector("#stick");
+    stick?.style.setProperty("--dx", "0px");
+    stick?.style.setProperty("--dy", "0px");
   }
   dispose() {
     this.clear();

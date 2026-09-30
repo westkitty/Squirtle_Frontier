@@ -1,0 +1,88 @@
+{
+  "errors": [],
+  "cycles": [
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    },
+    {
+      "geometries": 19,
+      "textures": 6
+    }
+  ],
+  "bypass": 0.1,
+  "suppression": {
+    "heat": 0.7499999999999999,
+    "soaked": 0.09999999999999999
+  },
+  "record": {
+    "y": -7.504385475968545,
+    "caption": "About 629 years ago. A water house drew from the spring. Cut stone remembers its cistern."
+  },
+  "teardown": {
+    "chunks": {
+      "active": 0,
+      "queued": 0,
+      "loads": 14,
+      "unloads": 14
+    },
+    "memory": {
+      "geometries": 0,
+      "textures": 0
+    },
+    "render": {
+      "frame": 195,
+      "calls": 11,
+      "triangles": 9488,
+      "points": 0,
+      "lines": 0
+    },
+    "assets": {
+      "cached": 0,
+      "referencedIds": 0,
+      "references": 0,
+      "records": 0
+    },
+    "mode": "land"
+  }
+}

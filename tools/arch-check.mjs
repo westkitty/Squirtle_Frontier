@@ -16,6 +16,6 @@ for (const path of await files('src')) {
  const code = await readFile(path, 'utf8');
  assert.ok(!/requestAnimationFrame|setInterval\(/.test(code), `unexpected scheduler: ${path}`);
  if (path !== 'src/main.js') assert.ok(!code.includes('setAnimationLoop('), `loop authority: ${path}`);
- if (/worldstate|persistence|worldgen/.test(path)) assert.ok(!/from ['"]three|pm0007|Squirtle/.test(code), `presentation coupling: ${path}`);
+ if (/worldstate|persistence|worldgen|simulation/.test(path)) assert.ok(!/from ['"]three|pm0007|Squirtle/.test(code), `presentation coupling: ${path}`);
 }
 console.log('All source syntax and focused Phase 0 architecture checks passed.');

@@ -385,3 +385,26 @@ kbd {
     bottom: 100px;
   }
 }
+
+#survey {
+  width: 100%;
+  background: #142c29;
+  border: 1px solid var(--line);
+}
+@media (max-width: 600px) {
+  nav {
+    top: 102px;
+  }
+  aside {
+    top: 154px;
+  }
+}
+
+@media (max-width: 600px) {
+  aside {
+    max-height: calc(100dvh - 210px);
+  }
+}
+canvas:focus:not(:focus-visible) {
+  outline: none;
+}
