@@ -1,3 +1,4 @@
+import { channelSample } from "./simulation/channel-terrain.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
@@ -72,6 +73,7 @@ async function boot() {
       effects = new WorldEffects(frontierGroup),
       liveRegion = {
         ...region,
+        sample: (x, z) => channelSample(x, z, state.frontier.stage),
         water: (x, z) => {
           const water = region.water(x, z);
           if (!water) return null;

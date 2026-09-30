@@ -1,3 +1,4 @@
+import {CHANNEL_BOUNDS} from "./simulation/channel-terrain.js";
 // Streaming terrain chunks with LOD + the shared "ground memory" texture
 // (burn scars, trails, lushness, development) that every surface samples.
 import * as THREE from 'three';
@@ -131,7 +132,9 @@ export class ChunkManager {
     for (let j = -this.radius; j <= this.radius; j++) {
       for (let i = -this.radius; i <= this.radius; i++) {
         const ring = Math.max(Math.abs(i), Math.abs(j));
-        const lod = ring <= 1 ? 32 : ring === 2 ? 16 : 8;
+        const b=CHANNEL_BOUNDS;
+        const overlaps=(ci+i+1)*WORLD.chunk>=b.minX && (ci+i)*WORLD.chunk<=b.maxX && (cj+j+1)*WORLD.chunk>=b.minZ && (cj+j)*WORLD.chunk<=b.maxZ;
+        const lod = overlaps && this.state.frontier?.stage>0 ? 128 : ring <= 1 ? 32 : ring === 2 ? 16 : 8;
         const gi = ci + i, gj = cj + j;
         const k = this.keyOf(gi, gj);
         wanted.add(k);
@@ -176,7 +179,7 @@ export class ChunkManager {
     for (let j = 0; j < n; j++) {
       for (let i = 0; i < n; i++) {
         const x = ox + i * step, z = oz + j * step;
-        heights[j * n + i] = heightAt(x, z);
+        heights[j * n + i] = this.state.sampleHeight?.(x, z) ?? heightAt(x, z);
       }
     }
     for (let j = 0; j < n; j++) {

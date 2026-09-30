@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 11
+revision: 12
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -120,12 +120,12 @@ Production expansion is blocked until the slice demonstrates:
 
 - Branch `arena/01a0f3be-squirtle-frontier`; source repositories remain read-only. Previously pushed rest/causal slice: `ad926ed`.
 - Direct Squirtle control, cached GLB and one authoritative loop retained. Body updates at 60 Hz; regional hydrology/ecology/weather/fire use integer one-second ticks, identical during bounded offline return.
-- Authored spring/landslide/wetland/outlet graph plus optional spring-to-outlet diversion. Nearby aimed Jet initiates the side groove, whose short local path descends sampled terrain. Diversion improves blocked-outlet supply but takes water from wetland after full repair. This is not a full generated watershed network or staged collision terrain.
+- Authored spring/landslide/wetland/outlet graph plus optional spring-to-outlet diversion. Nearby aimed Jet initiates the side groove, whose short local path descends sampled terrain. Diversion improves blocked-outlet supply but takes water from wetland after full repair. The side groove now reconstructs staged terrain vertices and body/camera contact from the saved stage; the wider graph is not a full generated watershed network.
 - Deterministic weather drives source supply, bounded 4x4 fire spread/fuel/ash/wetness and ash runoff. Jet suppresses nearby fire. Rain/fire/channel presentation uses two extra shared geometries and fixed instance limits. No global fluid or continuous erosion.
 - Player-only surveyed cells/landmarks, bounded 90-sample regional history, and one Lab frog identity/familiarity/fear persist. Offline time does not discover map cells or create encounters. Visitor mesh reacts simply to familiarity/fear; full AI and named settlement behavior remain pending.
 - Deep Record reached from the submerged Lab centre (R), then Q/E to descend/ascend through eight seeded aggregate historical strata; exit near surface. Lab/Record/frontier are mutually rendered, exterior chunks unload, shared Squirtle stays cached. Record reload resumes at surface; full body-pose persistence remains pending.
 - Version 4 save migrates versions 1–3; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
-- 43 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
+- 47 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
 - Frontier geometry bound <=23; ordinary run 22 geometries / six textures / 35 calls. Software median ~133 ms high / ~83 ms low, p95 ~317 / ~167 ms at 960x640: FPS target NOT met here; hardware/mobile performance unknown.
 - Opened Deep Record, fire, map, marked-visitor and touch-settings screenshots. Found and repaired mobile nav/title overlap. Caption/controls visible, world remains crude geometry; marked visitor was partly occluded by avatar in captured pose, not a complete visual acceptance.
 - Keyboard-focus regression exposed by Memory panel repaired: canvas is focusable and receives focus on pointer interaction. Escape dismisses panels, opening one closes others, repeated keydown does not retrigger rest, touch clear releases captures/resets stick.
@@ -133,7 +133,7 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Remaining scope / completion truth
 
-Full project NOT finished. Major remaining work: world-scale terrain-derived watershed/alternate route topology, staged terrain/collision changes, traversable micro-route network, production wildlife/settlement behavior, richer Lab play, polished/accessible presentation and controls, robust concurrent storage, measured hardware FPS, asset/legal review for distribution, and full end-to-end causal/human QA. Current systems are bounded foundations, not sufficient evidence to claim excellent movement or final production completion.
+Full project NOT finished. Major remaining work: world-scale terrain-derived watershed/alternate route topology, broader terrain/collision integration, traversable micro-route network, production wildlife/settlement behavior, richer Lab play, polished/accessible presentation and controls, robust concurrent storage, measured hardware FPS, asset/legal review for distribution, and full end-to-end causal/human QA. Current systems are bounded foundations, not sufficient evidence to claim excellent movement or final production completion.
 
 Evidence: `docs/qa/WORLD_SYSTEMS.md`, `docs/qa/world-browser.json`, `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, performance and historical asset evidence.
 
@@ -169,3 +169,12 @@ Phase 2 has started with a small authored semantic DAG (spring → landslide →
 ## Lab rest follow-up
 
 R/contextual button near the wooden platform advances the existing regional simulation by five minutes and saves, only once per press. No resource/quest reward is injected. Focused spatial eligibility and browser keyboard rest tests pass; repeated held-action fast-forward is rejected by the edge latch. The same habitat test covers twelve scene transitions and zero-resource teardown afterward. Full world completion is still not claimed.
+
+## Staged channel terrain checkpoint
+
+- Added pure local channel-height reconstruction from five saved erosion stages; source path remains derived once from immutable base terrain. Body/camera samples and chunk vertices share this height source. Water strip follows carved route as a connected mesh.
+- Streaming automatically detects stage changes (including initial Jet, rest/offline and load), invalidates only overlapping chunks and raises that chunk's grid to 128 segments while the channel is active. Unrelated chunks remain unchanged. This adds triangles, not new geometry ownership; still <=23 total geometries.
+- 47 checks pass; build passes with bundle warning. Existing movement browser passes. New channel browser validates staged vertices, persistence and twelve Lab/frontier returns with zero-resource teardown. Stage-4 measurement at 960x640 SwiftShader ~133 ms median / ~250 ms p95, ~55k triangles in sampled view. Performance target still not met.
+- Initial screenshot showed disconnected water patches from a coarse grid and horizontal strips. One visual repair pass densified only the affected chunk and replaced patches with a sloped connected strip; re-opened screenshot shows continuous course. Underlying continuous collision height and interpolated render triangles can still differ slightly between vertices; natural visual acceptance remains pending.
+- Environment had reverted local Git HEAD to initial state while files remained; recovered already-pushed branch index/HEAD from remote without modifying files or creating duplicate commits.
+- Full project completion remains unclaimed; no gate waiver is interpreted as verified quality.

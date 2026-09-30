@@ -1,4 +1,5 @@
 // Single semantic state owner; body physics remains separate from the one-second regional tick.
+import { channelHeight } from "./simulation/channel-terrain.js";
 import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
 import { Ecosystem } from "./simulation/ecosystem.js";
@@ -18,6 +19,9 @@ export class WorldState {
     this.frontierReturn = { x: -10, z: 18 };
     this.player = { x: -10, z: 18 };
     this.ground = new Uint8Array(WORLD.stateRes * WORLD.stateRes * 4);
+  }
+  sampleHeight(x, z) {
+    return channelHeight(x, z, this.frontier.stage);
   }
   update(dt) {
     if (!Number.isFinite(dt) || dt < 0 || dt > 1)

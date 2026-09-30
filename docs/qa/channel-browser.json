@@ -1,0 +1,116 @@
+{
+  "errors": [],
+  "cycles": [
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    },
+    {
+      "error": 1.1916847686421761e-7,
+      "memory": {
+        "geometries": 18,
+        "textures": 6
+      }
+    }
+  ],
+  "afterStage": {
+    "error": 1.1916847686421761e-7,
+    "memory": {
+      "geometries": 22,
+      "textures": 6
+    }
+  },
+  "performance": {
+    "environment": "960x640 SwiftShader, stage 4; NOT hardware/mobile FPS",
+    "medianMs": 150,
+    "p95Ms": 283.3000000000011,
+    "render": {
+      "frame": 132,
+      "calls": 31,
+      "triangles": 55187,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 22,
+      "textures": 6
+    }
+  },
+  "teardown": {
+    "geometries": 0,
+    "textures": 0
+  }
+}

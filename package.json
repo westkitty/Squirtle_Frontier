@@ -15,7 +15,8 @@
     "browser:watershed": "node tools/watershed-browser.mjs",
     "browser:habitat": "node tools/habitat-browser.mjs",
     "browser:world": "node tools/world-browser.mjs",
-    "browser:recovery": "node tools/recovery-browser.mjs"
+    "browser:recovery": "node tools/recovery-browser.mjs",
+    "browser:channel": "node tools/channel-browser.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

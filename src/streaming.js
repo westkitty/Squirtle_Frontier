@@ -1,6 +1,10 @@
+import { CHANNEL_BOUNDS } from "./simulation/channel-terrain.js";
+import { WORLD } from "./worldgen.js";
 import { ChunkManager, makeGroundTexture, shared } from "./terrain.js";
 export class Streaming {
   constructor(scene, state) {
+    this.state = state;
+    this.terrainStage = state.frontier?.stage ?? 0;
     this.texture = makeGroundTexture(state);
     this.chunks = new ChunkManager(scene, state);
     this.chunks.radius = 1; // one small baseline region; no ecology/actors yet
@@ -9,7 +13,24 @@ export class Streaming {
     this.chunks.onChunkBuild = () => this.loads++;
     this.chunks.onChunkRemove = () => this.unloads++;
   }
+  refreshTerrain() {
+    this.terrainStage = this.state.frontier?.stage ?? 0;
+    // Invalidate only channel-overlapping chunks. Normal queue owns reconstruction.
+    const b = CHANNEL_BOUNDS;
+    for (const [key, rec] of [...this.chunks.chunks]) {
+      if (
+        (rec.i + 1) * WORLD.chunk >= b.minX &&
+        rec.i * WORLD.chunk <= b.maxX &&
+        (rec.j + 1) * WORLD.chunk >= b.minZ &&
+        rec.j * WORLD.chunk <= b.maxZ
+      )
+        this.chunks.disposeChunk(key);
+    }
+    this.chunks.center = { i: 9999, j: 9999 };
+  }
   update(x, z) {
+    if (this.terrainStage !== (this.state.frontier?.stage ?? 0))
+      this.refreshTerrain();
     this.chunks.update(x, z, 2);
   }
   stats() {
