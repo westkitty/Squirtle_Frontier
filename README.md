@@ -6,7 +6,7 @@ A systemic browser game in development where **you directly control Squirtle, no
 
 **Phase 1 movement study: Stillwater Reach.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. There are no objectives yet. The training pond is not the future semantic watershed.
 
-Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. Phase 2 has not started.
+Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its graph is saved and simulated but not yet connected to visible water or physical repair.
 
 ## Run
 
@@ -25,7 +25,7 @@ Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 | Water Jet | Hold Space | Hold Jet |
 | Dive / rise | Hold Q / E | Hold Dive / Rise |
 
-Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. The current save is a development skeleton, not full world persistence.
+Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. The current save includes position, elapsed time and the authored watershed graph; full world persistence and offline recovery remain pending.
 
 ## Validate
 

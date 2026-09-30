@@ -1,4 +1,5 @@
-// Phase 0 skeleton, not final recovery/offline simulation.
+// Versioned semantic save; full recovery/offline simulation remains pending.
+import { Watershed } from "./simulation/watershed.js";
 const KEY = "squirtle_frontier_baseline_v1";
 export function save(state, storage) {
   try {
@@ -14,7 +15,7 @@ export function load(state, storage) {
     if (!text) return { ok: true, fresh: true };
     const s = JSON.parse(text);
     if (
-      s.version !== 1 ||
+      ![1, 2].includes(s.version) ||
       s.seed !== state.seed ||
       !Number.isFinite(s.elapsed) ||
       s.elapsed < 0 ||
@@ -26,6 +27,9 @@ export function load(state, storage) {
       throw new Error(
         "Unsupported or damaged baseline save; original retained.",
       );
+    const watershed =
+      s.version === 1 ? new Watershed() : Watershed.restore(s.watershed);
+    state.watershed = watershed;
     state.elapsed = s.elapsed;
     state.player = { x: s.player.x, z: s.player.z };
     return { ok: true };

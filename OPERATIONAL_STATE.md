@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 6
-status: Phase 1 playable movement slice / technical checks pass / human-quality gate open
+revision: 7
+status: Phase 2 semantic foundation in progress / approval gates waived by user / quality evidence incomplete
 
 ## Purpose
 
@@ -140,10 +140,10 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Current scope / blocked progression
 
-- Phase 2 NOT started. The pond is an authored locomotion test volume, not a watershed. No fake hydrology, offline chain, ecology, settlement, Lab or Deep Record has been substituted for simulation.
+- Historical Phase 1 checkpoint: Phase 2 had not started. Superseded by the authorization below. The pond is an authored locomotion test volume, not a watershed. No fake hydrology, offline chain, ecology, settlement, Lab or Deep Record has been substituted for simulation.
 - Save remains an explicit position/time skeleton; reload resets transient movement at terrain contact. Full semantic persistence/recovery/offline work remains pending.
 - Latest coherent work is the Phase 1 technical movement slice, not a complete game/prototype.
-- Next required external evidence: a human ten-minute movement playtest and representative desktop GPU/mobile timing. Fix concrete feel/performance failures before expanding systems.
+- Outstanding external evidence (no longer blocks implementation): a human ten-minute movement playtest and representative desktop GPU/mobile timing. Fix concrete feel/performance failures before expanding systems.
 - Evidence: `docs/qa/PHASE1.md`, `docs/qa/phase1-browser.json`, `docs/performance/phase1-measured.json`, `docs/assets/SQUIRTLE_INTAKE.md`.
 - Do not claim deployment: only local/preview development routes have been opened.
 
@@ -154,3 +154,11 @@ Production expansion is blocked until the slice demonstrates:
 - MSAA disabled; explicit render-pixel budgets added. See `docs/performance/RENDER_DIAGNOSTIC.md`; software performance still fails the target. No further speculative optimization pass or Phase 2 expansion authorized by this evidence.
 - Re-ran 20 tests, production build (bundle warning persists), physical browser journey, 12 chunk returns, 30 asset cycles, touch cancellation and full teardown. Bank, portrait touch and underwater screenshots opened after repair: character and controls readable; low detail visibly softer. No human feel/audio acceptance inferred.
 - External blocker unchanged: ten-minute objective-free human playtest, heard audio and real touch usability, representative hardware GPU/mobile timing. Phase 1 gate remains open; project is NOT finished.
+
+## User-authorized progression — 2026-09-30
+
+User explicitly requested continued implementation and to skip gates. Approval gates are waived for progression, NOT passed or verified. Earlier statements blocking Phase 2 are superseded by this authorization; evidence discipline and architecture remain in force.
+
+Phase 2 has started with a small authored semantic DAG (spring → landslide → wetland → outlet), bounded flow, blockage, wetness, transported sediment/contamination and time/soil/slope/vegetation-driven channel stages. WorldState advances it through the existing authoritative loop. Version 2 saves include graph/scalars; version 1 position saves migrate. Invalid topology/scalars reject before changing live state.
+
+24 tests, production build and existing browser movement/save/lifecycle journey pass. Build still warns about bundle size. These tests verify a simulation foundation, not a complete hydrology gameplay slice. Terrain-derived topology, physical debris interaction, alternate route, Current Sense, state-driven water rendering and downstream ecological/Lab consumers remain to implement. Existing pond rendering/current remains a movement fixture and does not yet read this graph. No new visual acceptance claimed.
