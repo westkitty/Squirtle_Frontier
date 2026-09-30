@@ -20,10 +20,14 @@ export class Streaming {
       unloads: this.unloads,
     };
   }
-  dispose() {
+  suspend() {
     for (const key of [...this.chunks.chunks.keys()])
       this.chunks.disposeChunk(key);
     this.chunks.queue.length = 0;
+    this.chunks.center = { i: 9999, j: 9999 };
+  }
+  dispose() {
+    this.suspend();
     this.chunks.material.dispose();
     this.texture.dispose();
     if (shared.uGround.value === this.texture) shared.uGround.value = null;

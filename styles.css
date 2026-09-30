@@ -369,3 +369,19 @@ kbd {
     max-height: calc(100dvh - 90px);
   }
 }
+
+#interact {
+  position: absolute;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+#interact[hidden] {
+  display: none;
+}
+@media (max-height: 500px) {
+  #interact {
+    bottom: 100px;
+  }
+}

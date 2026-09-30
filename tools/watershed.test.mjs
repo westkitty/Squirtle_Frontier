@@ -27,7 +27,7 @@ test("graph and propagation continue identically after semantic save/load", () =
   const store = { setItem: (_, v) => (text = v), getItem: () => text };
   assert.equal(save(a, store).ok, true);
   const b = new WorldState();
-  assert.equal(load(b, store).ok, true);
+  assert.equal(load(b, store, { offline: false }).ok, true);
   advance(a, 10);
   advance(b, 10);
   assert.deepEqual(a.snapshot(), b.snapshot());
@@ -40,7 +40,7 @@ test("bad topology, cyclic links and invalid scalars reject atomically; version 
     (s) => (s.watershed[0].flow = -1),
     (s) => (s.watershed = null),
   ]) {
-    const damaged = structuredClone(before);
+    const damaged = { ...structuredClone(before), savedAt: 0 };
     mutate(damaged);
     const text = JSON.stringify(damaged);
     assert.equal(load(state, { getItem: () => text }).ok, false);
@@ -52,9 +52,13 @@ test("bad topology, cyclic links and invalid scalars reject atomically; version 
     elapsed: 10,
     player: { x: 1, z: 2 },
   };
-  assert.equal(load(state, { getItem: () => JSON.stringify(legacy) }).ok, true);
+  assert.equal(
+    load(state, { getItem: () => JSON.stringify(legacy) }, { offline: false })
+      .ok,
+    true,
+  );
   assert.equal(state.elapsed, 10);
-  assert.equal(state.version, 2);
+  assert.equal(state.version, 3);
 });
 test("bounded steps and deterministic semantic snapshots", () => {
   const a = new Watershed(),

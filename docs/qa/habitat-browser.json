@@ -1,0 +1,190 @@
+{
+  "cycles": [
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 11,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    }
+  ],
+  "errors": [],
+  "return": {
+    "place": "lab",
+    "ecosystem": {
+      "reeds": 0.9999999978474963,
+      "insects": 0.9999999957187775,
+      "prey": 0.838577149470763,
+      "predators": 0.46121359235772286,
+      "cistern": 1,
+      "labWater": 0.9999999999999203,
+      "labReeds": 0.9999986053045499,
+      "labInsects": 0.9999972285538101,
+      "labFrogs": 0.8385933498186912,
+      "eligibleSeconds": 1626
+    }
+  },
+  "teardown": {
+    "chunks": {
+      "active": 0,
+      "queued": 0,
+      "loads": 108,
+      "unloads": 108
+    },
+    "memory": {
+      "geometries": 0,
+      "textures": 0
+    },
+    "render": {
+      "frame": 89,
+      "calls": 13,
+      "triangles": 12104,
+      "points": 0,
+      "lines": 0
+    },
+    "assets": {
+      "cached": 0,
+      "referencedIds": 0,
+      "references": 0,
+      "records": 0
+    },
+    "mode": "land"
+  }
+}

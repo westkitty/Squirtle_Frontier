@@ -11,7 +11,9 @@
     "browser:baseline": "node tools/browser-baseline.mjs",
     "assets": "node tools/asset-validate.mjs",
     "asset:convert": "node tools/asset-convert.mjs",
-    "perf": "node tools/movement-perf.mjs"
+    "perf": "node tools/movement-perf.mjs",
+    "browser:watershed": "node tools/watershed-browser.mjs",
+    "browser:habitat": "node tools/habitat-browser.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

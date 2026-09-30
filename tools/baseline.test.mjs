@@ -80,18 +80,23 @@ test("semantic save roundtrip excludes scenes; damaged original and live state r
   a.elapsed = 20;
   assert.equal(save(a, storage).ok, true);
   assert.deepEqual(Object.keys(JSON.parse(text)).sort(), [
+    "ecoRemainder",
+    "ecosystem",
     "elapsed",
+    "frontierReturn",
+    "place",
     "player",
+    "savedAt",
     "seed",
     "version",
     "watershed",
   ]);
   const b = new WorldState();
-  assert.equal(load(b, storage).ok, true);
+  assert.equal(load(b, storage, { offline: false }).ok, true);
   assert.deepEqual(b.snapshot(), a.snapshot());
   text = "{broken";
   const before = b.snapshot();
-  assert.equal(load(b, storage).ok, false);
+  assert.equal(load(b, storage, { offline: false }).ok, false);
   assert.equal(text, "{broken");
   assert.deepEqual(b.snapshot(), before);
 });

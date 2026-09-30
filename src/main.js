@@ -6,7 +6,7 @@ import { Streaming } from "./streaming.js";
 import { Input } from "./input.js";
 import { Loop } from "./loop.js";
 import { Settings } from "./settings.js";
-import { save, load } from "./persistence.js";
+import { save, load, advanceOffline } from "./persistence.js";
 import { AssetManager } from "./assets/asset-manager.js";
 import { SquirtlePresentation } from "./assets/squirtle-presentation.js";
 import { createBody } from "./player/body-state.js";
@@ -16,6 +16,12 @@ import { region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
 import { applyWaterJet, senseWater } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
+import {
+  HabitatView,
+  LAB_ENTRY,
+  labRegion,
+  labHeight,
+} from "./player/habitat-view.js";
 import { Audio } from "./audio.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading");
@@ -49,11 +55,16 @@ async function boot() {
     const body = createBody(
       state.player.x,
       state.player.z,
-      heightAt(state.player.x, state.player.z),
+      state.place === "lab"
+        ? labHeight(state.player.x, state.player.z)
+        : heightAt(state.player.x, state.player.z),
     );
-    const streaming = new Streaming(scene, state),
-      scenery = new MovementScenery(scene, streaming),
-      watershedView = new WatershedPresentation(scene),
+    const frontierGroup = new THREE.Group();
+    scene.add(frontierGroup);
+    const streaming = new Streaming(frontierGroup, state),
+      scenery = new MovementScenery(frontierGroup, streaming),
+      watershedView = new WatershedPresentation(frontierGroup),
+      habitat = new HabitatView(frontierGroup),
       liveRegion = {
         ...region,
         water: (x, z) => {
@@ -64,6 +75,39 @@ async function boot() {
         },
       },
       rig = new CreatureCamera(camera, liveRegion);
+    let lab = null,
+      interactionHeld = false;
+    const enterPlace = (place, relocate = true) => {
+      if (place === "lab") {
+        if (relocate) state.frontierReturn = { x: body.x, z: body.z };
+        streaming.suspend();
+        frontierGroup.visible = false;
+        lab ??= new HabitatView(scene, { lab: true });
+        if (relocate) Object.assign(body, createBody(0, 5, 0));
+        rig.env = labRegion;
+      } else {
+        lab?.dispose();
+        lab = null;
+        frontierGroup.visible = true;
+        if (relocate)
+          Object.assign(
+            body,
+            createBody(
+              state.frontierReturn.x,
+              state.frontierReturn.z,
+              heightAt(state.frontierReturn.x, state.frontierReturn.z),
+            ),
+          );
+        rig.env = liveRegion;
+      }
+      state.place = place;
+      state.player = { x: body.x, z: body.z };
+      rig.initial = true;
+      input.clear();
+      document.querySelector("h1").textContent =
+        place === "lab" ? "The Listening Basin" : "Stillwater Reach";
+    };
+    if (state.place === "lab") enterPlace("lab", false);
     const abort = new AbortController(),
       options = { signal: abort.signal };
     let disposed = false,
@@ -79,11 +123,20 @@ async function boot() {
       streaming.dispose();
       scenery.dispose();
       watershedView.dispose();
+      habitat.dispose();
+      lab?.dispose();
       audio.dispose();
       disposePromise = assets.disposeAll().finally(() => renderer.dispose());
       return disposePromise;
     };
-    addEventListener("pagehide", cleanup, { ...options, once: true });
+    addEventListener(
+      "pagehide",
+      () => {
+        if (!document.hidden) save(state, localStorage);
+        cleanup();
+      },
+      { ...options, once: true },
+    );
     if (import.meta.hot) import.meta.hot.dispose(cleanup);
     const resize = () => {
       renderer.setPixelRatio(
@@ -159,6 +212,7 @@ async function boot() {
     document.querySelector("#reset").addEventListener(
       "click",
       () => {
+        if (state.place === "lab") enterPlace("frontier");
         Object.assign(body, createBody(-10, 18, heightAt(-10, 18)));
         rig.initial = true;
         input.clear();
@@ -179,9 +233,28 @@ async function boot() {
       (dt) => {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
-        stepBody(body, { ...controls, ...world }, liveRegion, dt);
-        applyWaterJet(state.watershed, body, dt);
+        const inLab = state.place === "lab";
+        const atDoor = inLab
+          ? Math.hypot(body.x, body.z - 6) < 2
+          : Math.hypot(body.x - LAB_ENTRY.x, body.z - LAB_ENTRY.z) < 2.5;
+        document.querySelector("#interact").hidden = !atDoor;
+        document.querySelector("#interact").textContent = inLab
+          ? "Leave basin · R"
+          : "Enter basin · R";
+        if (controls.interact && !interactionHeld && atDoor) {
+          enterPlace(inLab ? "frontier" : "lab");
+        }
+        interactionHeld = !!controls.interact;
+        const env = state.place === "lab" ? labRegion : liveRegion;
+        stepBody(body, { ...controls, ...world }, env, dt);
+        if (state.place === "lab") {
+          body.x = Math.max(-7.5, Math.min(7.5, body.x));
+          body.z = Math.max(-7.5, Math.min(7.5, body.z));
+        } else applyWaterJet(state.watershed, body, dt);
         state.update(dt);
+        if (state.place === "frontier")
+          habitat.update(state.ecosystem, body, state.elapsed);
+        lab?.update(state.ecosystem, body, state.elapsed);
         const signal = controls.sense
           ? senseWater(
               state.watershed,
@@ -197,13 +270,18 @@ async function boot() {
           0.22 + state.watershed.nodes[2].wetness * 0.18,
           0.38,
         );
-        if (controls.sense)
+        if (controls.sense && state.place === "lab")
+          status.textContent =
+            state.ecosystem.labWater > 0.5
+              ? "Fresh water carries reed seeds into the basin."
+              : "The basin waits for water from the wetland.";
+        else if (controls.sense)
           status.textContent =
             signal?.message || "Touch the water to listen to its current.";
         state.player.x = body.x;
         state.player.z = body.z;
         creature.present(body, dt);
-        scenery.update(body, dt);
+        if (state.place === "frontier") scenery.update(body, dt);
         audio.update(body, Settings.values);
         saveTime += dt;
         if (saveTime >= 30) {
@@ -219,15 +297,24 @@ async function boot() {
               ? 1 / 60
               : Math.min(0.1, (now - lastRender) / 1000);
         lastRender = now;
-        streaming.update(body.x, body.z);
+        if (state.place === "frontier") streaming.update(body.x, body.z);
         rig.update(body, input.consumeLook(), cameraDt, {
           ...Settings.values,
           reducedMotion: Settings.motionReduced,
         });
         const underwater =
-          camera.position.y < 0 &&
-          region.water(camera.position.x, camera.position.z);
-        scene.fog.color.set(underwater ? "#246c69" : "#9bb9aa");
+          camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
+          (state.place === "lab" ? labRegion : liveRegion).water(
+            camera.position.x,
+            camera.position.z,
+          );
+        scene.fog.color.set(
+          underwater
+            ? "#246c69"
+            : state.place === "lab"
+              ? "#597b76"
+              : "#9bb9aa",
+        );
         scene.fog.density = underwater ? 0.13 : 0.025;
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
@@ -249,9 +336,19 @@ async function boot() {
         }
       },
     );
+    let hiddenAt = null;
     document.addEventListener(
       "visibilitychange",
       () => {
+        if (document.hidden) {
+          hiddenAt = Date.now();
+          save(state, localStorage);
+        } else if (hiddenAt !== null) {
+          advanceOffline(state, Math.max(0, (Date.now() - hiddenAt) / 1000));
+          hiddenAt = null;
+          const r = save(state, localStorage);
+          if (!r.ok) status.textContent = r.message;
+        }
         loop.reset();
         renderer.setAnimationLoop(
           document.hidden ? null : (now) => loop.frame(now),
@@ -271,6 +368,8 @@ async function boot() {
       rig,
       input,
       region,
+      enterPlace,
+      habitat,
       dispose: cleanup,
       stats: () => ({
         chunks: streaming.stats(),
@@ -283,9 +382,13 @@ async function boot() {
     };
     renderer.setAnimationLoop((now) => loop.frame(now));
     loading.hidden = true;
-    status.textContent = loaded.ok
-      ? "Try the water. It’s where you belong."
-      : loaded.message;
+    status.textContent =
+      loaded.message ||
+      (loaded.ok
+        ? loaded.seconds > 0
+          ? `The watershed continued for ${loaded.seconds} seconds${loaded.capped ? " (six-hour cap)" : ""}.`
+          : "Follow the shore. The stone doorway leads to the Listening Basin."
+        : "Save unavailable.");
   } catch (error) {
     cleanup();
     loading.hidden = false;
