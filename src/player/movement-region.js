@@ -1,3 +1,4 @@
+import { WATER_HOUSE } from "../simulation/settlement.js";
 import { heightAt, WORLD } from "../worldgen.js";
 import { hash2i, mulberry32 } from "../rng.js";
 export const obstacles = [
@@ -25,6 +26,7 @@ export function treesForChunk(i, j) {
     const x = i * WORLD.chunk + random() * WORLD.chunk,
       z = j * WORLD.chunk + random() * WORLD.chunk;
     if (
+      Math.hypot(x - WATER_HOUSE.x, z - WATER_HOUSE.z) > 5 &&
       heightAt(x, z) > 0.4 &&
       Math.abs(x) > 10 &&
       Math.hypot(x + 10, z - 18) > 4

@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 12
+revision: 13
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -124,8 +124,8 @@ Production expansion is blocked until the slice demonstrates:
 - Deterministic weather drives source supply, bounded 4x4 fire spread/fuel/ash/wetness and ash runoff. Jet suppresses nearby fire. Rain/fire/channel presentation uses two extra shared geometries and fixed instance limits. No global fluid or continuous erosion.
 - Player-only surveyed cells/landmarks, bounded 90-sample regional history, and one Lab frog identity/familiarity/fear persist. Offline time does not discover map cells or create encounters. Visitor mesh reacts simply to familiarity/fear; full AI and named settlement behavior remain pending.
 - Deep Record reached from the submerged Lab centre (R), then Q/E to descend/ascend through eight seeded aggregate historical strata; exit near surface. Lab/Record/frontier are mutually rendered, exterior chunks unload, shared Squirtle stays cached. Record reload resumes at surface; full body-pose persistence remains pending.
-- Version 4 save migrates versions 1–3; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
-- 47 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
+- Version 5 save migrates versions 1–4; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
+- 52 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
 - Frontier geometry bound <=23; ordinary run 22 geometries / six textures / 35 calls. Software median ~133 ms high / ~83 ms low, p95 ~317 / ~167 ms at 960x640: FPS target NOT met here; hardware/mobile performance unknown.
 - Opened Deep Record, fire, map, marked-visitor and touch-settings screenshots. Found and repaired mobile nav/title overlap. Caption/controls visible, world remains crude geometry; marked visitor was partly occluded by avatar in captured pose, not a complete visual acceptance.
 - Keyboard-focus regression exposed by Memory panel repaired: canvas is focusable and receives focus on pointer interaction. Escape dismisses panels, opening one closes others, repeated keydown does not retrigger rest, touch clear releases captures/resets stick.
@@ -178,3 +178,13 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Initial screenshot showed disconnected water patches from a coarse grid and horizontal strips. One visual repair pass densified only the affected chunk and replaced patches with a sloped connected strip; re-opened screenshot shows continuous course. Underlying continuous collision height and interpolated render triangles can still differ slightly between vertices; natural visual acceptance remains pending.
 - Environment had reverted local Git HEAD to initial state while files remained; recovered already-pushed branch index/HEAD from remote without modifying files or creating duplicate commits.
 - Full project completion remains unclaimed; no gate waiver is interpreted as verified quality.
+
+## Wildlife and settlement behavior checkpoint
+
+- Added near-only semantic actors: at most twelve prey and three predators within 28m of the wetland. Prey forage/flee/evade; predators stalk/watch/evade. Obstacle separation and deterministic frame-start decisions replace the exterior circular-orbit presentation. Distant ecology remains the existing scalar integrator; local pursuit is deliberately not a second kill/population model. Actors clear on region exit and are not serialized.
+- Water house now remembers calm familiarity, fear and distinct visits. Water reliability changes caretaker target/gesture; alarming movement causes withdrawal. A familiar, sufficiently supplied settlement fills a small bowl by drawing from cistern volume. Offline ticks never award familiarity or visits. Save v5 validates settlement state; old saves start with neutral settlement memory.
+- Meshes reuse existing sphere/box/cylinder geometry. Conservative house/trough collision proxies added; tree generation reserves 5m around the house. Additional materials/draw calls but no increased geometry ownership bound.
+- 52 checks and production build pass (~636 kB bundle warning). Movement and habitat browser suites pass. New wildlife browser verifies stalk/evade, bowl allocation, familiarity reload, twelve Lab/frontier cycles, actor removal and zero-resource teardown. Fixture populations and history are explicitly injected, not a full player-made ecological chain.
+- Current ordinary-bank SwiftShader sample median ~117 ms high / ~67 ms low, p95 200 / ~133 ms; 22 geometries, six textures, 40 calls. Targets still not met; hardware unknown.
+- Opened wildlife and settlement screenshots: animals have recognizable multipart silhouettes, but are still primitive and lack full locomotion/contact animation. Settlement screenshot is obstructed by rock/tree scenery; not a final readable presentation pass.
+- Known remaining limitations: no local capture/death model, no multi-step route planning, no human dialogue/complex settlement economy, and full production visual/accessibility/performance acceptance still outstanding. Full project NOT complete.

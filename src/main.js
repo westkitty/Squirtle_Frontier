@@ -1,3 +1,5 @@
+import { NearWildlife } from "./simulation/near-wildlife.js";
+import { settlementObstacles } from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
@@ -71,8 +73,13 @@ async function boot() {
       watershedView = new WatershedPresentation(frontierGroup),
       habitat = new HabitatView(frontierGroup),
       effects = new WorldEffects(frontierGroup),
+      wildlife = new NearWildlife(state.seed),
       liveRegion = {
         ...region,
+        obstaclesAt: (x, z) => [
+          ...region.obstaclesAt(x, z),
+          ...settlementObstacles,
+        ],
         sample: (x, z) => channelSample(x, z, state.frontier.stage),
         water: (x, z) => {
           const water = region.water(x, z);
@@ -86,6 +93,7 @@ async function boot() {
     let lab = null,
       interactionHeld = false;
     const enterPlace = (place, relocate = true) => {
+      wildlife.clear();
       record?.dispose();
       record = null;
       if (place === "record") {
@@ -150,6 +158,7 @@ async function boot() {
       scenery.dispose();
       watershedView.dispose();
       habitat.dispose();
+      wildlife.clear();
       effects.dispose();
       record?.dispose();
       lab?.dispose();
@@ -344,9 +353,20 @@ async function boot() {
             state.frontier.tick,
             state.ecosystem,
           );
+        if (state.frontier.tick !== previousTick)
+          state.settlement.observe(body, state.place, state.frontier.tick);
+        wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
         if (state.place === "frontier") effects.update(state, body);
         if (state.place === "frontier")
-          habitat.update(state.ecosystem, body, state.elapsed);
+          habitat.update(
+            state.ecosystem,
+            body,
+            state.elapsed,
+            null,
+            wildlife,
+            state.settlement,
+            dt,
+          );
         lab?.update(state.ecosystem, body, state.elapsed, state.memory.notable);
         const signal = controls.sense
           ? senseWater(
@@ -498,6 +518,7 @@ async function boot() {
       region,
       enterPlace,
       habitat,
+      wildlife,
       dispose: cleanup,
       stats: () => ({
         chunks: streaming.stats(),

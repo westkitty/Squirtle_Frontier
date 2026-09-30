@@ -1,3 +1,4 @@
+import { Settlement } from "./simulation/settlement.js";
 import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
 import { Watershed } from "./simulation/watershed.js";
@@ -14,7 +15,7 @@ const position = (p) =>
 function decode(text, seed) {
   const s = JSON.parse(text);
   if (
-    ![1, 2, 3, 4].includes(s.version) ||
+    ![1, 2, 3, 4, 5].includes(s.version) ||
     s.seed !== seed ||
     !Number.isFinite(s.elapsed) ||
     s.elapsed < 0 ||
@@ -44,7 +45,9 @@ function decode(text, seed) {
       : FrontierSystems.restore(s.frontier, seed);
   const memory =
     s.version < 4 ? new PlaceMemory(seed) : PlaceMemory.restore(s.memory, seed);
-  return { s, watershed, ecosystem, frontier, memory };
+  const settlement =
+    s.version < 5 ? new Settlement() : Settlement.restore(s.settlement);
+  return { s, watershed, ecosystem, frontier, memory, settlement };
 }
 export function advanceOffline(state, seconds) {
   if (!Number.isFinite(seconds) || seconds < 0)
@@ -98,11 +101,12 @@ export function load(
       decoded = decode(backup, state.seed);
       recovered = true;
     }
-    const { s, watershed, ecosystem, frontier, memory } = decoded;
+    const { s, watershed, ecosystem, frontier, memory, settlement } = decoded;
     state.watershed = watershed;
     state.ecosystem = ecosystem;
     state.frontier = frontier;
     state.memory = memory;
+    state.settlement = settlement;
     state.elapsed = s.elapsed;
     state.ecoRemainder = s.version >= 3 ? s.ecoRemainder : 0;
     state.player = { x: s.player.x, z: s.player.z };

@@ -1,3 +1,4 @@
+import { Settlement } from "./simulation/settlement.js";
 // Single semantic state owner; body physics remains separate from the one-second regional tick.
 import { channelHeight } from "./simulation/channel-terrain.js";
 import { FrontierSystems } from "./simulation/frontier-systems.js";
@@ -7,11 +8,12 @@ import { Watershed } from "./simulation/watershed.js";
 import { WORLD } from "./worldgen.js";
 export class WorldState {
   constructor() {
-    this.version = 4;
+    this.version = 5;
     this.seed = WORLD.seed;
     this.elapsed = 0;
     this.watershed = new Watershed();
     this.frontier = new FrontierSystems(this.seed);
+    this.settlement = new Settlement();
     this.memory = new PlaceMemory(this.seed);
     this.ecosystem = new Ecosystem(this.seed);
     this.ecoRemainder = 0;
@@ -34,6 +36,7 @@ export class WorldState {
       const forcing = this.frontier.advance();
       this.watershed.update(1, forcing);
       this.ecosystem.tick(this.watershed);
+      this.settlement.tick(this.ecosystem);
       this.frontier.record(this.watershed, this.ecosystem);
     }
   }
@@ -48,6 +51,7 @@ export class WorldState {
       ecosystem: this.ecosystem.snapshot(),
       frontier: this.frontier.snapshot(),
       memory: this.memory.snapshot(),
+      settlement: this.settlement.snapshot(),
       ecoRemainder: this.ecoRemainder,
       place: this.place,
       frontierReturn: { ...this.frontierReturn },

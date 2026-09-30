@@ -14,6 +14,90 @@
     },
     {
       "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 17,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
         "geometries": 13,
         "textures": 6
       },
@@ -38,91 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
         "geometries": 13,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 17,
         "textures": 6
       },
       "assets": {
@@ -174,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 110,
+      "frame": 108,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

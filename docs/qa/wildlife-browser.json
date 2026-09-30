@@ -1,0 +1,72 @@
+{
+  "errors": [],
+  "cycles": [
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    },
+    {
+      "geometries": 20,
+      "textures": 6
+    }
+  ],
+  "modes": [
+    "flee",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "forage",
+    "stalk",
+    "stalk"
+  ],
+  "savedFamiliarity": 0.41000000000000003,
+  "teardown": {
+    "geometries": 0,
+    "textures": 0
+  }
+}
