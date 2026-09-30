@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 1
-status: planning / implementation not started
+revision: 2
+status: planning control plane complete / implementation not started
 
 ## Purpose
 
