@@ -49,6 +49,11 @@
           <dd>Shell slide</dd>
           <dt>Space · hold</dt>
           <dd>Water Jet</dd>
+          <dt>F · hold</dt>
+          <dd>
+            Current Sense: touch water and follow the amber ripple. Aim Water
+            Jet at the debris to clear it.
+          </dd>
           <dt>Q / E · hold</dt>
           <dd>Dive / rise</dd>
         </dl>
@@ -57,8 +62,8 @@
           ability buttons.
         </p>
         <p class="small">
-          Phase 1 movement study. This pond is a test volume, not the future
-          simulated watershed.
+          Early watershed study. Nearby debris restricts downstream flow; Water
+          Jet can clear it.
         </p>
       </aside>
       <aside id="settings" hidden>
@@ -114,7 +119,9 @@
       <div id="touch" aria-label="Touch movement controls">
         <div id="stick" role="group" aria-label="Movement stick"><i></i></div>
         <div class="actions">
-          <button data-action="run" aria-label="Hold to run">Run</button
+          <button data-action="sense" aria-label="Hold for Current Sense">
+            Sense</button
+          ><button data-action="run" aria-label="Hold to run">Run</button
           ><button data-action="slide" aria-label="Hold to shell slide">
             Shell</button
           ><button data-action="dive" aria-label="Hold to dive">Dive</button

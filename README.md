@@ -6,7 +6,7 @@ A systemic browser game in development where **you directly control Squirtle, no
 
 **Phase 1 movement study: Stillwater Reach.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. There are no objectives yet. The training pond is not the future semantic watershed.
 
-Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its graph is saved and simulated but not yet connected to visible water or physical repair.
+Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its saved graph now drives pond current/tint and nearby Water Jet debris clearing. Hold F (or touch Sense) in water to locate the disturbance. This remains an early authored fixture, not the complete watershed.
 
 ## Run
 

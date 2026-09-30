@@ -14,6 +14,8 @@ import { stepBody } from "./player/squirtle-controller.js";
 import { CreatureCamera } from "./player/creature-camera.js";
 import { region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
+import { applyWaterJet, senseWater } from "./simulation/water-interaction.js";
+import { WatershedPresentation } from "./player/watershed-presentation.js";
 import { Audio } from "./audio.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading");
@@ -51,7 +53,17 @@ async function boot() {
     );
     const streaming = new Streaming(scene, state),
       scenery = new MovementScenery(scene, streaming),
-      rig = new CreatureCamera(camera, region);
+      watershedView = new WatershedPresentation(scene),
+      liveRegion = {
+        ...region,
+        water: (x, z) => {
+          const water = region.water(x, z);
+          if (!water) return null;
+          const flow = state.watershed.nodes[2].flow;
+          return { ...water, currentX: 0.08 * flow, currentZ: -0.18 * flow };
+        },
+      },
+      rig = new CreatureCamera(camera, liveRegion);
     const abort = new AbortController(),
       options = { signal: abort.signal };
     let disposed = false,
@@ -66,6 +78,7 @@ async function boot() {
       creature?.dispose();
       streaming.dispose();
       scenery.dispose();
+      watershedView.dispose();
       audio.dispose();
       disposePromise = assets.disposeAll().finally(() => renderer.dispose());
       return disposePromise;
@@ -166,8 +179,27 @@ async function boot() {
       (dt) => {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
-        stepBody(body, { ...controls, ...world }, region, dt);
+        stepBody(body, { ...controls, ...world }, liveRegion, dt);
+        applyWaterJet(state.watershed, body, dt);
         state.update(dt);
+        const signal = controls.sense
+          ? senseWater(
+              state.watershed,
+              body,
+              !!liveRegion.water(body.x, body.z) && body.y < 0.3,
+            )
+          : null;
+        watershedView.update(state.watershed, body, !!signal, state.elapsed);
+        scenery.water.material.opacity =
+          0.35 + state.watershed.nodes[2].wetness * 0.25;
+        scenery.water.material.color.setHSL(
+          0.48,
+          0.22 + state.watershed.nodes[2].wetness * 0.18,
+          0.38,
+        );
+        if (controls.sense)
+          status.textContent =
+            signal?.message || "Touch the water to listen to its current.";
         state.player.x = body.x;
         state.player.z = body.z;
         creature.present(body, dt);

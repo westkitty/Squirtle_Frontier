@@ -1,21 +1,21 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-09-30T20:28:44.016Z",
+  "date": "2026-09-30T20:41:23.982Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 133.29999999999927,
+      "medianMs": 133.30000000000018,
       "p95Ms": 233.39999999999964,
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "render": {
-        "frame": 144,
-        "calls": 26,
-        "triangles": 31026,
+        "frame": 145,
+        "calls": 27,
+        "triangles": 31206,
         "points": 0,
         "lines": 0
       },
@@ -26,16 +26,16 @@
       "quality": "low",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 66.70000000000073,
-      "p95Ms": 100,
+      "medianMs": 83.29999999999927,
+      "p95Ms": 149.90000000000146,
       "memory": {
-        "geometries": 15,
+        "geometries": 17,
         "textures": 6
       },
       "render": {
-        "frame": 272,
-        "calls": 26,
-        "triangles": 31026,
+        "frame": 273,
+        "calls": 27,
+        "triangles": 31206,
         "points": 0,
         "lines": 0
       },

@@ -65,3 +65,26 @@ test("bounded steps and deterministic semantic snapshots", () => {
   for (const dt of [-1, NaN, Infinity, 2]) assert.throws(() => a.update(dt));
   assert.ok(!JSON.stringify(a.snapshot()).includes("uuid"));
 });
+
+import {
+  applyWaterJet,
+  senseWater,
+  DEBRIS_SITE,
+} from "../src/simulation/water-interaction.js";
+test("repair requires nearby active jet aimed at debris; sense requires water", () => {
+  const w = new Watershed(),
+    b = {
+      x: DEBRIS_SITE.x,
+      z: DEBRIS_SITE.z + 2,
+      y: 0,
+      yaw: Math.PI,
+      jetTime: 0.2,
+    };
+  assert.equal(applyWaterJet(w, { ...b, jetTime: 0 }, 1 / 60), false);
+  assert.equal(applyWaterJet(w, { ...b, yaw: 0 }, 1 / 60), false);
+  assert.equal(applyWaterJet(w, { ...b, z: 50 }, 1 / 60), false);
+  assert.equal(applyWaterJet(w, b, 1 / 60), true);
+  assert.ok(w.nodes[1].blockage < 0.95);
+  assert.equal(senseWater(w, b, false), null);
+  assert.ok(senseWater(w, b, true).strength > 0);
+});

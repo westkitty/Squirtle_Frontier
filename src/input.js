@@ -107,6 +107,7 @@ export class Input {
       run: this.keys.has("ShiftLeft") || this.actions.run,
       slide: this.keys.has("KeyC") || this.actions.slide,
       jet: this.keys.has("Space") || this.actions.jet,
+      sense: this.keys.has("KeyF") || this.actions.sense,
       dive: this.keys.has("KeyQ") || this.actions.dive,
       ascend: this.keys.has("KeyE") || this.actions.ascend,
     };

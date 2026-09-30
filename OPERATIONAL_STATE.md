@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 7
+revision: 8
 status: Phase 2 semantic foundation in progress / approval gates waived by user / quality evidence incomplete
 
 ## Purpose
@@ -162,3 +162,12 @@ User explicitly requested continued implementation and to skip gates. Approval g
 Phase 2 has started with a small authored semantic DAG (spring → landslide → wetland → outlet), bounded flow, blockage, wetness, transported sediment/contamination and time/soil/slope/vegetation-driven channel stages. WorldState advances it through the existing authoritative loop. Version 2 saves include graph/scalars; version 1 position saves migrate. Invalid topology/scalars reject before changing live state.
 
 24 tests, production build and existing browser movement/save/lifecycle journey pass. Build still warns about bundle size. These tests verify a simulation foundation, not a complete hydrology gameplay slice. Terrain-derived topology, physical debris interaction, alternate route, Current Sense, state-driven water rendering and downstream ecological/Lab consumers remain to implement. Existing pond rendering/current remains a movement fixture and does not yet read this graph. No new visual acceptance claimed.
+
+## Playable hydrology connection — 2026-09-30
+
+- Nearby, aimed active Water Jet reduces saved blockage. Wetland graph flow now scales the pond current; wetness changes water tint/opacity. Fixed-size debris instances disappear as blockage clears. This is a rudimentary authored pond presentation, not a natural terrain-derived channel network.
+- Hold F / touch Sense while touching water to read the actual blockage signal and show an amber ripple at the disturbance. No arbitrary quest completion flag.
+- 25 tests, build, full movement browser journey, 12 chunk returns/30 asset cycles, and full zero-resource teardown pass. Added focused browser exercise for Sense, keyboard-driven repair and graph reload (setup position explicitly teleported). Initial persistence assertion sampled during a still-active jet; corrected test to wait for jet expiry, rerun passed.
+- Resource bound increases by exactly two owned geometries to 18. Measured sample: 17 geometries, six textures, 27 calls; software median ~133 ms high / ~83 ms low, still not hardware evidence or acceptable FPS.
+- Opened portrait touch and Sense screenshots: controls/ripple readable; debris remains crude geometric placeholder presentation and does not yet have a collision proxy. No natural-channel visual acceptance.
+- Remaining: alternate channel and terrain-driven topology/staged geometry, ecological consumers, settlement, Lab, offline recovery, Deep Record, broader world production and final polish. Approval gates remain waived; completion is not claimed.
