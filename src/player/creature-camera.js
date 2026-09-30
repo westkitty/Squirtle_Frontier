@@ -1,4 +1,41 @@
 import * as THREE from "three";
+const CLEARANCE = 0.12; // Greater than the .04 near-plane half-diagonal at supported aspects.
+const EPSILON = 1e-6;
+
+// Earliest intersection of a boom with an inflated, finite-height cylinder.
+function cylinderHit(from, to, obstacle, floor) {
+  const dx = to.x - from.x,
+    dy = to.y - from.y,
+    dz = to.z - from.z;
+  const ox = from.x - obstacle.x,
+    oz = from.z - obstacle.z,
+    radius = obstacle.radius + CLEARANCE;
+  const a = dx * dx + dz * dz,
+    b = 2 * (ox * dx + oz * dz),
+    c = ox * ox + oz * oz - radius * radius;
+  let enter = 0,
+    exit = 1;
+  if (a < EPSILON) {
+    if (c > 0) return 1;
+  } else {
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) return 1;
+    const root = Math.sqrt(discriminant);
+    enter = Math.max(enter, (-b - root) / (2 * a));
+    exit = Math.min(exit, (-b + root) / (2 * a));
+  }
+  const bottom = floor - CLEARANCE,
+    top = floor + obstacle.height + CLEARANCE;
+  if (Math.abs(dy) < EPSILON) {
+    if (from.y < bottom || from.y > top) return 1;
+  } else {
+    const t1 = (bottom - from.y) / dy,
+      t2 = (top - from.y) / dy;
+    enter = Math.max(enter, Math.min(t1, t2));
+    exit = Math.min(exit, Math.max(t1, t2));
+  }
+  return enter <= exit && exit >= 0 && enter <= 1 ? Math.max(0, enter) : 1;
+}
 export class CreatureCamera {
   constructor(camera, env) {
     this.camera = camera;
@@ -7,50 +44,83 @@ export class CreatureCamera {
     this.pitch = 0.26;
     this.initial = true;
     this.target = new THREE.Vector3();
+    this.desired = new THREE.Vector3();
+    this.probe = new THREE.Vector3();
   }
-  update(b, input, dt, settings) {
-    this.yaw -= input.lookX * 0.004 * settings.sensitivity;
-    this.pitch = THREE.MathUtils.clamp(
-      this.pitch + input.lookY * 0.003 * (settings.invertY ? -1 : 1),
-      -0.35,
-      0.85,
-    );
-    const underwater = b.y < -0.45;
-    const distance =
-      2.1 + (b.mode === "slide" && !settings.reducedMotion ? 0.35 : 0);
-    const target = new THREE.Vector3(b.x, b.y + 0.32, b.z);
-    const desired = new THREE.Vector3(
-      target.x - Math.sin(this.yaw) * distance * Math.cos(this.pitch),
-      target.y + Math.sin(this.pitch) * distance + 0.25,
-      target.z - Math.cos(this.yaw) * distance * Math.cos(this.pitch),
-    );
-    // Sample the camera boom, shorten it before intersecting ground or collision proxies.
-    const blockers = this.env.obstaclesAt?.(b.x, b.z) || this.env.obstacles;
-    for (let t = 0.12; t <= 1; t += 0.08) {
-      const p = target.clone().lerp(desired, t);
-      let blocked = p.y < this.env.sample(p.x, p.z).height + 0.15;
-      for (const o of blockers)
-        if (
-          Math.hypot(p.x - o.x, p.z - o.z) < o.radius + 0.15 &&
-          p.y < this.env.sample(o.x, o.z).height + o.height
-        )
-          blocked = true;
-      if (blocked) {
-        desired.copy(target).lerp(p, Math.max(0.15, t - 0.12) / t);
+  constrain(from, to, blockers) {
+    let fraction = 1;
+    const length = from.distanceTo(to);
+    for (const obstacle of blockers) {
+      // Broad phase avoids terrain queries for distant cylinders.
+      if (
+        Math.hypot(from.x - obstacle.x, from.z - obstacle.z) >
+        length + obstacle.radius + CLEARANCE
+      )
+        continue;
+      const hit = cylinderHit(
+        from,
+        to,
+        obstacle,
+        this.env.sample(obstacle.x, obstacle.z).height,
+      );
+      if (hit < 1)
+        fraction = Math.min(
+          fraction,
+          Math.max(0, hit - 0.025 / Math.max(length, 0.025)),
+        );
+    }
+    const steps = Math.max(1, Math.ceil(length / 0.15));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      if (t > fraction) break;
+      this.probe.copy(from).lerp(to, t);
+      if (
+        this.probe.y <
+        this.env.sample(this.probe.x, this.probe.z).height + CLEARANCE
+      ) {
+        fraction = Math.min(fraction, (i - 1) / steps);
         break;
       }
     }
-    desired.y = Math.max(
-      desired.y,
-      this.env.sample(desired.x, desired.z).height + 0.15,
+    to.lerpVectors(from, to, fraction);
+    to.y = Math.max(to.y, this.env.sample(to.x, to.z).height + CLEARANCE);
+  }
+  update(body, input, dt, settings) {
+    this.yaw -= input.lookX * 0.004 * settings.sensitivity;
+    this.pitch = THREE.MathUtils.clamp(
+      this.pitch +
+        input.lookY *
+          0.003 *
+          settings.sensitivity *
+          (settings.invertY ? -1 : 1),
+      -0.35,
+      0.85,
     );
-    const alpha = this.initial ? 1 : 1 - Math.exp(-12 * dt);
+    const distance =
+      2.1 + (body.mode === "slide" && !settings.reducedMotion ? 0.35 : 0);
+    this.target.set(body.x, body.y + 0.32, body.z);
+    this.desired.set(
+      this.target.x - Math.sin(this.yaw) * distance * Math.cos(this.pitch),
+      this.target.y + Math.sin(this.pitch) * distance + 0.25,
+      this.target.z - Math.cos(this.yaw) * distance * Math.cos(this.pitch),
+    );
+    const blockers =
+      this.env.obstaclesAt?.(body.x, body.z) || this.env.obstacles;
+    this.constrain(this.target, this.desired, blockers);
+    this.camera.position.lerp(
+      this.desired,
+      this.initial ? 1 : 1 - Math.exp(-12 * dt),
+    );
     this.initial = false;
-    this.camera.position.lerp(desired, alpha);
-    this.target.lerp(target, alpha);
+    // Collision authority comes AFTER smoothing. A safe desired point alone isn't enough.
+    this.constrain(this.target, this.camera.position, blockers);
     this.camera.lookAt(this.target);
-    this.camera.fov = underwater ? 61 : 55;
-    this.camera.updateProjectionMatrix();
+    const fov = settings.reducedMotion ? 55 : body.y < -0.45 ? 61 : 55;
+    const next = THREE.MathUtils.damp(this.camera.fov, fov, 8, dt);
+    if (Math.abs(this.camera.fov - next) > 0.001) {
+      this.camera.fov = next;
+      this.camera.updateProjectionMatrix();
+    }
   }
   movement(x, z) {
     return {

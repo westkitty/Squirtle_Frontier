@@ -39,3 +39,7 @@ Probe corrections: renderer geometry uploads depend on visibility and one-time s
 4. Full movement-state save/recovery, remapping, true terrain LOD for the creature-scale region and broader accessibility coverage remain future work. Current save explicitly stores position/time only.
 
 Do not label the Phase 1 gate passed. The next external evidence is a human movement playtest in the preview on actual hardware, with concrete feel/camera feedback and measured frame timings. Do not build semantic-world complexity while that gate is open.
+
+## Bounded repair revalidation — 2026-09-30
+
+20 automated tests pass after slope/slide and final camera collision repairs. Full browser journey and lifecycle probes rerun; refreshed JSON evidence. Opened bank, portrait touch and underwater screenshots; no missing character/UI observed, low resolution is visibly softer. Human enjoyment/audio/touch and hardware performance gates remain unverified. See performance diagnostic report.

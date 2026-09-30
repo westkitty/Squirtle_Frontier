@@ -9,6 +9,7 @@ export function createBody(x = -10, z = 18, y = 1) {
     yaw: Math.PI,
     mode: "land",
     grounded: true,
+    slideHeld: false,
     jetCooldown: 0,
     jetTime: 0,
     distance: 0,

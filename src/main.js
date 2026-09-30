@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { pixelRatioFor } from "./render-quality.js";
 import { WorldState } from "./worldstate.js";
 import { heightAt } from "./worldgen.js";
 import { Streaming } from "./streaming.js";
@@ -23,7 +24,7 @@ async function boot() {
     Settings.applyDocument();
     const renderer = new THREE.WebGLRenderer({
       canvas: document.querySelector("canvas"),
-      antialias: true,
+      antialias: false,
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -73,13 +74,11 @@ async function boot() {
     if (import.meta.hot) import.meta.hot.dispose(cleanup);
     const resize = () => {
       renderer.setPixelRatio(
-        Math.min(
+        pixelRatioFor(
+          Settings.get("quality"),
+          innerWidth,
+          innerHeight,
           devicePixelRatio,
-          Settings.get("quality") === "high"
-            ? 1.5
-            : Settings.get("quality") === "medium"
-              ? 1
-              : 0.75,
         ),
       );
       renderer.setSize(innerWidth, innerHeight);
@@ -131,7 +130,7 @@ async function boot() {
                 ? Number(element.value)
                 : element.value,
           );
-          resize();
+          if (key === "quality") resize();
         },
         options,
       );

@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 5
+revision: 6
 status: Phase 1 playable movement slice / technical checks pass / human-quality gate open
 
 ## Purpose
@@ -123,7 +123,7 @@ Production expansion is blocked until the slice demonstrates:
 - Phase 0 baseline committed/pushed as `8a565ec`. Browser capability restored via npm-bundled Chromium; historical TLS/apt failures retained in baseline evidence.
 - Original Squirtle archive preserved/hash-verified. Runtime GLB: 981,708 bytes, 26-joint rig, correct 0.55 m bounds, two mapped materials; zero validator errors and one documented skinned-parent warning. No source clips invented.
 - Direct control through independent body-state logic and PlayableCreature presentation boundary: walk/run, swim/dive/ascent, shell-slide and Water Jet. Creature-scale camera, settings, procedural audio and bounded VFX implemented.
-- `npm run check`: all source checks and 14 tests pass (100 CPU chunk crossings, movement transitions/collision, 6000 state steps, tree proxies, save skeleton).
+- `npm run check`: all source checks and 20 tests pass (100 CPU chunk crossings, movement transitions/collision, 6000 state steps, tree proxies, save skeleton).
 - `npm run build` passes, retaining recorded large-bundle warning; dependency audit zero known vulnerabilities.
 - Actual browser journey passes physical land-to-water traversal, dive/boost/ascent/surface launch, camera drag, settings and position save/reload; zero captured page/console errors.
 - 12 rendered chunk-return cycles bounded at <=16 geometries / six textures; 30 extra rendered Squirtle instances release to one cached model/reference without mutable material leakage.
@@ -135,7 +135,7 @@ Production expansion is blocked until the slice demonstrates:
 
 - Human ten-minute no-objective movement enjoyment: no evidence. Phase 1 MUST NOT be called passed.
 - Procedural animation polish, body-specific tactile movement quality, human camera/touch usability and heard audio quality remain unverified.
-- Hardware GPU/mobile performance unavailable. Software-renderer sample at 960x640: median ~133 ms high / ~100 ms low, p95 ~200 / ~167 ms. This fails the desktop FPS target in the measured environment; no hardware acceptance can be inferred.
+- Hardware GPU/mobile performance unavailable. Software-renderer sample at 960x640: median ~133 ms high / ~67 ms low, p95 ~233 / ~100 ms. This fails the desktop FPS target in the measured environment; no hardware acceptance can be inferred.
 - True creature-scale terrain LOD, remapping and broader accessibility coverage remain pending.
 
 ## Current scope / blocked progression
@@ -146,3 +146,11 @@ Production expansion is blocked until the slice demonstrates:
 - Next required external evidence: a human ten-minute movement playtest and representative desktop GPU/mobile timing. Fix concrete feel/performance failures before expanding systems.
 - Evidence: `docs/qa/PHASE1.md`, `docs/qa/phase1-browser.json`, `docs/performance/phase1-measured.json`, `docs/assets/SQUIRTLE_INTAKE.md`.
 - Do not claim deployment: only local/preview development routes have been opened.
+
+## Phase 1 bounded repair checkpoint
+
+- Downhill grounded contact and slide entry now prevent repeated landing/tap impulses; cliff and intentional launch regression tests pass.
+- Camera constrains the final smoothed boom against terrain and inflated finite-height obstacle cylinders; orbit/recovery tests at 30/60/120 Hz pass. Both look axes respect sensitivity.
+- MSAA disabled; explicit render-pixel budgets added. See `docs/performance/RENDER_DIAGNOSTIC.md`; software performance still fails the target. No further speculative optimization pass or Phase 2 expansion authorized by this evidence.
+- Re-ran 20 tests, production build (bundle warning persists), physical browser journey, 12 chunk returns, 30 asset cycles, touch cancellation and full teardown. Bank, portrait touch and underwater screenshots opened after repair: character and controls readable; low detail visibly softer. No human feel/audio acceptance inferred.
+- External blocker unchanged: ten-minute objective-free human playtest, heard audio and real touch usability, representative hardware GPU/mobile timing. Phase 1 gate remains open; project is NOT finished.

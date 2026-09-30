@@ -1,0 +1,200 @@
+{
+  "date": "2026-09-30T20:23:02.915Z",
+  "environment": "Sandbox Chromium / SwiftShader; forced GPU synchronization diagnostic",
+  "runs": [
+    {
+      "repeat": 0,
+      "name": "clear-only",
+      "aa": false,
+      "scale": 1,
+      "clear": true,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.10000000000582077,
+        "p95Ms": 0.5
+      },
+      "submit": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 16.70000000001164,
+        "p95Ms": 183.20000000001164
+      }
+    },
+    {
+      "repeat": 0,
+      "name": "scene-aa",
+      "aa": true,
+      "scale": 1,
+      "antialias": true,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.29999999998835847,
+        "p95Ms": 0.5
+      },
+      "submit": {
+        "medianMs": 0.7000000000116415,
+        "p95Ms": 1.1999999999825377
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.09999999997671694
+      },
+      "wall": {
+        "medianMs": 169.10000000000582,
+        "p95Ms": 202.5
+      }
+    },
+    {
+      "repeat": 0,
+      "name": "scene-no-aa",
+      "aa": false,
+      "scale": 1,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.29999999998835847,
+        "p95Ms": 0.5999999999767169
+      },
+      "submit": {
+        "medianMs": 0.6999999999825377,
+        "p95Ms": 1
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 111.70000000001164,
+        "p95Ms": 239.80000000001746
+      }
+    },
+    {
+      "repeat": 0,
+      "name": "quarter-pixels",
+      "aa": false,
+      "scale": 0.5,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.20000000001164153,
+        "p95Ms": 0.39999999999417923
+      },
+      "submit": {
+        "medianMs": 0.7000000000116415,
+        "p95Ms": 1
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 58.10000000000582,
+        "p95Ms": 217.79999999998836
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "clear-only",
+      "aa": false,
+      "scale": 1,
+      "clear": true,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.10000000000582077,
+        "p95Ms": 0.5
+      },
+      "submit": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 16.70000000001164,
+        "p95Ms": 113
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "scene-aa",
+      "aa": true,
+      "scale": 1,
+      "antialias": true,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.29999999998835847,
+        "p95Ms": 0.6000000000058208
+      },
+      "submit": {
+        "medianMs": 0.6999999999825377,
+        "p95Ms": 1.1000000000058208
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 175.5,
+        "p95Ms": 349.0999999999767
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "scene-no-aa",
+      "aa": false,
+      "scale": 1,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.29999999998835847,
+        "p95Ms": 0.5
+      },
+      "submit": {
+        "medianMs": 0.6999999999825377,
+        "p95Ms": 0.8999999999941792
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 111.29999999998836,
+        "p95Ms": 211.40000000002328
+      }
+    },
+    {
+      "repeat": 1,
+      "name": "quarter-pixels",
+      "aa": false,
+      "scale": 0.5,
+      "antialias": false,
+      "samples": 60,
+      "update": {
+        "medianMs": 0.20000000001164153,
+        "p95Ms": 0.5999999999767169
+      },
+      "submit": {
+        "medianMs": 0.7000000000116415,
+        "p95Ms": 1
+      },
+      "finish": {
+        "medianMs": 0,
+        "p95Ms": 0.10000000000582077
+      },
+      "wall": {
+        "medianMs": 59.20000000001164,
+        "p95Ms": 154.10000000000582
+      }
+    }
+  ]
+}

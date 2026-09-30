@@ -2,6 +2,9 @@
 import { clamp } from "../rng.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
+  const wasGrounded = b.grounded;
+  const slidePressed = !!input.slide && !b.slideHeld;
+  b.slideHeld = !!input.slide;
   b.jetCooldown = Math.max(0, b.jetCooldown - dt);
   b.jetTime = Math.max(0, b.jetTime - dt);
   b.impact = Math.max(0, b.impact - dt);
@@ -17,9 +20,11 @@ export function stepBody(b, input, env, dt) {
         : "swim";
   } else if (b.grounded) {
     if (input.slide) {
-      if (b.mode !== "slide") {
-        b.vx += Math.sin(b.yaw) * 3;
-        b.vz += Math.cos(b.yaw) * 3;
+      if (slidePressed) {
+        // Enter up to a target speed, never stack free impulses on landings/taps.
+        const boost = Math.max(0, 3 - Math.hypot(b.vx, b.vz));
+        b.vx += Math.sin(b.yaw) * boost;
+        b.vz += Math.cos(b.yaw) * boost;
       }
       b.mode = "slide";
     } else b.mode = "land";
@@ -139,7 +144,15 @@ export function stepBody(b, input, env, dt) {
     b.mode = "swim";
   }
   const ground = env.sample(b.x, b.z).height;
-  if (b.y <= ground) {
+  const travelled = Math.hypot(b.x - ox, b.z - oz);
+  const followsSlope =
+    wasGrounded &&
+    !aquatic &&
+    b.jetTime === 0 &&
+    b.vy <= 0 &&
+    floor.height - ground <= travelled * Math.tan(Math.PI / 4) + 0.015 &&
+    Math.hypot(floor.dx, floor.dz) <= 1;
+  if (b.y <= ground || followsSlope) {
     b.y = ground;
     b.vy = 0;
     b.grounded = true;
