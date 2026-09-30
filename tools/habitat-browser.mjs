@@ -49,6 +49,35 @@ try {
   }));
   assert.equal(report.return.place, "lab");
   await page.screenshot({ path: "artifacts/lab-after.png" });
+  await page.evaluate(() => {
+    const g = window.__SF;
+    Object.assign(g.body, {
+      x: -4.4,
+      z: 5.6,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      grounded: true,
+    });
+  });
+  await page.waitForFunction(() =>
+    document.querySelector("#interact").textContent.includes("Rest"),
+  );
+  const beforeRest = await page.evaluate(() => window.__SF.state.elapsed);
+  await page.keyboard.down("KeyR");
+  await page.waitForFunction(
+    (t) => window.__SF.state.elapsed >= t + 300,
+    beforeRest,
+  );
+  await page.keyboard.up("KeyR");
+  const rested = await page.evaluate(() => window.__SF.state.elapsed);
+  assert.ok(
+    rested < beforeRest + 305,
+    "held action must not repeat fast-forward",
+  );
+  report.restSeconds = 300;
+  await page.screenshot({path:"artifacts/lab-rest.png"});
   for (let i = 0; i < 12; i++) {
     await page.evaluate(() => window.__SF.enterPlace("frontier"));
     await page.waitForFunction(

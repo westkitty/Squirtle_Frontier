@@ -12,7 +12,7 @@ Version 3 saves include location, semantic graph/ecology and wall time. v1/v2 mi
 
 ## Executed
 
-- 34 source/behavior tests: propagation, delayed colonization, online/offline equivalence, cap, rollback, same-time repeated reload, backup preservation, stale saves, old migrations, Lab floor/physics and suspend/resume streaming and shared Lab wall/furniture collision proxies.
+- 35 source/behavior tests: propagation, delayed colonization, online/offline equivalence, cap, rollback, same-time repeated reload, backup preservation, stale saves, old migrations, Lab floor/physics and suspend/resume streaming and shared Lab wall/furniture collision proxies.
 - `npm run build`: pass, existing large-bundle warning.
 - Movement browser: physical locomotion journey, save/reload, 12 chunk returns, 30 asset cycles, touch cancellation/layout.
 - Watershed browser: Sense + active keyboard Jet + repaired graph reload; explicit setup teleport.
@@ -25,3 +25,5 @@ Version 3 saves include location, semantic graph/ecology and wall time. v1/v2 mi
 Initial online/offline test exposed sub-picosecond accumulator residue; snapping the one-second remainder below 1e-9 to zero removed drift and the test passes. Source data validation remains atomic before live state assignment. Clock rollback regression added. Page hide avoids replacing a hidden-tab timestamp without simulating the interval.
 
 No real-time 30-minute wait claimed. No human movement/audio/touch pass, complete ecology AI, seamless micro-route, final settlement or Lab interaction, hardware FPS pass, or full game completion claimed.
+
+Rest follow-up: grounded platform proximity exposes a five-minute rest action. Browser keyboard test confirms a single 300-second advance per press, save and subsequent lifecycle cycling. Unit tests reject remote/airborne rest.

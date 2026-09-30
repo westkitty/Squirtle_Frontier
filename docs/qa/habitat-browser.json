@@ -14,19 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 15,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 15,
+        "geometries": 11,
         "textures": 6
       },
       "assets": {
@@ -143,6 +131,18 @@
         "references": 1,
         "records": 1
       }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
     }
   ],
   "errors": [],
@@ -161,6 +161,7 @@
       "eligibleSeconds": 1626
     }
   },
+  "restSeconds": 300,
   "teardown": {
     "chunks": {
       "active": 0,
@@ -173,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 89,
+      "frame": 108,
       "calls": 13,
       "triangles": 12104,
       "points": 0,

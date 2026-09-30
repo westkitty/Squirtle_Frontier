@@ -59,3 +59,15 @@ test("Lab wall proxies stop body traversal and preserve a clear camera boom", as
   });
   assert.ok(rig.camera.position.z > -7.5);
 });
+
+import { placeAction } from "../src/simulation/place-interaction.js";
+test("rest requires grounded proximity to Lab platform; no remote or underwater action", () => {
+  assert.equal(placeAction("lab", { x: -4.4, z: 5.6, grounded: true }), "rest");
+  assert.equal(placeAction("lab", { x: -4.4, z: 5.6, grounded: false }), null);
+  assert.equal(
+    placeAction("frontier", { x: -4.4, z: 5.6, grounded: true }),
+    null,
+  );
+  assert.equal(placeAction("lab", { x: 0, z: 0, grounded: true }), null);
+  assert.equal(placeAction("lab", { x: 0, z: 6, grounded: true }), "leave");
+});

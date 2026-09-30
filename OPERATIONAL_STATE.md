@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 9
+revision: 10
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -123,7 +123,7 @@ Production expansion is blocked until the slice demonstrates:
 - Authored saved watershed graph drives local repair, pond current/tint, wetland vegetation/prey/predator aggregates, settlement cistern and delayed Lab reed/insect/frog colonization. Regional simulation now uses one-second ticks inside the single authoritative loop; body physics stays 60 Hz.
 - Physical western-bank doorway at (-11,5), R or contextual touch button, enters a separate authored Lab basin with swimming/diving, rest platform and object placeholder. No frontier chunks remain loaded inside Lab; cached movement scenery is hidden. Lab-owned resources disposed on exit; one Squirtle reference retained.
 - Version 3 save migrates v1/v2, saves region/player/graph/ecology/clock, bounds offline catch-up to six hours, preserves future timestamps on clock rollback, consumes offline time on successful load, rejects stale-tab writes. Corrupt primary can recover backup read-only. Fully transactional multi-tab locking and recovery UI remain pending.
-- `npm run check`: 34 tests pass. Build passes with ~611 kB bundle warning. Movement + repair browser journeys pass. Added habitat browser journey verifies keyboard doorway entry, artificial 30-minute saved-clock absence, colonization, 12 scene return cycles and zero-resource teardown. Setup teleports/artificial repair are explicit test fixtures, not a fully walked end-to-end causal playthrough.
+- `npm run check`: 35 tests pass. Build passes with ~611 kB bundle warning. Movement + repair browser journeys pass. Added habitat browser journey verifies keyboard doorway entry, artificial 30-minute saved-clock absence, colonization, 12 scene return cycles and zero-resource teardown. Setup teleports/artificial repair are explicit test fixtures, not a fully walked end-to-end causal playthrough.
 - Frontier geometry budget <=21 (nine chunks + seven movement + two watershed + three habitat); textures six. Lab test sampled <=17 geometries, zero chunks, one asset ref. Ordinary software-renderer median ~117 ms high / ~67 ms low, p95 ~317 / ~150 ms at 960x640; NOT hardware/mobile performance or a target pass.
 - Opened Lab before/after colonization and frontier-bank screenshots: material changes/reeds/animal placeholders visible. Presentation is crude; no natural habitat, animation or final visual acceptance claimed.
 - Human enjoyment, heard audio, actual touch usability and real GPU/mobile performance remain unverified. User waived progression gates; these are NOT passed.
@@ -131,7 +131,7 @@ Production expansion is blocked until the slice demonstrates:
 ## Remaining scope
 
 - Full game/prototype NOT complete. Terrain-derived watershed, alternate channel, staged terrain geometry, weather/fire, micro-route network, notable actor behaviors, full settlements, surveyed map/place memory and Deep Record remain outstanding.
-- Current near-animal meshes are population-driven ephemeral visual proxies, not complete AI. Settlement is a building/trough fixture, not human behavior. Lab home interaction remains a platform and object placeholder; no sleep/play semantics yet. Lab walls/furnishings use conservative circular body/camera proxies; accurate box/contact interactions remain pending.
+- Current near-animal meshes are population-driven ephemeral visual proxies, not complete AI. Settlement is a building/trough fixture, not human behavior. Lab home interaction includes grounded five-minute rest at the platform; object play remains a placeholder. Lab walls/furnishings use conservative circular body/camera proxies; accurate box/contact interactions remain pending.
 - No live deployment claimed. Preview remains development-only.
 - Evidence: `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, `docs/performance/phase1-measured.json`, historical Phase 1/asset evidence.
 
@@ -163,3 +163,7 @@ Phase 2 has started with a small authored semantic DAG (spring → landslide →
 - Resource bound increases by exactly two owned geometries to 18. Measured sample: 17 geometries, six textures, 27 calls; software median ~133 ms high / ~83 ms low, still not hardware evidence or acceptable FPS.
 - Opened portrait touch and Sense screenshots: controls/ripple readable; debris remains crude geometric placeholder presentation and does not yet have a collision proxy. No natural-channel visual acceptance.
 - Remaining: alternate channel and terrain-driven topology/staged geometry, ecological consumers, settlement, Lab, offline recovery, Deep Record, broader world production and final polish. Approval gates remain waived; completion is not claimed.
+
+## Lab rest follow-up
+
+R/contextual button near the wooden platform advances the existing regional simulation by five minutes and saves, only once per press. No resource/quest reward is injected. Focused spatial eligibility and browser keyboard rest tests pass; repeated held-action fast-forward is rejected by the edge latch. The same habitat test covers twelve scene transitions and zero-resource teardown afterward. Full world completion is still not claimed.

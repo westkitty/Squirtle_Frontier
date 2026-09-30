@@ -16,12 +16,8 @@ import { region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
 import { applyWaterJet, senseWater } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
-import {
-  HabitatView,
-  LAB_ENTRY,
-  labRegion,
-  labHeight,
-} from "./player/habitat-view.js";
+import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
+import { placeAction } from "./simulation/place-interaction.js";
 import { Audio } from "./audio.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading");
@@ -233,16 +229,26 @@ async function boot() {
       (dt) => {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
-        const inLab = state.place === "lab";
-        const atDoor = inLab
-          ? Math.hypot(body.x, body.z - 6) < 2
-          : Math.hypot(body.x - LAB_ENTRY.x, body.z - LAB_ENTRY.z) < 2.5;
-        document.querySelector("#interact").hidden = !atDoor;
-        document.querySelector("#interact").textContent = inLab
-          ? "Leave basin · R"
-          : "Enter basin · R";
-        if (controls.interact && !interactionHeld && atDoor) {
-          enterPlace(inLab ? "frontier" : "lab");
+        const action = placeAction(state.place, body);
+        document.querySelector("#interact").hidden = !action;
+        document.querySelector("#interact").textContent =
+          {
+            enter: "Enter basin · R",
+            leave: "Leave basin · R",
+            rest: "Rest five minutes · R",
+          }[action] || "";
+        if (controls.interact && !interactionHeld && action) {
+          if (action === "rest") {
+            advanceOffline(state, 300);
+            body.vx = 0;
+            body.vy = 0;
+            body.vz = 0;
+            input.clear();
+            const r = save(state, localStorage);
+            status.textContent = r.ok
+              ? "Five quiet minutes. The watershed continued while you rested."
+              : r.message;
+          } else enterPlace(action === "enter" ? "lab" : "frontier");
         }
         interactionHeld = !!controls.interact;
         const env = state.place === "lab" ? labRegion : liveRegion;
