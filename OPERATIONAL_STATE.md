@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 4
-status: Phase 0 software-browser baseline passed / Phase 1 starting
+revision: 5
+status: Phase 1 playable movement slice / technical checks pass / human-quality gate open
 
 ## Purpose
 
@@ -118,32 +118,31 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Current verified state
 
-- Destination identity: `westkitty/Squirtle_Frontier`, branch `arena/01a0f3be-squirtle-frontier`; initial HEAD `1203240775c3b91ecca64647fe96f257a84b156a`.
-- Read-only reference snapshots: Living Frontier `bdea0434d99b1d0d902fd00826b17a7126731471`; Squirtle Lab `a8face4e8969254940cc5ff5c120e3decf555a57`. Neither source repository modified.
-- Build guide and master prompt already exist; stale pending items removed.
-- Original Squirtle ZIP preserved and hash verified. OpenCollada structural inspection: 26 joints, two materials, zero animation elements; not a rendered asset acceptance.
-- `npm run check`: source syntax/authority checks and seven tests pass, including 100 CPU-side chunk crossings and teardown, deterministic RNG/terrain, fixed-step bounds, semantic save roundtrip and storage failure handling.
-- `npm run build` passes, with a recorded >500 kB bundle warning.
-- `npm audit` reports zero known vulnerabilities following non-force dependency repair.
-- Vite starts on `0.0.0.0:5173`; HTTP HTML/manifest requests and an Arena-style Host header succeed. Browser rendering remains unverified.
+- Destination: `westkitty/Squirtle_Frontier`, branch `arena/01a0f3be-squirtle-frontier`; initial HEAD `1203240775c3b91ecca64647fe96f257a84b156a`.
+- Read-only sources: Living Frontier `bdea0434d99b1d0d902fd00826b17a7126731471`; Squirtle Lab `a8face4e8969254940cc5ff5c120e3decf555a57`. Neither edited or pushed.
+- Phase 0 baseline committed/pushed as `8a565ec`. Browser capability restored via npm-bundled Chromium; historical TLS/apt failures retained in baseline evidence.
+- Original Squirtle archive preserved/hash-verified. Runtime GLB: 981,708 bytes, 26-joint rig, correct 0.55 m bounds, two mapped materials; zero validator errors and one documented skinned-parent warning. No source clips invented.
+- Direct control through independent body-state logic and PlayableCreature presentation boundary: walk/run, swim/dive/ascent, shell-slide and Water Jet. Creature-scale camera, settings, procedural audio and bounded VFX implemented.
+- `npm run check`: all source checks and 14 tests pass (100 CPU chunk crossings, movement transitions/collision, 6000 state steps, tree proxies, save skeleton).
+- `npm run build` passes, retaining recorded large-bundle warning; dependency audit zero known vulnerabilities.
+- Actual browser journey passes physical land-to-water traversal, dive/boost/ascent/surface launch, camera drag, settings and position save/reload; zero captured page/console errors.
+- 12 rendered chunk-return cycles bounded at <=16 geometries / six textures; 30 extra rendered Squirtle instances release to one cached model/reference without mutable material leakage.
+- Awaited full shutdown reaches zero chunks, geometries, textures, cache entries and references.
+- Touch CDP stick movement/cancellation and portrait/landscape layout checks pass in desktop emulation. Actual mobile performance and human usability are NOT verified.
+- Rendered front/back asset, bank, shell, swim, underwater, touch portrait and landscape screenshots opened and inspected. Not final visual/animation acceptance.
 
-## Implemented but unverified
+## Implemented but unverified / mandatory gate open
 
-- Renderer/inspection camera, semantic HUD, keyboard input, separate settings, terrain streaming adapter and complete baseline teardown.
-- Self-hosted asset-manager infrastructure with empty runtime manifest; no imported model instances yet.
-- Hardware performance and imported-model lifecycle remain unverified.
+- Human ten-minute no-objective movement enjoyment: no evidence. Phase 1 MUST NOT be called passed.
+- Procedural animation polish, body-specific tactile movement quality, human camera/touch usability and heard audio quality remain unverified.
+- Hardware GPU/mobile performance unavailable. Software-renderer sample at 960x640: median ~133 ms high / ~100 ms low, p95 ~200 / ~167 ms. This fails the desktop FPS target in the measured environment; no hardware acceptance can be inferred.
+- True creature-scale terrain LOD, remapping and broader accessibility coverage remain pending.
 
-## Historical blocker (resolved)
+## Current scope / blocked progression
 
-- Chromium installation failed with CDN TLS ECONNRESET. One bounded curl fallback also failed with SSL_ERROR_SYSCALL. Browser test fails at launch because executable is absent.
-- Browser capability restored using npm-distributed Chromium and bundled libraries. `BROWSER_BUNDLED=1 npm run browser` passes 24 crossings/four matched return checkpoints, with stable renderer counts and zero page/console errors. Rendered screenshot inspected. Measurements in `docs/performance/phase0-measured.json`; software renderer only.
-- Phase 0 software-browser foundation gate passed. Phase 1 may begin. Phase 2 remains blocked on movement gate.
-
-## Scope limits and pending
-
-- Current rendered scaffold is an inspection rig, not a trainer or Squirtle controller.
-- Full save recovery, offline simulation, PlayableCreature, GLB conversion, movement, touch controls, watershed, ecology, settlement, Lab and Deep Record remain pending.
-- Asset licensing/redistribution clearance is not implied by the supplied fan-source archive.
-- Continue Phase 1: convert and validate asset, add PlayableCreature seam, locomotion and touch/camera; do not bypass human movement acceptance.
-- Human ten-minute movement enjoyment and real-device mobile validation remain external evidence requirements for later gates.
-- Detailed evidence: `docs/architecture/BASELINE.md`, `docs/assets/SQUIRTLE_INTAKE.md`, `docs/performance/BASELINE.md`.
+- Phase 2 NOT started. The pond is an authored locomotion test volume, not a watershed. No fake hydrology, offline chain, ecology, settlement, Lab or Deep Record has been substituted for simulation.
+- Save remains an explicit position/time skeleton; reload resets transient movement at terrain contact. Full semantic persistence/recovery/offline work remains pending.
+- Latest coherent work is the Phase 1 technical movement slice, not a complete game/prototype.
+- Next required external evidence: a human ten-minute movement playtest and representative desktop GPU/mobile timing. Fix concrete feel/performance failures before expanding systems.
+- Evidence: `docs/qa/PHASE1.md`, `docs/qa/phase1-browser.json`, `docs/performance/phase1-measured.json`, `docs/assets/SQUIRTLE_INTAKE.md`.
+- Do not claim deployment: only local/preview development routes have been opened.

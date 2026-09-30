@@ -1,0 +1,398 @@
+{
+  "date": "2026-09-30",
+  "environment": "Chromium 140 / ANGLE SwiftShader; NOT hardware or mobile performance evidence",
+  "journey": [
+    {
+      "name": "keyboard land running",
+      "mode": "land",
+      "x": -10,
+      "y": 0.8686776382129275,
+      "z": 15.878687536152809,
+      "render": {
+        "frame": 21,
+        "calls": 22,
+        "triangles": 26239,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "shell slide",
+      "mode": "slide",
+      "x": -9.989827754958073,
+      "y": 0.8547617933469511,
+      "z": 14.813924279024908,
+      "render": {
+        "frame": 23,
+        "calls": 21,
+        "triangles": 24191,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "land Water Jet",
+      "mode": "air",
+      "x": -9.309378662252206,
+      "y": 0.9315298391892287,
+      "z": 7.08368890691648,
+      "render": {
+        "frame": 40,
+        "calls": 19,
+        "triangles": 20219,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "water entry",
+      "mode": "swim",
+      "x": -7.571148392085586,
+      "y": -0.34213725522860866,
+      "z": -0.7957711337645859,
+      "render": {
+        "frame": 52,
+        "calls": 27,
+        "triangles": 31581,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "dive",
+      "mode": "dive",
+      "x": -1.0707888278713948,
+      "y": -2.3247611132365047,
+      "z": -2.3006457416371595,
+      "render": {
+        "frame": 99,
+        "calls": 22,
+        "triangles": 27462,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "underwater boost",
+      "mode": "dive",
+      "x": -0.17775931159661723,
+      "y": -2.5313050102952945,
+      "z": -2.57664604771311,
+      "render": {
+        "frame": 116,
+        "calls": 21,
+        "triangles": 25538,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "ascent",
+      "mode": "swim",
+      "x": 1.8993811067221265,
+      "y": -2.5220659264753653,
+      "z": -2.625686836048286,
+      "render": {
+        "frame": 119,
+        "calls": 21,
+        "triangles": 25538,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "surface launch",
+      "mode": "air",
+      "x": 4.790586839986574,
+      "y": 0.32182736854118765,
+      "z": -2.7749330495992806,
+      "render": {
+        "frame": 128,
+        "calls": 23,
+        "triangles": 27017,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "drag camera",
+      "mode": "land",
+      "x": 8.842366210231729,
+      "y": 0.35315278622410046,
+      "z": -2.8609814463730228,
+      "render": {
+        "frame": 134,
+        "calls": 20,
+        "triangles": 24372,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "save and reload",
+      "mode": "land",
+      "x": -10,
+      "y": 0.8919498528048344,
+      "z": 18,
+      "render": {
+        "frame": 13,
+        "calls": 26,
+        "triangles": 31026,
+        "points": 0,
+        "lines": 0
+      }
+    }
+  ],
+  "chunkReturns": [
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 62,
+        "unloads": 53
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 76,
+        "unloads": 67
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 86,
+        "unloads": 77
+      },
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 102,
+        "unloads": 93
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 112,
+        "unloads": 103
+      },
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 126,
+        "unloads": 117
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 140,
+        "unloads": 131
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 154,
+        "unloads": 145
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 164,
+        "unloads": 155
+      },
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 180,
+        "unloads": 171
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 190,
+        "unloads": 181
+      },
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 204,
+        "unloads": 195
+      },
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    }
+  ],
+  "assetCycles": {
+    "count": 30,
+    "first": {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    "last": {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    }
+  },
+  "touch": {
+    "viewport": "390x844 desktop emulation, not mobile hardware",
+    "movement": true,
+    "cancelClears": true,
+    "overflow": false
+  },
+  "errors": []
+}

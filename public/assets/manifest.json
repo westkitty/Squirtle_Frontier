@@ -1,1 +1,17 @@
-{"schemaVersion":1,"assets":[]}
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "playable.squirtle",
+      "uri": "./runtime/squirtle/squirtle.glb",
+      "sha256": "420d35ae5dea1087f585ccce206263fc5f96d21ff85ed2a8ca2baa4915e6a12f",
+      "bytes": 981708,
+      "presentation": {
+        "ground": false,
+        "centerXZ": false
+      },
+      "provenance": "Supplied fan-project source; see docs/assets/SQUIRTLE_INTAKE.md",
+      "animation": "No source clips; procedural presentation authored separately"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <body style="margin: 0">
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      const r = new THREE.WebGLRenderer({ antialias: true });
+      r.setSize(900, 700);
+      document.body.append(r.domElement);
+      const s = new THREE.Scene();
+      s.background = new THREE.Color("#a2b9b1");
+      s.add(new THREE.HemisphereLight(0xffffff, 0x556655, 2));
+      const l = new THREE.DirectionalLight(0xffffff, 2);
+      l.position.set(2, 4, 3);
+      s.add(l);
+      const g = await new GLTFLoader().loadAsync(
+        "/assets/runtime/squirtle/squirtle.glb",
+      );
+      s.add(g.scene);
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x566857, roughness: 1 }),
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.005;
+      s.add(floor);
+      const c = new THREE.PerspectiveCamera(35, 900 / 700, 0.01, 30);
+      c.position.set(0.85, 0.5, 1.25);
+      c.lookAt(0, 0.28, 0);
+      r.render(s, c);
+      window.review = {
+        scene: s,
+        model: g.scene,
+        renderer: r,
+        camera: c,
+        ready: true,
+      };
+    </script>
+  </body>
+</html>

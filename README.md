@@ -1,30 +1,45 @@
 # Squirtle Frontier
 
-A third-person systemic browser game in development: **the player will directly control Squirtle, not a trainer**.
+A systemic browser game in development where **you directly control Squirtle, not a trainer**.
 
-## Current status
+## Current slice
 
-Phase 0 software-browser foundation gate passed; **Phase 1 starting**. The current view is explicitly a terrain inspection rig, not gameplay. Phase 1 and semantic watershed work have not started.
+**Phase 1 movement study: Stillwater Reach.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. There are no objectives yet. The training pond is not the future semantic watershed.
+
+Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. Phase 2 has not started.
 
 ## Run
 
 ```sh
 npm ci
-npm run check
-npm run build
 npm start
 ```
 
-Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts. WASD moves the inspection rig; DOM buttons exercise chunk crossing and baseline position saving. No touch movement or playable avatar is claimed.
+Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 
-Browser baseline (requires installed Chromium and a running server):
+| Action | Desktop | Touch |
+|---|---|---|
+| Move / run | WASD or arrows / Shift | Left stick / Run |
+| Look | Drag world | Drag world |
+| Shell-slide | Hold C | Hold Shell |
+| Water Jet | Hold Space | Hold Jet |
+| Dive / rise | Hold Q / E | Hold Dive / Rise |
+
+Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. The current save is a development skeleton, not full world persistence.
+
+## Validate
 
 ```sh
-npx playwright install chromium
+npm run check
+npm run build
+npm run assets
 BROWSER_BUNDLED=1 npm run browser
+BROWSER_BUNDLED=1 npm run perf
 ```
 
-Generated evidence goes in ignored `artifacts/`. Inspect screenshots before claiming visual QA. Software-rendered browser tests do not establish desktop hardware or mobile performance.
+Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance.
+
+Original Phase 0 evidence/tool remains historical; use the current movement browser journey for this app revision.
 
 ## Authority and evidence
 
@@ -32,6 +47,6 @@ Generated evidence goes in ignored `artifacts/`. Inspect screenshots before clai
 2. [Build guide](docs/SQUIRTLE_FRONTIER_BUILD_GUIDE.md)
 3. [Master prompt](docs/LM_ARENA_MASTER_BUILD_PROMPT.md)
 
-[Architecture/provenance](docs/architecture/BASELINE.md) · [Baseline evidence](docs/performance/BASELINE.md) · [Asset intake](docs/assets/SQUIRTLE_INTAKE.md)
+[Architecture/provenance](docs/architecture/BASELINE.md) · [Phase 0 baseline](docs/performance/BASELINE.md) · [Movement QA](docs/qa/PHASE1.md) · [Asset intake](docs/assets/SQUIRTLE_INTAKE.md)
 
-The Living Frontier supplies the technical foundation. Squirtle Lab supplies character source and creature-centered requirements. Source repositories are read-only references. No deployment, runtime asset validation, movement quality, or prototype pass is claimed.
+Living Frontier remains the technical foundation; Squirtle Lab supplies character source and creature-centered requirements. Both source repositories remain untouched. Supplied fan-project assets do not imply permissive distribution rights. No prototype completion or deployment is claimed.

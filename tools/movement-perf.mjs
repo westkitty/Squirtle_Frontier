@@ -1,0 +1,69 @@
+import { launchBrowser } from "./browser-launch.mjs";
+import { writeFile } from "node:fs/promises";
+import assert from "node:assert/strict";
+const browser = await launchBrowser();
+const evidence = {
+  environment:
+    "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
+  date: new Date().toISOString(),
+  scenarios: [],
+};
+try {
+  const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
+  await page.goto(process.env.BASE_URL || "http://127.0.0.1:5173");
+  await page.waitForFunction(() => window.__SF?.loop.frames.length > 15);
+  for (const quality of ["high", "low"]) {
+    await page.click("#settings-toggle");
+    await page.selectOption("#quality", quality);
+    await page.click("#settings-toggle");
+    await page.evaluate(() => {
+      window.__SF.loop.frames.length = 0;
+    });
+    await page.waitForFunction(
+      () => window.__SF.loop.frames.length >= 120,
+      null,
+      { timeout: 90000 },
+    );
+    const measured = await page.evaluate(() => {
+      const g = window.__SF,
+        s = g.stats(),
+        f = s.frames.slice(10).sort((a, b) => a - b),
+        gl = g.renderer.getContext(),
+        debug = gl.getExtension("WEBGL_debug_renderer_info");
+      return {
+        samples: f.length,
+        medianMs: f[Math.floor(f.length * 0.5)],
+        p95Ms: f[Math.floor(f.length * 0.95)],
+        memory: s.memory,
+        render: s.render,
+        heap: performance.memory?.usedJSHeapSize ?? null,
+        renderer: debug
+          ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+          : gl.getParameter(gl.RENDERER),
+      };
+    });
+    evidence.scenarios.push({ quality, viewport: "960x640", ...measured });
+  }
+  await page.evaluate(async () => {
+    await window.__SF.dispose();
+  });
+  evidence.teardown = await page.evaluate(() => {
+    const g = window.__SF;
+    return {
+      memory: { ...g.renderer.info.memory },
+      chunks: g.streaming.stats(),
+      assets: g.assets.stats(),
+    };
+  });
+  assert.equal(evidence.teardown.chunks.active, 0);
+  assert.equal(evidence.teardown.memory.geometries, 0);
+  assert.equal(evidence.teardown.memory.textures, 0);
+  assert.equal(evidence.teardown.assets.references, 0);
+} finally {
+  await writeFile(
+    "docs/performance/phase1-measured.json",
+    JSON.stringify(evidence, null, 2) + "\n",
+  );
+  await browser.close();
+}
+console.log(JSON.stringify(evidence, null, 2));

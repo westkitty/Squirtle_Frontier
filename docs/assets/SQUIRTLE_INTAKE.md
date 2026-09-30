@@ -17,3 +17,16 @@ Inspected ZIP listing and OpenCollada XML:
 Machine-readable structural result: `source-inspection.json`.
 
 Tag.txt credits Nintendo, Game Freak, Creatures Inc., Random Talking Bush and Ploaj, and names The Models Resource hosting permissions. This is supplied fan-project source, **not evidence of a permissive redistribution license**. No public-release rights clearance is claimed. No runtime derivative or remote hotlink is currently served.
+
+## Phase 1 runtime derivative (2026-09-30)
+
+- Reproducible tool: `BROWSER_BUNDLED=1 npm run asset:convert` with Vite running. Extracts the original archive into ignored `.asset-work`, loads OpenCollada with Three 0.160.1, converts UVs to VEC2, uses explicit body/eye sRGB diffuse maps and rough nonmetal materials, normalizes to 0.55 m height, centers X/Z and grounds the root. No speculative normal/ID/auxiliary maps assigned.
+- Self-hosted file: `public/assets/runtime/squirtle/squirtle.glb`; manifest contains exact SHA-256 and byte count. Source ZIP remains unchanged.
+- Runtime bounds approximately X ±0.2324 m, Y 0–0.55 m, Z ±0.2972 m. +Y up and +Z front confirmed in inspected front/back browser renders. Mesh follows translated/rotated authoritative root in the movement browser journey.
+- 26 joints survive export. Collada SIDs survive as runtime bone names; role mapping is isolated in `squirtle-presentation.js`.
+- No animation clips in selected source or exported GLB. Walking, swimming and shell poses are newly authored procedural presentation, not discovered source animations.
+- `gltf-validation.json`: zero errors, one `NODE_SKINNED_MESH_NON_ROOT` warning. Normalization remains on a parent root; Three.js roundtrip bounds match and actual translated/rotated instances render correctly. Portability to other renderers is not claimed.
+- `runtime-inspection.json`: source-normalized and GLB roundtrip bounds, geometry and joint positions.
+- Browser lifecycle: 30 rendered acquire/release cycles, independent mutable material clones, one persistent cached model, no reference/texture growth. Full awaited application teardown reaches zero renderer geometries/textures.
+- Normal palette only; shiny textures remain preserved source, not an implemented variant toggle.
+- Original IP/provenance restrictions above still apply. This is not redistribution-rights clearance or a verified public deployment.

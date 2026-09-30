@@ -7,14 +7,19 @@
     "check": "node tools/arch-check.mjs && npm test",
     "start": "vite --host 0.0.0.0",
     "build": "vite build",
-    "browser": "node tools/browser-baseline.mjs"
+    "browser": "node tools/movement-browser.mjs",
+    "browser:baseline": "node tools/browser-baseline.mjs",
+    "assets": "node tools/asset-validate.mjs",
+    "asset:convert": "node tools/asset-convert.mjs",
+    "perf": "node tools/movement-perf.mjs"
   },
   "dependencies": {
-    "three": "^0.160.1"
+    "three": "0.160.1"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "^140.0.0",
-    "playwright": "^1.55.0",
-    "vite": "^6.4.1"
+    "@sparticuz/chromium": "140.0.0",
+    "gltf-validator": "2.0.0-dev.3.10",
+    "playwright": "1.63.0",
+    "vite": "6.4.3"
   }
 }

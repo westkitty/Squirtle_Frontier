@@ -1,3 +1,134 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Squirtle Frontier · Foundation</title><link rel="stylesheet" href="/styles.css"></head>
-<body><main><canvas aria-label="Procedural terrain inspection view"></canvas><header><p>Squirtle Frontier / Phase 0</p><h1>Foundation inspection</h1><p>Terrain substrate only. No playable avatar yet.</p></header><section aria-label="Baseline controls"><p>W A S D — move inspection rig</p><button id="save">Save inspection position</button><button id="cycle">Cross a chunk</button><output id="status" role="status">Initializing renderer…</output></section></main><script type="module" src="/src/main.js"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#203d36" />
+    <title>Squirtle Frontier · Stillwater Reach</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <canvas
+        aria-label="Third-person Squirtle movement proving ground. Use WASD to move and drag to look."
+      ></canvas>
+      <header>
+        <div class="eyebrow"><span class="mark">◈</span> SQUIRTLE FRONTIER</div>
+        <h1>Stillwater Reach</h1>
+        <p>A small body. A wide world.</p>
+      </header>
+      <nav aria-label="Field controls">
+        <button id="help-toggle" aria-expanded="false" aria-controls="help">
+          Controls <span>?</span></button
+        ><button
+          id="settings-toggle"
+          aria-expanded="false"
+          aria-controls="settings"
+        >
+          Settings
+        </button>
+      </nav>
+      <aside id="help" hidden>
+        <h2>Follow your own current</h2>
+        <p>
+          No objectives here. Find the shore, gather speed, and get to know your
+          shell.
+        </p>
+        <dl>
+          <dt>W A S D / arrows</dt>
+          <dd>Move</dd>
+          <dt>Shift</dt>
+          <dd>Scamper</dd>
+          <dt>Drag the world</dt>
+          <dd>Look around</dd>
+          <dt>C · hold</dt>
+          <dd>Shell slide</dd>
+          <dt>Space · hold</dt>
+          <dd>Water Jet</dd>
+          <dt>Q / E · hold</dt>
+          <dd>Dive / rise</dd>
+        </dl>
+        <p>
+          Touch: left stick to move, drag the world to look, hold the labeled
+          ability buttons.
+        </p>
+        <p class="small">
+          Phase 1 movement study. This pond is a test volume, not the future
+          simulated watershed.
+        </p>
+      </aside>
+      <aside id="settings" hidden>
+        <h2>Make yourself at home</h2>
+        <label
+          >Look sensitivity
+          <input
+            id="sensitivity"
+            type="range"
+            min=".4"
+            max="2"
+            step=".1" /></label
+        ><label
+          ><input id="invert" type="checkbox" /> Invert vertical look</label
+        ><label
+          ><input id="motion" type="checkbox" /> Reduce camera motion</label
+        ><label><input id="mute" type="checkbox" /> Mute sound</label
+        ><label
+          >Volume
+          <input id="volume" type="range" min="0" max="1" step=".05" /></label
+        ><label
+          >Render detail
+          <select id="quality">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select></label
+        ><button id="save">Remember this place</button
+        ><button id="reset">Return to the bank</button>
+      </aside>
+      <div id="loading" role="status">Finding the shore…</div>
+      <footer>
+        <div class="location">
+          <span class="eyebrow">MOVEMENT STUDY / 01</span>
+          <div>
+            <span id="mode">On the bank</span><span class="separator"> / </span
+            ><span id="speed">0.0 m/s</span>
+          </div>
+        </div>
+        <div class="jet-readout">
+          <span>WATER JET</span
+          ><meter
+            id="jet"
+            min="0"
+            max="1"
+            value="1"
+            aria-label="Water Jet readiness"
+          ></meter
+          ><kbd>SPACE</kbd>
+        </div>
+        <output id="status" role="status">Explore at your own pace.</output>
+      </footer>
+      <div id="touch" aria-label="Touch movement controls">
+        <div id="stick" role="group" aria-label="Movement stick"><i></i></div>
+        <div class="actions">
+          <button data-action="run" aria-label="Hold to run">Run</button
+          ><button data-action="slide" aria-label="Hold to shell slide">
+            Shell</button
+          ><button data-action="dive" aria-label="Hold to dive">Dive</button
+          ><button data-action="ascend" aria-label="Hold to ascend">Rise</button
+          ><button
+            class="jet-button"
+            data-action="jet"
+            aria-label="Hold for Water Jet"
+          >
+            Jet ↗
+          </button>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

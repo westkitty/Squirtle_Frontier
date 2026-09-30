@@ -47,3 +47,12 @@ The copied `terrain.js` still contains unused source water presentation helpers.
 Code adapted from the user's designated Living Frontier repository under the authorization for this destination. No independent source-code license grant is asserted here. No Living Frontier external creature/human/structure assets were copied. Three.js is installed from npm with its package license.
 
 Squirtle Lab is a seeded reconstruction contract, not an implemented Lab engine. Its room count and trainer-style handling are not imported. Applicable constraints include creature-first framing, one-heavy-environment lifetime, persistent cached character, instance-owned animated materials, camera accessibility and evidence-based animation mapping.
+
+## Phase 1 adaptation record
+
+- LF seeded heightfield/RNG and keyed ChunkManager remain the foundation. Chunk size is now 24 m for creature-scale contact resolution. A deterministic local training basin blends back to the original `frontierHeightAt` outside the proving ground; it is not semantic hydrology.
+- `player/squirtle-controller.js` is pure body-state logic. `PlayableCreature` is the semantic presentation seam; Squirtle-only assets/bone roles are contained in `assets/squirtle-presentation.js`. Physics never reads imported mesh nodes.
+- `MovementScenery` generates presentation from chunk seeds, instances trees and releases instance buffers on chunk removal. Deterministic body/camera tree proxies are separately reconstructed from the same placement function, with a bounded 16-entry collider cache.
+- Main retains the only scheduler; procedural audio owns one graph; particles use a fixed pool. Scene shutdown awaits asset disposal. No near actor populations, ecology or distant render objects have been added.
+- Current persistence still deliberately saves only position/time. Phase 1 reload resets transient velocity/mode to terrain contact; final robust saves are not implemented.
+- Runtime assets live under Vite `public/assets/runtime`, rather than top-level `assets/runtime`, so the build copies the same self-hosted files. Originals stay under `assets/source` and are not bundled into production output.

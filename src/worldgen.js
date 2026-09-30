@@ -5,7 +5,7 @@ export const WORLD = {
   seed: 1337,
   half: 1150,          // world extends -half..half on X and Z
   water: 0.0,          // sea / river level
-  chunk: 180,          // chunk size in world units
+  chunk: 24,          // chunk size in world units
   stateRes: 512,       // resolution of the persistent ground-state texture
   exploreRes: 128,     // resolution of the player's remembered map (fog of war)
   fireRes: 96,         // resolution of the fire/fuel grid
@@ -110,7 +110,7 @@ export function baseHeight(x, z) {
   return h;
 }
 
-export function heightAt(x, z) {
+export function frontierHeightAt(x, z) {
   let h = baseHeight(x, z);
 
   // Rivers carve valleys toward water level.
@@ -318,4 +318,14 @@ export function isBuildableFlat(x, z) {
 // Deterministic ore / forage node seeding
 export function resourceRoll(x, z, kind) {
   return hash2i(Math.round(x * 3.1), Math.round(z * 3.1), S + (kind === 'ore' ? 900 : 901));
+}
+
+// Phase 1 locomotion proving ground. Local water is an authored test volume,
+// not a semantic watershed; the original LF world remains outside this slice.
+export function heightAt(x, z) {
+ const basin = Math.sqrt((x / 8) ** 2 + (z / 25) ** 2);
+ const shore = -2.6 + smoothstep(.45, 1.3, basin) * 3.3;
+ const hills = Math.max(0, Math.abs(x) - 11) * .09 + Math.sin(z*.10) * .35 * smoothstep(1.1,2,basin);
+ const training = shore + hills + fbm2(x*.05,z*.05,3,WORLD.seed)*.15;
+ return lerp(training, frontierHeightAt(x,z),smoothstep(120,210,Math.hypot(x,z)));
 }
