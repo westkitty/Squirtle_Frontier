@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 3
-status: Phase 0 scaffold implemented / mandatory browser baseline blocked
+revision: 4
+status: Phase 0 software-browser baseline passed / Phase 1 starting
 
 ## Purpose
 
@@ -131,19 +131,19 @@ Production expansion is blocked until the slice demonstrates:
 
 - Renderer/inspection camera, semantic HUD, keyboard input, separate settings, terrain streaming adapter and complete baseline teardown.
 - Self-hosted asset-manager infrastructure with empty runtime manifest; no imported model instances yet.
-- Browser baseline tool for timing/resource counts and screenshots. No browser run reached a page.
+- Hardware performance and imported-model lifecycle remain unverified.
 
-## Known not working / blocker
+## Historical blocker (resolved)
 
 - Chromium installation failed with CDN TLS ECONNRESET. One bounded curl fallback also failed with SSL_ERROR_SYSCALL. Browser test fails at launch because executable is absent.
-- Mandatory Phase 0 browser/render/performance validation cannot complete in the current environment. No screenshot inspected, no GPU resource stability or FPS measured.
-- Phase 1 prerequisites are not satisfied. Do not proceed to locomotion or Phase 2.
+- Browser capability restored using npm-distributed Chromium and bundled libraries. `BROWSER_BUNDLED=1 npm run browser` passes 24 crossings/four matched return checkpoints, with stable renderer counts and zero page/console errors. Rendered screenshot inspected. Measurements in `docs/performance/phase0-measured.json`; software renderer only.
+- Phase 0 software-browser foundation gate passed. Phase 1 may begin. Phase 2 remains blocked on movement gate.
 
 ## Scope limits and pending
 
 - Current rendered scaffold is an inspection rig, not a trainer or Squirtle controller.
 - Full save recovery, offline simulation, PlayableCreature, GLB conversion, movement, touch controls, watershed, ecology, settlement, Lab and Deep Record remain pending.
 - Asset licensing/redistribution clearance is not implied by the supplied fan-source archive.
-- Restore browser capability, run `npm start` and `npm run browser`, inspect rendered screenshot, record resource/timing evidence; only then evaluate Phase 0 gate.
+- Continue Phase 1: convert and validate asset, add PlayableCreature seam, locomotion and touch/camera; do not bypass human movement acceptance.
 - Human ten-minute movement enjoyment and real-device mobile validation remain external evidence requirements for later gates.
 - Detailed evidence: `docs/architecture/BASELINE.md`, `docs/assets/SQUIRTLE_INTAKE.md`, `docs/performance/BASELINE.md`.

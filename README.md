@@ -4,7 +4,7 @@ A third-person systemic browser game in development: **the player will directly 
 
 ## Current status
 
-Phase 0 foundation scaffold implemented; **browser/performance gate blocked by unavailable Chromium**. The current view is explicitly a terrain inspection rig, not gameplay. Phase 1 and semantic watershed work have not started.
+Phase 0 software-browser foundation gate passed; **Phase 1 starting**. The current view is explicitly a terrain inspection rig, not gameplay. Phase 1 and semantic watershed work have not started.
 
 ## Run
 
@@ -21,7 +21,7 @@ Browser baseline (requires installed Chromium and a running server):
 
 ```sh
 npx playwright install chromium
-npm run browser
+BROWSER_BUNDLED=1 npm run browser
 ```
 
 Generated evidence goes in ignored `artifacts/`. Inspect screenshots before claiming visual QA. Software-rendered browser tests do not establish desktop hardware or mobile performance.

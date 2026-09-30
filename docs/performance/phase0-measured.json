@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-30",
+  "source": "tools/browser-baseline.mjs",
+  "browser": "npm @sparticuz/chromium 140.0.0; Playwright; ANGLE SwiftShader",
+  "bootMs": 288.7931789999999,
+  "frameTiming": {
+    "samples": 110,
+    "medianMs": 49.90000000000009,
+    "p95Ms": 66.70000000000005
+  },
+  "heap": 18200000,
+  "initialMemory": {
+    "geometries": 5,
+    "textures": 1
+  },
+  "initialRender": {
+    "frame": 121,
+    "calls": 5,
+    "triangles": 10240,
+    "points": 0,
+    "lines": 0
+  },
+  "checkpoints": [
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 33,
+        "unloads": 24
+      },
+      "memory": {
+        "geometries": 5,
+        "textures": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 57,
+        "unloads": 48
+      },
+      "memory": {
+        "geometries": 5,
+        "textures": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 81,
+        "unloads": 72
+      },
+      "memory": {
+        "geometries": 5,
+        "textures": 1
+      }
+    },
+    {
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 105,
+        "unloads": 96
+      },
+      "memory": {
+        "geometries": 5,
+        "textures": 1
+      }
+    }
+  ],
+  "errors": []
+}

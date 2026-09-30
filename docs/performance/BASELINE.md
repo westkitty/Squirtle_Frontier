@@ -1,4 +1,4 @@
-# Phase 0 baseline — incomplete, gate blocked
+# Phase 0 baseline — software-browser foundation gate passed
 
 Date: 2026-09-30. No Squirtle asset or world-feature complexity has been added to the renderer.
 
@@ -31,3 +31,13 @@ Boot/first interactive frame, renderer.info memory/render counts, sustained fram
 - Zero growing geometry/texture counts over settled repeated traversal is mandatory.
 
 Phase 1 is blocked until actual browser/render/performance evidence is captured and inspected. The node lifecycle test must not be used to bypass this gate.
+
+## Browser capability restored (2026-09-30)
+
+Pinned npm-distributed Chromium 140.0.0 and its bundled NSS/NSPR libraries bypass the unreachable Playwright CDN; `tools/browser-launch.mjs` extracts tools to temporary storage, not Git. Debian package repositories were also unreachable. Run `BROWSER_BUNDLED=1 npm run browser`.
+
+Actual browser baseline now passes: 24 crossings and four identical-position return checkpoints; nine active owned chunks, stable uploaded geometry/texture counts at matched positions, zero console/page errors. The first assertion incorrectly compared different camera positions (five vs six uploaded geometries). The bounded probe repair compares identical return positions and bounds other positions by owned chunks. No resource assertion was removed without replacement.
+
+Measurements: `phase0-measured.json`. Headless SwiftShader timing is a software-browser baseline, not hardware performance acceptance. Screenshot `artifacts/phase0-terrain.png` was opened and inspected: terrain surface and semantic inspection HUD render; no avatar is expected in Phase 0. The ground is deliberately sparse and not final presentation.
+
+Earlier blocker/unknown entries above are retained as historical evidence. Browser timing, renderer counts and screenshot inspection now have evidence. Real GPU/mobile performance, imported-asset cycling and full gameplay remain pending. Phase 1 may start; production performance gate remains open.
