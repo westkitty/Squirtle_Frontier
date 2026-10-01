@@ -260,6 +260,98 @@ test("clearing attention target decays gaze back to resting orientation", () => 
   presentation.dispose();
 });
 
+test("prolonged undisturbed idle transitions into living slumber crouch with slowed respiration", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.grounded = true;
+  b.mode = "land";
+
+  // Step 6 seconds of undisturbed idle on land
+  for (let i = 0; i < 370; i++) presentation.present(b, 1 / 60);
+
+  assert.equal(presentation.isSleeping, true, "must enter sleeping state after >5.5s idle");
+  assert.ok(presentation.sleepProgress > 0.8, "sleep progress must advance near 1.0");
+  assert.ok(
+    presentation.bones.get("Head").node.rotation.x < -0.15,
+    "head must nod down onto chest in restful sleep",
+  );
+  assert.ok(
+    presentation.bones.get("LArm").node.rotation.z < -0.3,
+    "front arms must relax down beside shell in resting crouch",
+  );
+  assert.ok(
+    presentation.bones.get("LThigh").node.rotation.z > 0.25,
+    "hind thighs must splay outward into stable sitting crouch",
+  );
+  assert.ok(
+    presentation.bones.get("Tail3").node.rotation.y > 0.7,
+    "tail tip must curl protectively around flank during sleep",
+  );
+  presentation.dispose();
+});
+
+test("explicit body resting flag triggers peaceful shell sleep and curled tail", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.grounded = true;
+  b.mode = "land";
+  b.resting = true;
+
+  // Step presentation for rest transition
+  for (let i = 0; i < 60; i++) presentation.present(b, 1 / 60);
+
+  assert.equal(presentation.isSleeping, true, "explicit resting flag must activate sleep");
+  assert.ok(presentation.sleepProgress > 0.85);
+  assert.ok(
+    presentation.visual.position.y < -0.05,
+    "visual center must lower comfortably toward ground during rest",
+  );
+  presentation.dispose();
+});
+
+test("sleeping state suppresses active saccadic gaze tracking", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.grounded = true;
+  b.mode = "land";
+  b.resting = true;
+
+  const target = { x: 5, y: 1, z: 2 };
+  // Step while resting with salient target present
+  for (let i = 0; i < 60; i++) presentation.present(b, 1 / 60, target);
+
+  assert.equal(presentation.isSleeping, true);
+  assert.equal(presentation.attention, null, "sleeping suppresses active attention target");
+  assert.equal(presentation.gazeYaw, 0, "sleeping zeroes gaze yaw");
+  assert.equal(presentation.gazePitch, 0, "sleeping zeroes gaze pitch");
+  presentation.dispose();
+});
+
+test("movement input wakes Squirtle and smoothly restores alert upright stance", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.grounded = true;
+  b.mode = "land";
+  b.resting = true;
+
+  // Settle into sleep
+  for (let i = 0; i < 60; i++) presentation.present(b, 1 / 60);
+  assert.equal(presentation.isSleeping, true);
+
+  // Wake up by moving
+  b.resting = false;
+  b.vx = 2.0;
+  for (let i = 0; i < 60; i++) presentation.present(b, 1 / 60);
+
+  assert.equal(presentation.isSleeping, false, "movement must awaken Squirtle");
+  assert.ok(presentation.sleepProgress < 0.1, "sleep progress must decay to zero");
+  assert.ok(
+    presentation.visual.position.y > -0.01,
+    "visual elevation must restore to upright stance",
+  );
+  presentation.dispose();
+});
+
 test("presentation cleanly disposes materials, skeletons and releases asset handle", () => {
   const { presentation, isReleased } = createMockSquirtle();
   presentation.dispose();

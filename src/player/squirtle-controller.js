@@ -29,6 +29,9 @@ export function stepBody(b, input, env, dt) {
       b.mode = "slide";
     } else b.mode = "land";
   } else if (!immersed) b.mode = "air";
+  if (moving || input.jet || input.slide || !b.grounded || b.mode !== "land") {
+    b.resting = false;
+  }
   const aquatic = b.mode === "swim" || b.mode === "dive";
   const speed = aquatic ? 4.8 : input.run ? 3.8 : 2.2;
   if (moving) {

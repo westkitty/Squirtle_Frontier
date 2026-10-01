@@ -567,6 +567,7 @@ async function boot() {
             body.vx = 0;
             body.vy = 0;
             body.vz = 0;
+            body.resting = true;
             input.clear();
             const r = save(state, localStorage);
             status.textContent = r.ok
@@ -860,6 +861,8 @@ async function boot() {
         mode: body.mode,
         attention: creature?.attention ?? null,
         gaze: creature ? { yaw: creature.gazeYaw, pitch: creature.gazePitch } : null,
+        sleeping: creature?.isSleeping ?? false,
+        sleepProgress: creature?.sleepProgress ?? 0,
       }),
     };
     renderer.setAnimationLoop((now) => loop.frame(now));

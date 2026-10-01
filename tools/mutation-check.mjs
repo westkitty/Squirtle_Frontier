@@ -187,9 +187,17 @@ const MUTATIONS = [
     what: "shell slide tracks attention targets instead of retracting head",
     file: "src/assets/squirtle-presentation.js",
     from:
-      "    if (inShell) {\n      // Complete suppression in shell slide: head retracts inside shell\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+      "    if (inShell || this.restProgress > 0.45) {\n      // Complete suppression in shell slide or peaceful slumber\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
     to:
       "    if (false) {\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+  },
+  {
+    what: "undisturbed idle stays standing upright instead of settling into slumber crouch",
+    file: "src/assets/squirtle-presentation.js",
+    from:
+      "    const isResting =\n      (b.resting || this.idleTime > 5.5) &&\n      b.grounded &&\n      !inShell &&\n      !aquatic &&\n      !isMoving;",
+    to:
+      "    const isResting = false;",
   },
 ];
 

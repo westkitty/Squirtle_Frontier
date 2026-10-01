@@ -25,6 +25,7 @@ export class SquirtlePresentation extends PlayableCreature {
     this.lookPitch = 0;
     this.attentionTime = 0;
     this.activeAttention = null;
+    this.restProgress = 0;
     // Collada SID -> semantic role verified against source node hierarchy.
     const roles = {
       joint1: "Head",
@@ -85,6 +86,12 @@ export class SquirtlePresentation extends PlayableCreature {
   get attention() {
     return this.activeAttention;
   }
+  get isSleeping() {
+    return this.restProgress > 0.45;
+  }
+  get sleepProgress() {
+    return this.restProgress;
+  }
   present(b, dt, attentionTarget = null) {
     const aquatic = b.mode === "swim" || b.mode === "dive";
     const speed = Math.hypot(b.vx, b.vz);
@@ -98,17 +105,27 @@ export class SquirtlePresentation extends PlayableCreature {
     this.wasAquatic = aquatic;
     this.shakeTime = Math.max(0, this.shakeTime - dt);
 
-    // Idle duration tracking on dry land
-    if (!isMoving && b.grounded && !aquatic) {
+    // Idle duration and rest/sleep tracking on dry land
+    if (!isMoving && b.grounded && !aquatic && !inShell) {
       this.idleTime += dt;
     } else {
       this.idleTime = 0;
     }
 
+    const isResting =
+      (b.resting || this.idleTime > 5.5) &&
+      b.grounded &&
+      !inShell &&
+      !aquatic &&
+      !isMoving;
+    this.restProgress +=
+      ((isResting ? 1 : 0) - this.restProgress) * (1 - Math.exp(-3.5 * dt));
+
     // Kinematic phase progressions
     this.phase += dt * Math.max(1, speed * 8);
     this.swimPhase += dt * (aquatic ? (isMoving ? 6.2 : 2.5) : 0);
-    this.breathPhase += dt * 2.2;
+    const breathRate = 2.2 * (1 - this.restProgress * 0.65);
+    this.breathPhase += dt * breathRate;
     this.shell += (Number(inShell) - this.shell) * (1 - Math.exp(-14 * dt));
 
     this.root.position.set(b.x, b.y, b.z);
@@ -134,8 +151,8 @@ export class SquirtlePresentation extends PlayableCreature {
     };
 
     // Contextual attention & gaze tracking
-    if (inShell) {
-      // Complete suppression in shell slide: head retracts inside shell
+    if (inShell || this.restProgress > 0.45) {
+      // Complete suppression in shell slide or peaceful slumber
       this.lookYaw = 0;
       this.lookPitch = 0;
       this.attentionTime = 0;
@@ -247,31 +264,52 @@ export class SquirtlePresentation extends PlayableCreature {
           rotateX("Head", this.lookPitch * 0.5);
         }
       } else {
-        // Living idle respiration & natural tail sway
+        // Living idle respiration & natural tail sway, relaxing into restful slumber
         const breath = Math.sin(this.breathPhase);
-        rotateX("Head", breath * 0.035);
-        rotateZ("LArm", -0.18 + breath * 0.02);
-        rotateZ("RArm", 0.18 - breath * 0.02);
+        const rest = this.restProgress;
+        const alertWeight = 1 - rest;
+
+        // Head and snout: nods with breath, settles into resting nap posture
+        rotateX("Head", breath * (0.035 * alertWeight + 0.015 * rest) - rest * 0.22);
+        rotateX("Snout", -rest * 0.07);
+
+        // Arms: soft natural resting posture alongside plastron
+        rotateZ("LArm", -0.18 + breath * 0.02 * alertWeight - rest * 0.22);
+        rotateZ("RArm", 0.18 - breath * 0.02 * alertWeight + rest * 0.22);
+        rotateX("LArm", rest * 0.28);
+        rotateX("RArm", rest * 0.28);
         rotateY("LArm", -0.12);
         rotateY("RArm", -0.12);
+        rotateY("LForearm", rest * 0.26);
+        rotateY("RForearm", -rest * 0.26);
 
+        // Legs: comfortable resting sit/crouch
+        rotateZ("LThigh", rest * 0.32);
+        rotateZ("RThigh", -rest * 0.32);
+        rotateY("LThigh", rest * 0.22);
+        rotateY("RThigh", -rest * 0.22);
+        rotateY("LCalf", rest * 0.38);
+        rotateY("RCalf", rest * 0.38);
+
+        // Tail: gentle sway while alert, curls into protective resting crescent when sleeping
         const tailSway = Math.sin(this.breathPhase * 0.8) * 0.18;
-        rotateY("Tail1", tailSway * 0.6);
-        rotateY("Tail2", tailSway * 0.8);
-        rotateY("Tail3", tailSway);
+        rotateY("Tail1", tailSway * 0.6 * alertWeight + rest * 0.48);
+        rotateY("Tail2", tailSway * 0.8 * alertWeight + rest * 0.72);
+        rotateY("Tail3", tailSway * alertWeight + rest * 0.96);
+        rotateX("Tail1", -rest * 0.12);
 
-        // Curious idle glance after settling or focused attention
-        if (this.activeAttention) {
+        // Curious idle glance after settling or focused attention (alert state only)
+        if (this.activeAttention && alertWeight > 0.5) {
           rotateY("Head", this.lookYaw);
           rotateX("Head", this.lookPitch);
           rotateZ("Head", Math.sin(this.attentionTime * 2.0) * 0.05);
           rotateX("Snout", this.lookPitch * 0.25);
-        } else if (this.idleTime > 1.5) {
+        } else if (this.idleTime > 1.5 && alertWeight > 0.5) {
           const lookCycle = (this.idleTime - 1.5) * 0.6;
           const lookYaw =
             Math.sin(lookCycle) * Math.min(0.38, (this.idleTime - 1.5) * 0.2);
-          rotateY("Head", lookYaw);
-          rotateZ("Head", Math.sin(lookCycle * 0.5) * 0.08);
+          rotateY("Head", lookYaw * alertWeight);
+          rotateZ("Head", Math.sin(lookCycle * 0.5) * 0.08 * alertWeight);
         }
       }
 
@@ -343,7 +381,7 @@ export class SquirtlePresentation extends PlayableCreature {
         ? 0.12 + Math.sin(this.swimPhase) * (isMoving ? 0.018 : 0.01)
         : isMoving
           ? Math.abs(Math.sin(this.phase)) * Math.min(0.012, speed * 0.004)
-          : Math.sin(this.breathPhase) * 0.003;
+          : Math.sin(this.breathPhase) * 0.003 - this.restProgress * 0.08;
   }
   dispose() {
     if (this.disposed) return;

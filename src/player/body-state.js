@@ -14,5 +14,6 @@ export function createBody(x = -10, z = 18, y = 1) {
     jetTime: 0,
     distance: 0,
     impact: 0,
+    resting: false,
   };
 }
