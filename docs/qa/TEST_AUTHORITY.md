@@ -15,17 +15,34 @@ under its negation does not own that rule**, and there was no way to find out wh
 
 `tools/mutation-check.mjs` holds a list of textual mutations, each of which inverts or
 removes one **documented** contract while leaving the file syntactically valid — a kill by
-parse error would prove the suite runs, not that it understands. For each one it:
+parse error would prove the suite runs, not that it understands. It copies `src`, `tools` and
+the small amount of project data a unit test might read into a scratch directory in temp
+storage, symlinks `node_modules`, and **never writes the repository**. For each mutation it:
 
-1. refuses to start unless the unmutated suite passes (a red suite judges nothing);
-2. requires the anchor to match exactly once, so the list rots loudly (`STALE ANCHOR`)
-   instead of quietly becoming a no-op — the same silent-failure class as the bug above;
-3. writes the broken file, runs `node --test tools/*.test.mjs`, restores the original in a
-   `finally`;
+1. refuses to start unless the unmutated suite passes in the copy (a red suite judges nothing,
+   and this also proves the unit tests are hermetic to those paths);
+2. requires the anchor to match exactly once, so the list rots loudly (`STALE ANCHOR`) instead
+   of quietly becoming a no-op — the same silent-failure class as the bug above;
+3. breaks the copy, runs `node --test tools/*.test.mjs` there, restores the copy;
 4. requires a **named failing test**, and prints which one.
 
-Exit code is non-zero if any mutation survives, so it can gate as well as inform. The run
-costs one suite pass per mutation plus one: **14 mutations in about 61 s**, measured.
+Exit code is non-zero if any mutation survives, so it can gate as well as inform. The run costs
+one suite pass per mutation plus one: **14 mutations in about 56 s**, measured.
+
+## Why it breaks a copy instead of the working tree
+
+The first version mutated `src/*.js` in place and repaired it in a `finally`, plus signal
+handlers for good measure. Interrupting it proved the handlers useless — a `SIGINT` that
+arrives while the process is blocked in the synchronous suite call cannot run any JavaScript
+of ours, and the tree was left holding a genuinely broken `src/simulation/deep-history.js`.
+A journal in temp storage and a recovery pass fixed the next-run case and still leaked the
+dirty-file window.
+
+Copying first removes the hazard class instead of managing it: the worst an interrupt can do
+is leave a scratch directory in temp storage, and a run sweeps stale `sf-mutation-*`
+directories older than an hour on startup (older than that, nothing of ours can legitimately
+be in flight). The repository is not a thing this tool can corrupt, which is a stronger
+property than "it cleans up after itself".
 
 ## The result, not a claim
 

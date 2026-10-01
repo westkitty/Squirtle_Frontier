@@ -1,13 +1,30 @@
 // A suite that passes under a rule and under its negation is not a test of the rule. That is
 // how one defect in this project shipped: the loop kept an older hold rule, 105 checks stayed
-// green, and only a read of the diff noticed. So this runs the whole unit suite against each
+// green, and only a read of the diff noticed. So this runs the unit suite against each
 // deliberately broken source file and requires the break to be *named* by a failing test.
 //
 // Every mutation is a single textual swap that keeps the file syntactically valid: a kill by
-// parse error proves the suite runs, not that it understands. Survivors are gaps in the tests,
-// not in the code, and each one is a to-do.
+// parse error would prove the suite runs, not that it understands. Survivors are gaps in the
+// tests, not in the code, and each one is a to-do.
+//
+// The repository is never written to. A scratch copy of the sources is broken instead, so an
+// interrupted, crashed or ctrl-C-ed run cannot leave a mutated file in the working tree - a
+// first version of this tool tried to restore in place and could not survive a signal
+// arriving inside the synchronous suite call.
 import { execFileSync } from "node:child_process";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { readdirSync, statSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 
 const MUTATIONS = [
   {
@@ -29,7 +46,7 @@ const MUTATIONS = [
     to: "    inBank: false,\n    bankAbove:",
   },
   {
-    what: "every layer gets a constant thickness, so the last one stops short of the floor",
+    what: "every layer gets a constant thickness, so the last stops short of the floor",
     file: "src/simulation/deep-history.js",
     from: "return +((next ? next.depth : RECORD_DEPTH) - era.depth).toFixed(6);",
     to: "return +(2.3).toFixed(6);",
@@ -65,6 +82,12 @@ const MUTATIONS = [
     to: "        true &&",
   },
   {
+    what: "drink tracks are recorded from anywhere in the watershed",
+    file: "src/simulation/place-memory.js",
+    from: "if (Math.hypot(site.x - body.x, site.z - body.z) > 10) continue;",
+    to: "if (false) continue;",
+  },
+  {
     what: "the basin level is anchored on the wrong wetland supply",
     file: "src/simulation/water-level.js",
     from: "export const WETLAND_PRISTINE = 0.05;",
@@ -77,24 +100,57 @@ const MUTATIONS = [
     to: "export const WATER_PAINT_LIFT = 0.05;",
   },
   {
-    what: "the shaft floor constant drifts from the geometry that uses it",
-    file: "src/simulation/deep-history.js",
-    from: "export const RECORD_DEPTH = 22;",
-    to: "export const RECORD_DEPTH = 21;",
-  },
-  {
     what: "the painted shallows flood the walkable rim the body stands on",
     file: "src/player/movement-region.js",
     from: "heightAt(x, z) < WATER_SHORELINE(level)",
     to: "heightAt(x, z) < level",
   },
   {
-    what: "drink tracks are recorded from anywhere in the watershed",
-    file: "src/simulation/place-memory.js",
-    from: "if (Math.hypot(site.x - body.x, site.z - body.z) > 10) continue;",
-    to: "if (false) continue;",
+    what: "the shaft floor constant drifts from the geometry that uses it",
+    file: "src/simulation/deep-history.js",
+    from: "export const RECORD_DEPTH = 22;",
+    to: "export const RECORD_DEPTH = 21;",
   },
 ];
+
+// What the tests can reach from their own directory: sources, tools, and the small amount of
+// project data a unit test is allowed to read.
+const COPIES = ["src", "tools", "assets", "docs", "prompts"];
+const FILES = [
+  "package.json",
+  "index.html",
+  "styles.css",
+  "vite.config.js",
+  "OPERATIONAL_STATE.md",
+  "README.md",
+];
+
+// A signal can land inside the synchronous suite call, where no handler of ours can run, so a
+// previous run may leave its scratch copy behind. Sweep the old ones; leave anything younger
+// than an hour alone, in case a second run is legitimately in flight.
+for (const stale of readdirSync(tmpdir()).filter((n) =>
+  n.startsWith("sf-mutation-"),
+)) {
+  const path = `${tmpdir()}/${stale}`;
+  if (Date.now() - statSync(path).mtimeMs > 3_600_000)
+    rmSync(path, { recursive: true, force: true });
+}
+
+const work = mkdtempSync(`${tmpdir()}/sf-mutation-`);
+const scratch = (file) => `${work}/${file}`;
+for (const dir of COPIES)
+  if (existsSync(dir)) cpSync(dir, scratch(dir), { recursive: true });
+for (const file of FILES) if (existsSync(file)) cpSync(file, scratch(file));
+if (existsSync("node_modules"))
+  symlinkSync(resolve("node_modules"), scratch("node_modules"), "dir");
+const sweep = () => rmSync(work, { recursive: true, force: true });
+process.on("exit", sweep);
+// Only the scratch copy is at stake, so a signal can clean up and hand the exit code back.
+for (const signal of ["SIGINT", "SIGTERM"])
+  process.on(signal, () => {
+    sweep();
+    process.exit(128 + (signal === "SIGINT" ? 2 : 15));
+  });
 
 const testFiles = (await readdir("tools"))
   .filter((n) => n.endsWith(".test.mjs"))
@@ -105,7 +161,7 @@ function suite() {
     execFileSync(
       process.execPath,
       ["--test", "--test-reporter=tap", ...testFiles.map((n) => `tools/${n}`)],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], cwd: work },
     );
     return { passed: true, output: "" };
   } catch (error) {
@@ -116,32 +172,32 @@ function suite() {
   }
 }
 
-const failures = [];
 if (!suite().passed) {
   console.error(
     "the unit suite must pass before its mutations can be judged; run `npm test`",
   );
   process.exit(1);
 }
-const originals = new Map();
+
+const pristine = new Map(),
+  failures = [];
 for (const mutation of MUTATIONS) {
-  if (!originals.has(mutation.file))
-    originals.set(mutation.file, await readFile(mutation.file, "utf8"));
-  const source = originals.get(mutation.file);
+  if (!pristine.has(mutation.file))
+    pristine.set(mutation.file, readFileSync(scratch(mutation.file), "utf8"));
+  const source = pristine.get(mutation.file);
   const hits = source.split(mutation.from).length - 1;
   let verdict, detail;
   if (hits !== 1) {
     verdict = "STALE ANCHOR";
     detail = `${hits} matches for the mutation's text - fix this tool, the source moved`;
-    failures.push(mutation.what);
+    failures.push(`${mutation.what} (anchor no longer matches)`);
   } else {
-    await writeFile(mutation.file, source.replace(mutation.from, mutation.to));
-    let result;
-    try {
-      result = suite();
-    } finally {
-      await writeFile(mutation.file, source);
-    }
+    writeFileSync(
+      scratch(mutation.file),
+      source.replace(mutation.from, mutation.to),
+    );
+    const result = suite();
+    writeFileSync(scratch(mutation.file), source);
     if (result.passed) {
       verdict = "SURVIVED";
       detail = "no test noticed - the suite does not own this behaviour";
