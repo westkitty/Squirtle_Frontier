@@ -55,17 +55,17 @@
     "heat": 0.7499999999999999,
     "soaked": 0.09999999999999999
   },
-  "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully; 27 m above the shallows.",
-  "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m above the shallows.",
+  "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
+  "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
   "reachCounts": "spring-gully,drainage-groove",
   "drinkNote": "No drink tracks yet. Animals drink where the shallows run clean.",
-  "waterNote": "Water followed: Spring gully (27 m) · Drainage groove (3 m). 2 of 6 reaches.",
+  "waterNote": "Water followed: Spring gully (27 m) · Drainage groove (3 m). 2 of 6 reaches, 1 holding water.",
   "reachGeometry": {
     "geometries": 21,
     "followed": 2
   },
   "record": {
-    "y": -7.5509649966186245,
+    "y": -7.537100820640542,
     "caption": "About 629 years ago. A water house drew from the spring. Cut stone remembers its cistern."
   },
   "teardown": {
@@ -80,7 +80,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 299,
+      "frame": 335,
       "calls": 11,
       "triangles": 9488,
       "points": 0,

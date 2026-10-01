@@ -83,7 +83,17 @@ try {
   );
   await page.keyboard.up("KeyF");
   assert.match(evidence.senseAtSpring, /You are on the Spring gully/);
-  assert.match(evidence.senseAtSpring, /\d+ m above the shallows\./);
+  assert.match(evidence.senseAtSpring, /\d+ m to the shallows/);
+  assert.match(
+    evidence.senseAtSpring,
+    /[\d.]+ m above the water|, at the water/,
+    "the sense line has to say how high the water is under you",
+  );
+  assert.match(
+    evidence.senseAtSpring,
+    /a dry channel/,
+    "with an undisturbed basin a natural inflow holds no water to report",
+  );
   await standOn({ x: BYPASS_SITE.x, z: BYPASS_SITE.z });
   await page.waitForTimeout(1600);
   await page.keyboard.down("KeyF");
@@ -122,7 +132,11 @@ try {
     () => document.querySelector("#water-note").textContent,
   );
   assert.match(evidence.waterNote, /Spring gully \(\d+ m\)/);
-  assert.match(evidence.waterNote, /2 of \d+ reaches\./);
+  assert.match(
+    evidence.waterNote,
+    /2 of \d+ reaches, \d+ holding water\./,
+    "the panel counts water in the network, not just walked routes",
+  );
   evidence.reachGeometry = await page.evaluate(() => ({
     geometries: window.__SF.renderer.info.memory.geometries,
     followed: window.__SF.state.memory.reaches.length,

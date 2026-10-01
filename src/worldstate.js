@@ -5,6 +5,7 @@ import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
 import { Ecosystem } from "./simulation/ecosystem.js";
 import { Watershed } from "./simulation/watershed.js";
+import { waterLevelFor } from "./simulation/water-level.js";
 import { WORLD } from "./worldgen.js";
 export class WorldState {
   constructor() {
@@ -27,6 +28,13 @@ export class WorldState {
   }
   sampleHeight(x, z) {
     return channelHeight(x, z, this.frontier.stage);
+  }
+  // One number for the whole basin. Derived from the wetland node rather than stored, so
+  // a restored save gets the level its graph implies and an offline catch-up cannot drift
+  // away from it, and so the wade line, the herd's shore and the painted shallows agree.
+  get waterLevel() {
+    const wetland = this.watershed.nodes.find((n) => n.id === "wetland");
+    return waterLevelFor(wetland?.wetness);
   }
   update(dt) {
     if (!Number.isFinite(dt) || dt < 0 || dt > 1)

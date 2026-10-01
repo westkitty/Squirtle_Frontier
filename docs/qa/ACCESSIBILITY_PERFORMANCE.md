@@ -99,3 +99,15 @@ one in 100,000 pixels, recorded here rather than smoothed over.
 
 Still unknown after this: any real GPU or mobile number, and whether 64 is enough
 detail for a _wider_ cut if the channel is ever carved to more than one chunk.
+
+## The basin level costs nothing to draw (2026-10-01)
+
+`docs/qa/WATER_LEVEL.md` derives one height from the wetland node and lets the wade
+predicate, the herd's shore, the painted shallows and the reach readouts all read it. No
+mesh, geometry or draw call was added, and the triangle count is identical before and
+after (`31,236` on the bank, `55,241` in the cut): 23 geometries, six textures, 40 calls,
+122 line primitives, 66.7 ms median on high and 33.3 ms on low in this environment,
+teardown zero. What did change is what is _seen_: the same-pose screenshot pair differs on
+`tools/png-diff.mjs` by mean channel delta 1.49 with 4.4% of pixels moved, against the
+0.0005 / 0.001% of the invisible LOD saving. Targets for real hardware and mobile remain
+undemonstrated.

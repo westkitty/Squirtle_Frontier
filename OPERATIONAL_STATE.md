@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 18
+revision: 19
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -237,3 +237,12 @@ R/contextual button near the wooden platform advances the existing regional simu
 - `npm run perf` gained two forced-stage-4 scenarios (in the groove, and viewed from the next chunk over) measured one run per rule: 55,241 triangles and 83.2/83.3 ms unchanged in the first, 56,445 to 31,869 triangles and 66.6 to 50.0 ms median in the second. The triangle drop is the reproducible result; a one-frame median shift under shared-CPU software rendering is treated as noise, and no hardware or mobile number exists.
 - `tools/png-diff.mjs` (new, dependency-free PNG decoder + `tools/png-diff.test.mjs`, 5 checks) answers "is that visible?" against a control pair: 0.0011 mean channel delta for a pose the rule cannot touch versus 0.0005 for the far view and 0.0227 when standing on the chunk border looking down the groove, with at most 0.003% of pixels moved. Cheaper ring LOD is therefore invisible at distance and sub-pixel at the border; recorded rather than hidden.
 - 81 checks pass; build, `browser:dist` and all nine browser journeys green. Still open: hardware/mobile FPS, whether 64 segments suffices for a groove that ever spans chunks, authored terrain art, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.
+
+## Basin water level checkpoint
+
+- `src/simulation/water-level.js` derives one water height from `Watershed.nodes[wetland].wetness`, anchored so an untouched basin sits exactly on the line it has always used (`WATER_BASE`, verified equal) and bounded to +0.28/-0.05 m. It is derived, not saved: no save version changed, and a restored save reproduces the level from its own graph.
+- One authority now: `waterAt(x,z,level)` is what the body swims by, what the herd picks a drinking shore with, what the camera tests for submersion and what the painted shallows are set against, so a shoreline you can see is a shoreline you get wet in. The 1.5 cm paint lift and 5 cm wade offset are named constants with a test that their difference never changes as the level moves.
+- The named reaches gained a measured voice: `You are on the North run, a dry channel; 6 m to the shallows, 0.8 m above the water` becomes `water in patches ... 0.6 m above the water` once the basin is fed, and the reach lines colour by measured water rather than by an authored flag. Flow is sampled through the same predicate, so the readout cannot claim water where the body would stay dry.
+- `browser:watershed` clears the landslide with real jet pulses and asserts the flooded wording, a shoreline cell count (655 to 707 through `waterAt` in Node) and the restored level. 90 checks pass; all ten journeys, `npm run build` and `browser:dist` green; ordinary run unchanged at 23 geometries / 40 calls / 31,236 triangles, so the pass cost no rendering.
+- Found and fixed while building: a `controls`-out-of-scope crash in the render callback that killed the animation loop under adaptive load, a stale-DOM sense read in the journey tool, and a jet fixture pose that slid out of range. See `docs/qa/WATER_LEVEL.md`.
+- Still open: no fluid or per-cell water (one scalar from one node; the cut does not widen the painted basin, and `heightAt` not `channelHeight` still decides submergence), no flow travelling along named reaches, Lab/settlement basins keep fixed water tests, wildlife art stays primitive, richer Lab play, hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.

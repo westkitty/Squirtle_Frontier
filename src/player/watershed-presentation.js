@@ -83,18 +83,32 @@ export class WatershedPresentation {
     this.reachSeen = null;
     this.paintReaches([], 0);
   }
-  paintReaches(seen, stage) {
+  // One colour for where water is and one brightness for what you have walked: the line
+  // is a map of the basin's inflows, not a score, so the water signal wins the hue.
+  paintReaches(seen, stage, water = {}) {
     const dim = new THREE.Color(0x40645d),
       lit = new THREE.Color(0x9fd8c0),
-      cut = new THREE.Color(0xf3cf82);
+      running = new THREE.Color(0x6fb6d8),
+      cut = new THREE.Color(0xf3cf82),
+      dryCut = new THREE.Color(0x6b5a3f);
     for (const range of this.reachRanges) {
-      const color = range.cut
-        ? stage > 0
-          ? cut
-          : dim
-        : seen.includes(range.id)
-          ? lit
-          : dim;
+      const flow = water[range.id];
+      const color = (
+        range.cut
+          ? stage > 0
+            ? flow?.flowing
+              ? cut
+              : dryCut
+            : dim
+          : flow?.flowing
+            ? running
+            : flow && flow.fraction > 0
+              ? running.clone().lerp(dim, 0.55)
+              : seen.includes(range.id)
+                ? lit
+                : dim
+      ).clone();
+      if (!range.cut && seen.includes(range.id)) color.lerp(lit, 0.45);
       for (let v = range.from; v < range.to; v++) {
         this.reachColors[v * 3] = color.r;
         this.reachColors[v * 3 + 1] = color.g;
@@ -103,14 +117,18 @@ export class WatershedPresentation {
     }
     this.reachGeometry.attributes.color.needsUpdate = true;
   }
-  update(watershed, body, sensing, time, seen = [], stage = 0) {
-    const node = watershed.nodes[1];
+  update(watershed, body, sensing, time, seen = [], stage = 0, water = {}) {
+    const node = watershed.nodes[1],
+      flows = REACHES.map(
+        (r) =>
+          `${r.id}:${water[r.id]?.flowing ? 1 : (water[r.id]?.fraction ?? 0) > 0 ? 2 : 0}`,
+      ).join(",");
     this.group.visible =
       Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 55;
-    const signature = `${stage}|${seen.join(",")}`;
+    const signature = `${stage}|${seen.join(",")}|${flows}`;
     if (signature !== this.reachSeen) {
       this.reachSeen = signature;
-      this.paintReaches(seen, stage);
+      this.paintReaches(seen, stage, water);
     }
     this.reachLines.visible = Math.hypot(body.x, body.z) < 72;
     this.debris.count = Math.ceil((node.blockage / 0.95) * 9);

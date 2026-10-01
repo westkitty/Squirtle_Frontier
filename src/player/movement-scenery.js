@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { WATER_BASE, WATER_SURFACE_Y } from "../simulation/water-level.js";
 import { heightAt, WORLD } from "../worldgen.js";
 import { obstacles, treesForChunk } from "./movement-region.js";
 // Presentation-only training landmarks. Each grove is owned by its streamed chunk.
@@ -47,7 +48,7 @@ export class MovementScenery {
     );
     this.water.rotation.x = -Math.PI / 2;
     this.water.scale.set(10, 31, 1);
-    this.water.position.y = 0.015;
+    this.water.position.y = WATER_SURFACE_Y(WATER_BASE);
     scene.add(this.water);
     this.pool = new THREE.InstancedMesh(
       new THREE.SphereGeometry(0.035, 4, 3),
@@ -149,7 +150,8 @@ export class MovementScenery {
     group.removeFromParent();
     this.groups.delete(key);
   }
-  update(body, dt) {
+  update(body, dt, level = null) {
+    if (level !== null) this.water.position.y = WATER_SURFACE_Y(level);
     const ground = heightAt(body.x, body.z),
       depth = body.y - ground;
     this.contact.visible = ground > -0.1 && depth < 1.5;

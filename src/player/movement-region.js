@@ -1,4 +1,5 @@
 import { WATER_HOUSE } from "../simulation/settlement.js";
+import { WATER_BASE, WATER_SHORELINE } from "../simulation/water-level.js";
 import { heightAt, WORLD } from "../worldgen.js";
 import { hash2i, mulberry32 } from "../rng.js";
 export const obstacles = [
@@ -14,9 +15,10 @@ export function sampleGround(x, z) {
     dz: (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e),
   };
 }
-export function waterAt(x, z) {
-  return (x / 10) ** 2 + (z / 31) ** 2 < 1 && heightAt(x, z) < -0.05
-    ? { level: 0, currentX: 0.08, currentZ: -0.18 }
+export function waterAt(x, z, level = WATER_BASE) {
+  return (x / 10) ** 2 + (z / 31) ** 2 < 1 &&
+    heightAt(x, z) < WATER_SHORELINE(level)
+    ? { level, currentX: 0.08, currentZ: -0.18 }
     : null;
 }
 export function treesForChunk(i, j) {

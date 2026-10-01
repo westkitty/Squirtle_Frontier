@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 12,
         "textures": 6
       },
       "assets": {
@@ -149,16 +149,16 @@
   "return": {
     "place": "lab",
     "ecosystem": {
-      "reeds": 0.9684838286190004,
-      "insects": 0.9438582453479114,
-      "prey": 0.7666070402791555,
-      "predators": 0.394773476962641,
+      "reeds": 0.968625991613637,
+      "insects": 0.9433048844819074,
+      "prey": 0.7660172735644929,
+      "predators": 0.39462383726395966,
       "cistern": 1,
-      "labWater": 0.9802601111664972,
-      "labReeds": 0.8333553713825956,
-      "labInsects": 0.7683704550644126,
-      "labFrogs": 0.7224809391167245,
-      "eligibleSeconds": 1579
+      "labWater": 0.9832896221502255,
+      "labReeds": 0.8323845762364876,
+      "labInsects": 0.7672782970906457,
+      "labFrogs": 0.7221116851858761,
+      "eligibleSeconds": 1578
     }
   },
   "restSeconds": 300,
@@ -174,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 122,
+      "frame": 126,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

@@ -3,6 +3,7 @@ import { NearWildlife } from "./simulation/near-wildlife.js";
 import { settlementObstacles } from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
 import { REACHES, reachAt, reachById } from "./simulation/reaches.js";
+import { reachWaterState } from "./simulation/water-level.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
@@ -99,13 +100,30 @@ async function boot() {
           };
         },
         water: (x, z) => {
-          const water = region.water(x, z);
+          const water = region.water(x, z, state.waterLevel);
           if (!water) return null;
           const flow = state.watershed.nodes[2].flow;
           return { ...water, currentX: 0.08 * flow, currentZ: -0.18 * flow };
         },
       },
       rig = new CreatureCamera(camera, liveRegion);
+    // Water in the named inflows is read through the predicate the body swims by, and only
+    // re-read when the basin's level or the player's cut changes. Nothing here pretends to
+    // move water: it is a measurement of where water already is.
+    let reachWater = {},
+      reachWaterKey = "";
+    const readReachWater = () => {
+      const key = `${state.frontier.stage}|${(state.waterLevel * 1000) | 0}`;
+      if (key === reachWaterKey) return reachWater;
+      reachWaterKey = key;
+      reachWater = {};
+      for (const reach of REACHES)
+        reachWater[reach.id] = reachWaterState(
+          reach,
+          (x, z) => !!liveRegion.water(x, z),
+        );
+      return reachWater;
+    };
     let record = null;
     let lab = null,
       interactionHeld = false;
@@ -290,7 +308,9 @@ async function boot() {
       document.querySelector("#water-note").textContent = followed.length
         ? `Water followed: ${followed
             .map((r) => `${r.name} (${Math.round(r.length)} m)`)
-            .join(" · ")}. ${followed.length} of ${REACHES.length} reaches.`
+            .join(" · ")}. ${followed.length} of ${REACHES.length} reaches, ${
+            REACHES.filter((r) => readReachWater()[r.id]?.flowing).length
+          } holding water.`
         : "No channels followed yet. Water runs down from the rim to the shallows.";
       document.querySelector("#companion").textContent = n
         ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
@@ -471,11 +491,15 @@ async function boot() {
     scene.add(creature.root);
     let hudTime = 0,
       saveTime = 0,
-      lastRender = null;
+      lastRender = null,
+      // The step callback owns the input sample; the render callback below needs to know
+      // whether the player is reading a sense line without reaching out of scope.
+      senseHeld = false;
     const loop = new Loop(
       (dt) => {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
+        senseHeld = !!controls.sense;
         const action = placeAction(state.place, body);
         document.querySelector("#interact").hidden = !action;
         document.querySelector("#interact").textContent =
@@ -569,6 +593,7 @@ async function boot() {
           state.elapsed,
           state.memory.reaches,
           state.frontier.stage,
+          readReachWater(),
         );
         scenery.water.material.opacity =
           0.35 + state.watershed.nodes[2].wetness * 0.25;
@@ -583,18 +608,28 @@ async function boot() {
               ? "Fresh water carries reed seeds into the basin."
               : "The basin waits for water from the wetland.";
         else if (controls.sense) {
-          const reach = reachAt(body.x, body.z);
+          const reach = reachAt(body.x, body.z),
+            flow = reach ? readReachWater()[reach.id] : null,
+            above = reach
+              ? state.sampleHeight(body.x, body.z) - state.waterLevel
+              : 0;
           status.textContent = `${
             signal?.message || "Touch the water to listen to its current."
           }${
             reach
               ? ` You are on the ${reach.name}${
-                  reach.cut
-                    ? state.frontier.stage > 0
+                  reach.cut && state.frontier.stage === 0
+                    ? ", still a dry groove"
+                    : flow?.flowing
                       ? ", carrying water"
-                      : ", still a dry groove"
-                    : ""
-                }; ${Math.round(reach.toMouth)} m above the shallows.`
+                      : flow && flow.fraction > 0
+                        ? ", water in patches"
+                        : ", a dry channel"
+                }; ${Math.round(reach.toMouth)} m to the shallows${
+                  above > 0.25
+                    ? `, ${above.toFixed(1)} m above the water`
+                    : ", at the water"
+                }.`
               : ""
           }`;
         }
@@ -609,7 +644,8 @@ async function boot() {
           place: state.place,
         };
         creature.present(body, dt);
-        if (state.place === "frontier") scenery.update(body, dt);
+        if (state.place === "frontier")
+          scenery.update(body, dt, state.waterLevel);
         audio.update(body, Settings.values);
         saveTime += dt;
         if (saveTime >= 30) {
@@ -638,7 +674,7 @@ async function boot() {
             : state.place === "lab"
               ? labRegion
               : liveRegion
-          ).water(camera.position.x, camera.position.z);
+          ).water(camera.position.x, camera.position.z, state.waterLevel);
         scene.fog.color.set(
           underwater
             ? "#246c69"
@@ -658,7 +694,12 @@ async function boot() {
           adaptive.add(previousFrame) !== null
         ) {
           resize();
-          status.textContent = `Render scale ${Math.round(adaptive.value * 100)}%.`;
+          // The scale notice is transient, so it must not overwrite a readout the player
+          // is deliberately asking for with the sense key held down.
+          if (!senseHeld)
+            status.textContent = `Render scale ${Math.round(
+              adaptive.value * 100,
+            )}%.`;
         }
         hudTime++;
         if (hudTime % 3 === 0) {
