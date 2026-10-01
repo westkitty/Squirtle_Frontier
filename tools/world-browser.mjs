@@ -3,6 +3,11 @@ import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { REACHES, SPRING_SITE } from "../src/simulation/reaches.js";
 import { BYPASS_SITE } from "../src/simulation/frontier-systems.js";
+import {
+  deepHistory,
+  deepTimeLedger,
+  recordRows,
+} from "../src/simulation/deep-history.js";
 const browser = await launchBrowser(),
   evidence = { errors: [], cycles: [] };
 try {
@@ -168,10 +173,84 @@ try {
   await page.waitForFunction(() => window.__SF.body.y < -7);
   await page.keyboard.up("KeyQ");
   await page.screenshot({ path: "artifacts/world-record.png" });
-  evidence.record = await page.evaluate(() => ({
-    y: window.__SF.body.y,
-    caption: document.querySelector("#status").textContent,
-  }));
+  // Hold the body still: a drifting y would make the painted row and the measured row
+  // disagree for reasons that have nothing to do with the readout being honest.
+  const pinInShaft = () =>
+    page.evaluate(() => {
+      const g = window.__SF;
+      Object.assign(g.body, { x: 0, z: 0, y: -12.4, vx: 0, vy: 0, vz: 0 });
+      g.rig.initial = true;
+    });
+  const readRecord = async () => {
+    await pinInShaft();
+    return page.evaluate(() => ({
+      y: window.__SF.body.y,
+      hidden: document.querySelector("#record-readout").hidden,
+      caption: document.querySelector("#status").textContent,
+      seed: window.__SF.state.seed,
+      rows: [...document.querySelectorAll("#record-readout div")].map((d) => ({
+        label: d.querySelector("dt").textContent,
+        value: d.querySelector("dd").textContent,
+      })),
+      live: {
+        tick: window.__SF.state.frontier.tick,
+        stage: window.__SF.state.frontier.stage,
+        diversion: window.__SF.state.frontier.diversion,
+        history: window.__SF.state.frontier.history,
+        nodes: window.__SF.state.watershed.nodes.map((n) => ({
+          id: n.id,
+          erosion: n.erosion,
+          sediment: n.sediment,
+        })),
+      },
+    }));
+  };
+  const expectRows = (r) =>
+    recordRows(
+      deepTimeLedger({
+        eras: deepHistory(r.seed),
+        y: r.y,
+        tick: r.live.tick,
+        history: r.live.history,
+        nodes: r.live.nodes,
+        stage: r.live.stage,
+        diversion: r.live.diversion,
+      }),
+    );
+  // The rows are painted during a frame and the graph advances on the same tick, so the
+  // two can be a frame apart on read. Retry until they line up rather than loosening the
+  // comparison: this asserts the exact measured strings, or nothing.
+  let recordDom = await readRecord(),
+    expected = expectRows(recordDom),
+    mismatch = null;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    mismatch = null;
+    for (let i = 0; i < expected.length; i++)
+      if ((recordDom.rows[i]?.value ?? null) !== expected[i].value)
+        mismatch = `row "${expected[i].label}": screen "${
+          recordDom.rows[i]?.value
+        }" vs measurement "${expected[i].value}"`;
+    if (!mismatch) break;
+    await page.waitForTimeout(60);
+    recordDom = await readRecord();
+    expected = expectRows(recordDom);
+  }
+  evidence.record = { y: recordDom.y, caption: recordDom.caption };
+  assert.equal(
+    recordDom.hidden,
+    false,
+    "the shaft readout belongs to the record",
+  );
+  assert.ok(expected.length >= 8, "the instrument has rows to compare");
+  assert.equal(
+    mismatch,
+    null,
+    "the screen must show the measurement, row for row",
+  );
+  const cutRow = recordDom.rows.find((r) => r.label === "your cut");
+  assert.match(cutRow.value, /% of the 22 m below you/);
+  evidence.recordRows = recordDom.rows;
+  evidence.recordRows = recordDom.rows;
   await page.keyboard.down("KeyE");
   await page.waitForFunction(() => window.__SF.body.y > -1, null, {
     timeout: 30000,
@@ -180,6 +259,11 @@ try {
   await page.keyboard.down("KeyR");
   await page.waitForFunction(() => window.__SF.state.place === "lab");
   await page.keyboard.up("KeyR");
+  await page.waitForFunction(
+    () => document.querySelector("#record-readout").hidden,
+    null,
+    { timeout: 5000 },
+  );
   for (let i = 0; i < 12; i++) {
     await page.evaluate(() => window.__SF.enterPlace("record"));
     await page.waitForTimeout(100);

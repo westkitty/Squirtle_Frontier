@@ -423,3 +423,52 @@ canvas:focus-visible {
   outline: 3px solid #ecd19c;
   outline-offset: -6px;
 }
+
+/* The shaft readout is an instrument, not a caption: values sit in a column and change
+   without moving the layout, so descending reads as measurement rather than animation. */
+#record-readout {
+  /* The HUD's dl is a two-column legend; a shaft log reads top to bottom. */
+  display: block;
+  position: absolute;
+  left: 0;
+  bottom: 116px;
+  margin: 0;
+  padding: 8px 14px 10px 12px;
+  max-width: min(40ch, 78vw);
+  border-left: 1px solid var(--line);
+  background: #14282466;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #f7f4de;
+  pointer-events: none;
+}
+#record-readout .readout-title {
+  display: block;
+  margin-bottom: 6px;
+  opacity: 0.72;
+}
+/* One measurement per row: the label is a legend, the value is the reading. */
+#record-readout div {
+  display: block;
+}
+#record-readout div + div {
+  margin-top: 5px;
+}
+#record-readout dt {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+#record-readout dd {
+  display: block;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 720px) {
+  #record-readout {
+    bottom: 140px;
+    max-width: calc(100vw - 24px);
+    font-size: 10px;
+  }
+}

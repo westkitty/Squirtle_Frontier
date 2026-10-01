@@ -2,7 +2,7 @@ import { launchBrowser } from "./browser-launch.mjs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { REACHES } from "../src/simulation/reaches.js";
-import { WATER_BASE } from "../src/simulation/water-level.js";
+import { WATER_BASE, waterLevelFor } from "../src/simulation/water-level.js";
 import { waterAt } from "../src/player/movement-region.js";
 // Counted here rather than in the page, through the same predicate the body swims by.
 const shoreline = (level) => {
@@ -171,21 +171,53 @@ try {
     evidence.shorelineCells.after > evidence.shorelineCells.before + 20,
     "a fed wetland has to uncover less shore than a blocked one",
   );
-  await page.click("#settings-toggle");
-  await page.click("#save");
-  await page.reload();
-  await page.waitForFunction(() => window.__SF?.loop.frames.length > 5);
   assert.equal(
     await page.evaluate(() => window.__SF.state.watershed.nodes[1].blockage),
     evidence.blockageCleared,
   );
-  evidence.levelAfterReload = await page.evaluate(
-    () => window.__SF.state.waterLevel,
+  // Read the level together with the wetness it comes from, in one evaluation: the graph
+  // ticks every second and the save button takes its own copy at click time, so two
+  // separate reads would compare numbers from two different worlds.
+  const levelPair = () =>
+    page.evaluate(() => {
+      const wetland = window.__SF.state.watershed.nodes.find(
+        (n) => n.id === "wetland",
+      );
+      return { level: window.__SF.state.waterLevel, wetness: wetland.wetness };
+    });
+  await page.click("#settings-toggle");
+  await page.click("#save");
+  await page.reload();
+  await page.waitForFunction(() => window.__SF?.loop.frames.length > 5);
+  const afterRestore = await levelPair();
+  evidence.levelAfterReload = afterRestore.level;
+  assert.equal(
+    afterRestore.level,
+    waterLevelFor(afterRestore.wetness),
+    "the level is derived from the graph, so a restore has to reproduce it",
+  );
+  // And it is derived live: nudge the graph and the water follows in the same frame,
+  // which no stored height could do.
+  evidence.levelFollowsGraph = await page.evaluate(() => {
+    const wetland = window.__SF.state.watershed.nodes.find(
+      (n) => n.id === "wetland",
+    );
+    const was = wetland.wetness;
+    wetland.wetness = 0.5;
+    const raised = window.__SF.state.waterLevel;
+    wetland.wetness = was;
+    const back = window.__SF.state.waterLevel;
+    return { raised, back, was };
+  });
+  assert.equal(
+    evidence.levelFollowsGraph.raised,
+    waterLevelFor(0.5),
+    "the level has to track the graph, not a stored number",
   );
   assert.equal(
+    evidence.levelFollowsGraph.back,
     evidence.levelAfterReload,
-    evidence.waterLevel.after,
-    "the level is derived from the graph, so a restore has to reproduce it",
+    "putting the graph back has to put the water back",
   );
   assert.deepEqual(errors, []);
   await writeFile(

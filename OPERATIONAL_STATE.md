@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 19
+revision: 20
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -246,3 +246,12 @@ R/contextual button near the wooden platform advances the existing regional simu
 - `browser:watershed` clears the landslide with real jet pulses and asserts the flooded wording, a shoreline cell count (655 to 707 through `waterAt` in Node) and the restored level. 90 checks pass; all ten journeys, `npm run build` and `browser:dist` green; ordinary run unchanged at 23 geometries / 40 calls / 31,236 triangles, so the pass cost no rendering.
 - Found and fixed while building: a `controls`-out-of-scope crash in the render callback that killed the animation loop under adaptive load, a stale-DOM sense read in the journey tool, and a jet fixture pose that slid out of range. See `docs/qa/WATER_LEVEL.md`.
 - Still open: no fluid or per-cell water (one scalar from one node; the cut does not widen the painted basin, and `heightAt` not `channelHeight` still decides submergence), no flow travelling along named reaches, Lab/settlement basins keep fixed water tests, wildlife art stays primitive, richer Lab play, hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.
+
+## Deep-time instrument checkpoint
+
+- The Deep Record shaft now measures the player instead of captioning them: `deepTimeLedger()` (pure, `src/simulation/deep-history.js`) turns body depth, seeded strata, `frontier.history`, per-node `erosion`/`sediment`, stage and diversion into one record, and `recordRows()` renders it into a HUD `<dl>` that only exists while `state.place === "record"`. `RECORD_DEPTH = 22` is the single source for the floor mesh, the region's sampled height and the wording on screen.
+- The readout cannot invent numbers: a unit test scans every rendered value and requires each numeral to be a ledger leaf, which is how a real defect died (`cutShare.toFixed(1)` on screen while the measurement held `0.32`). The ledger now carries display precision itself, so the cut-share ladder reads exactly 0 / 0.1 / 0.3 / 0.6 / 1.0 % of the 22 m below you for stages 0-4.
+- Two clocks stay unconverted on purpose. "Years until the basin fills" was rejected because `erosion` and `sediment` are dimensionless per-tick accumulations with no metres/year scale in the codebase; the limit row says so, and a test fails if any other row mixes years with ticks.
+- `browser:world` recomputes the ledger in Node from the page's live state and requires the screen to match row for row (retrying until the paint and the tick line up rather than loosening the comparison), plus asserts the readout stays hidden in the Lab. `tools/deep-time.test.mjs` adds 11 checks: 101/101 pass, all ten journeys, build and `browser:dist` green, ordinary run unchanged at 31,236 triangles and 0/0 geometries/textures at teardown.
+- Found and fixed while validating: the HUD's global `dl { display: grid; grid-template-columns: 1fr 1fr }` was laying the shaft log out as a two-column checkerboard (now `display: block`, label above value, 40ch cap, verified by desktop and mobile screenshots); and `browser:watershed`'s restore check compared a pre-click level with a post-reload level across a live tick, failing about half the time (now an exact same-frame derivation check plus a live-follow probe, three runs green).
+- Still open: `your cut` reports the depth the channel stage implies rather than a survey of the hole, the strata are authored canon with 20.5 m of banding over a 22 m shaft, no per-reach wear history, no fluid or per-cell water, hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.

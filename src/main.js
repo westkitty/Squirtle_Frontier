@@ -7,6 +7,7 @@ import { reachWaterState } from "./simulation/water-level.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
+import { deepTimeLedger, recordRows } from "./simulation/deep-history.js";
 import { LANDMARKS } from "./simulation/place-memory.js";
 import * as THREE from "three";
 import { pixelRatioFor } from "./render-quality.js";
@@ -40,8 +41,12 @@ import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
 import { Audio } from "./audio.js";
 const status = document.querySelector("#status"),
-  loading = document.querySelector("#loading");
-let cleanup = () => {};
+  loading = document.querySelector("#loading"),
+  recordReadout = document.querySelector("#record-readout");
+// Module scope, because cleanup can run from a pagehide during boot: a `let` declared
+// later in the boot body would still be in its temporal dead zone when it is reached.
+let cleanup = () => {},
+  recordShown = "";
 async function boot() {
   try {
     Settings.load();
@@ -210,6 +215,8 @@ async function boot() {
       creature?.dispose();
       streaming.dispose();
       scenery.dispose();
+      recordReadout.hidden = true;
+      recordShown = "";
       watershedView.dispose();
       habitat.dispose();
       wildlife.clear();
@@ -489,6 +496,36 @@ async function boot() {
       throw new Error("Boot cancelled");
     }
     scene.add(creature.root);
+    // The shaft is an instrument, so it is written once per change rather than once per
+    // frame: descending re-renders on a new row set and on nothing else.
+    const renderRecordReadout = (ledger) => {
+      const rows = recordRows(ledger),
+        signature = rows
+          .map((row) => `${row.label}\u0000${row.value}`)
+          .join("\u0001");
+      if (signature === recordShown) return;
+      recordShown = signature;
+      recordReadout.replaceChildren(
+        ...[
+          Object.assign(document.createElement("dt"), {
+            className: "eyebrow readout-title",
+            textContent: "Stillwater measurement / 01",
+          }),
+          ...rows.map((row) => {
+            const wrap = document.createElement("div");
+            wrap.append(
+              Object.assign(document.createElement("dt"), {
+                textContent: row.label,
+              }),
+              Object.assign(document.createElement("dd"), {
+                textContent: row.value,
+              }),
+            );
+            return wrap;
+          }),
+        ],
+      );
+    };
     let hudTime = 0,
       saveTime = 0,
       lastRender = null,
@@ -548,6 +585,17 @@ async function boot() {
             body.z *= 3.4 / r;
           }
           status.textContent = record.describe(body.y);
+          renderRecordReadout(
+            deepTimeLedger({
+              eras: record.eras,
+              y: body.y,
+              tick: state.frontier.tick,
+              history: state.frontier.history,
+              nodes: state.watershed.nodes,
+              stage: state.frontier.stage,
+              diversion: state.frontier.diversion,
+            }),
+          );
         } else {
           applyWaterJet(state.watershed, body, dt);
           applyWorldJet(state.frontier, body, dt);
@@ -708,6 +756,8 @@ async function boot() {
               ? state.frontier.weather.type
               : "Sheltered";
           if (!document.querySelector("#memory").hidden) refreshMemoryPanel();
+          // The instrument belongs to the shaft and to nothing else.
+          recordReadout.hidden = state.place !== "record";
 
           document.querySelector("#mode").textContent = {
             land:

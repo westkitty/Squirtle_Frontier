@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { deepHistory } from "../simulation/deep-history.js";
+import { RECORD_DEPTH, deepHistory } from "../simulation/deep-history.js";
 export const recordRegion = {
-  sample: () => ({ height: -22, dx: 0, dz: 0 }),
+  sample: () => ({ height: -RECORD_DEPTH, dx: 0, dz: 0 }),
   water: () => ({ level: 0, currentX: 0, currentZ: 0 }),
   obstacles: Array.from({ length: 48 }, (_, i) => ({
     x: Math.sin((i * Math.PI) / 24) * 4,
@@ -34,7 +34,7 @@ export class DeepRecord {
     this.materials.push(floorMat);
     this.floor = new THREE.Mesh(this.floorGeo, floorMat);
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.position.y = -22;
+    this.floor.position.y = -RECORD_DEPTH;
     this.group.add(this.floor);
   }
   describe(y) {

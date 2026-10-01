@@ -65,9 +65,43 @@
     "followed": 2
   },
   "record": {
-    "y": -7.537100820640542,
-    "caption": "About 629 years ago. A water house drew from the spring. Cut stone remembers its cistern."
+    "y": -12.4,
+    "caption": "About 895 years ago. A long dry season lowered the reeds. Wind laid sand over the mud."
   },
+  "recordRows": [
+    {
+      "label": "shaft",
+      "value": "−12.4 m of 22"
+    },
+    {
+      "label": "layer",
+      "value": "6 of 8 · 2.3 m of pale silt"
+    },
+    {
+      "label": "recorded",
+      "value": "about 895 years ago"
+    },
+    {
+      "label": "basin clock",
+      "value": "9 ticks · ledger empty"
+    },
+    {
+      "label": "water moved",
+      "value": "0.8 units of wear · 0.01 of sediment in the shallows"
+    },
+    {
+      "label": "your cut",
+      "value": "0.03 m of floor · 0.1% of the 22 m below you"
+    },
+    {
+      "label": "trend",
+      "value": "no second entry yet"
+    },
+    {
+      "label": "the shaft does not convert",
+      "value": "record in years, basin in ticks; nothing in the water translates between them"
+    }
+  ],
   "teardown": {
     "chunks": {
       "active": 0,
@@ -80,7 +114,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 335,
+      "frame": 256,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
