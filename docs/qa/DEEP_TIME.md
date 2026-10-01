@@ -179,8 +179,9 @@ _fix_ along with the probe; throwaway edits belong in a `/tmp` copy, not in the 
 `deepTimeLedger` plus `recordRows` costs 5.7 µs per call measured in Node (20,000 calls,
 real 8-era graph, 90-entry history): it runs once per frame in the same branch that already
 built the caption, so the added work is a rounding error against a 16.6 ms frame, and the
-DOM is written only when a row's string signature changes. The hold-to-read path adds four
-comparisons per frame and only while `state.place === "record"`, and the frame after logging
+DOM is written only when a row's string signature changes. Outside the shaft the mechanic
+costs one comparison per frame (the reset when `state.place !== "record"`); inside it, a
+handful of numeric tests on values already computed for the caption, and the frame after logging
 a band is one signature change wide. Ordinary-run triangles are unchanged at 31,236 across
 the runs that shipped this; the two recorded medians of the same build were 66.7 / 33.4 ms
 and 83.3 / 50.0 ms, which is shared-CPU software-rendering noise of the kind
@@ -195,6 +196,14 @@ rendering and are recorded rather than interpreted; there is no hardware or mobi
 
 ## Still open
 
+- The walls are drawn but faint. A probe from inside the shaft found all eight stratum
+  meshes present and visible (`side: BackSide`, positioned at the band depths −1.5, −3.8,
+  −6.1 …), rendering in 5 calls / 4,844 triangles with most bands frustum-culled from the
+  surface; the reason a mid-shaft screenshot reads as a wash is that the scene fog is
+  `#597b76` and two of the four band colours (`#607875`, `#62645c`) sit within a few
+  percent of it, so the record is legible as a measurement long before it is legible as a
+  wall. Making the column readable in geometry is an art pass with its own visual review,
+  not a number to nudge inside this one.
 - Strata remain authored canon: 8 bands, 2.3 m each. The readout now says so out loud —
   the bands tile 20.5 m of the 22 m shaft, and the 1.5 m of bank above them is reported as
   bank instead of being assigned a date.

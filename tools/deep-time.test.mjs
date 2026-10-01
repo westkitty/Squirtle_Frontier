@@ -5,6 +5,7 @@ import {
   RECORD_BANDS,
   RECORD_DEPTH,
   STRATA_HOLD_SECONDS,
+  STRATA_SETTLE_SPEED,
   advanceStrataHold,
   strataHoldReady,
   RECORD_MATERIALS,
@@ -329,6 +330,23 @@ test("reading a band takes standing in it, and falling through does not", () => 
     })).ready,
     true,
   );
+  // The settle threshold is a documented number, so it is pinned: at the limit the hold
+  // still grows, just above it only bleeds.
+  let edge = { band: 5, held: 0.3 };
+  for (let i = 0; i < 40; i++)
+    edge = advanceStrataHold(edge, at(-12.4), STRATA_SETTLE_SPEED, dt);
+  assert.ok(strataHoldReady(edge), "at the limit, time still counts");
+  let parked = { band: 5, held: 0 };
+  for (let i = 0; i < 600; i++)
+    parked = advanceStrataHold(parked, at(-12.4), 0, dt);
+  assert.ok(
+    parked.held <= STRATA_HOLD_SECONDS + dt + 1e-9,
+    "a hold held forever does not grow without bound",
+  );
+  let fast = { band: 5, held: 0.8 };
+  for (let i = 0; i < 40; i++)
+    fast = advanceStrataHold(fast, at(-12.4), STRATA_SETTLE_SPEED + 0.1, dt);
+  assert.ok(fast.held < 0.8, "above the limit, the count is bled away");
   // In the bank there is nothing to read, and the hold cannot be carried between bands.
   assert.equal(run(() => ({ y: -0.4, vy: 0 })).ready, false);
   let carry = { band: -1, held: 0 };
