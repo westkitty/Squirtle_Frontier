@@ -152,6 +152,25 @@ const MUTATIONS = [
       "    const drinkable =\n      !!this.sites.length && quality > 0.5 && (water?.wetness ?? 1) > 0.25;",
     to: "    const drinkable = !!this.sites.length;",
   },
+  {
+    what: "stationary idle freezes into a bind-pose statue without breathing",
+    file: "src/assets/squirtle-presentation.js",
+    from: "        const breath = Math.sin(this.breathPhase);",
+    to: "        const breath = 0;",
+  },
+  {
+    what: "aquatic swimming repeats land gait without flipper strokes",
+    file: "src/assets/squirtle-presentation.js",
+    from: "    this.swimPhase += dt * (aquatic ? (isMoving ? 6.2 : 2.5) : 0);",
+    to: "    this.swimPhase = 0;",
+  },
+  {
+    what: "water exit fails to trigger an emergent shake-off",
+    file: "src/assets/squirtle-presentation.js",
+    from:
+      "    if (this.wasAquatic && !aquatic && b.grounded) {\n      this.shakeTime = 0.6;\n    }",
+    to: "    if (false) {\n      this.shakeTime = 0.6;\n    }",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

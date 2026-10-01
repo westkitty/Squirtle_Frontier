@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 24
+revision: 25
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -288,3 +288,17 @@ R/contextual button near the wooden platform advances the existing regional simu
 - `browser:habitat` no longer injects the repair. It clears the landslide with real aimed Space pulses (the same play browser:watershed proves), saves through the Settings control, rewinds the stored clock thirty minutes (the one time fixture, standing in for a wait no test can afford), reloads into the offline tick, and then asserts the rendered consequence on both sides: frontier reeds 3 → 46 of 48 instances, Lab reeds 0 → 40, Lab frogs 0 → 8, basin opacity 0.30 → 0.68, and both sense sentences — "The basin waits for water from the wetland" before, "Fresh water carries reed seeds into the basin" after. Rest edge-latch, twelve Lab/frontier cycles and zero-resource teardown retained. The cycle geometry bound moved 19 → 20 with an added no-growth assertion: the Lab's geometry composition depends on which shared geometries the repair leg uploaded before the first cycle (measured stable across all cycles; teardown still 0/0), so the guard is now "never accumulates" rather than an exact count from one flow. Vantage and door placements remain teleports and the run output says so. Evidence: `docs/qa/habitat-browser.json`, `artifacts/lab-before.png` and `lab-after.png` (opened: an empty bowl with thin water versus reeds, frogs and deeper water).
 - `window.__SF.labView()` added so journeys can read what the Lab actually renders; the frontier view remains `habitat`. No simulation, rendering or save-format change: ordinary frontier counts are unchanged (23 geometries / 40 calls in `browser:world`), teardown zero.
 - 112 checks pass; all ten journeys, `npm run build` and `browser:dist` green. Still open: teleports and pins remain the fixture class elsewhere in the ladder, no survey of the carved mesh behind `your cut`, hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.
+
+## Squirtle creature kinematics and aquatic identity checkpoint
+
+- Squirtle's physical presentation (`src/assets/squirtle-presentation.js`) upgraded from the static bind-pose placeholder to creature-first kinematics honoring Squirtle's living presence and aquatic identity.
+- Full skeleton role mapping extended across 13 articulated joints: `Head`, `Snout`, `LArm`, `LForearm`, `RArm`, `RForearm`, `LThigh`, `LCalf`, `RThigh`, `RCalf`, `Tail1`, `Tail2`, `Tail3`.
+- Living idle & respiration: When standing still on land, Squirtle no longer freezes into an immobile bind-pose statue. A subtle respiration cadence drives gentle head nods and resting arm posture, while its iconic curly tail sways continuously across three segments. Sustained stillness (>1.5s) activates curious idle glances and inquisitively tilted head orientation.
+- Aquatic swimming stroke & rudder: In `swim` and `dive` modes, Squirtle replaces the dry land gait with authentic aquatic kinematics: front flippers sweep in power/recovery breaststroke cycles with forearm articulation, hind legs flutter kick with calf flexing, and the three-segment tail undulates in an S-curve swimming rudder wave. Stationary water treading provides buoyant paddling and vertical surface bobbing.
+- Water Jet & slide posture: Water Jet triggers a streamlined hydrodynamic bullet pose (head forward, arms tucked alongside shell, legs and tail aligned). Shell slide cleanly retracts all extremities and tail segments into the shell (>0.92 retraction) with tactile elastic wobble on physical impacts.
+- Water-to-land emergent shake: Transitioning from water to land triggers a brief 0.6s water-shedding body and tail shake, celebrating Squirtle's aquatic nature.
+- Dedicated unit test suite (`tools/squirtle-presentation.test.mjs`, 6 new tests) pins role assignments, living respiration, aquatic stroke, water shake, shell retraction, and resource disposal. Unit tests expanded from 112 to 118 checks; all pass.
+- Mutation suite (`tools/mutation-check.mjs`) expanded from 20 to 23 documented-contract mutations: freezing idle without breathing, swimming without flipper stroke, and failing water-exit shake are now killed by named tests (23/23 caught in ~98s).
+- Tooling portability: `tools/browser-launch.mjs` updated with Darwin Google Chrome fallback, allowing headless browser test suites to run natively on macOS. `tools/world-browser.mjs` reach assertion made order-independent via sorting.
+- Validation: All 118 unit tests, architecture checks (`npm run check`), 23/23 mutations (`npm run mutate`), production bundle build (`npm run build`), and browser journeys (`browser`, `browser:world`, `browser:habitat`, `browser:wildlife`, `browser:watershed`, `browser:channel`, `browser:multitab`, `browser:a11y`, `browser:dist`, `npm run perf`) pass with zero errors and zero resource leaks (0 geometries / 0 textures at teardown).
+

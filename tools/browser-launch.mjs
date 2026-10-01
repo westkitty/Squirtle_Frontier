@@ -10,7 +10,9 @@ const require = createRequire(import.meta.url);
 export async function launchBrowser() {
  const launch = { headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] };
  if (process.env.BROWSER_EXECUTABLE) launch.executablePath = process.env.BROWSER_EXECUTABLE;
- else if (process.env.BROWSER_BUNDLED === '1') {
+ else if (process.platform === 'darwin' && existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')) {
+  launch.executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+ } else if (process.env.BROWSER_BUNDLED === '1') {
   const bundled = (await import('@sparticuz/chromium')).default;
   launch.executablePath = await bundled.executablePath();
   // Minimal containers can lack NSS/NSPR. These compatible libraries ship in the

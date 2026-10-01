@@ -157,14 +157,14 @@
   "blockageCleared": 0,
   "absence": {
     "wetness": 0.894473281648598,
-    "labFrogs": 0.7247333663103213,
-    "labWater": 0.9631060935627669
+    "labFrogs": 0.7247334082622922,
+    "labWater": 0.963106093562767
   },
   "frontierReedsAfter": 46,
   "labAfter": {
     "labReeds": 40,
     "labFrogs": 8,
-    "basinOpacity": 0.6821845841335026
+    "basinOpacity": 0.6821845841335027
   },
   "restSeconds": 300,
   "teardown": {
@@ -179,7 +179,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 139,
+      "frame": 200,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

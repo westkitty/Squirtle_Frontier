@@ -114,11 +114,11 @@ try {
     "a cut channel has to say whether it is running",
   );
   evidence.reachCounts = await page.evaluate(() =>
-    window.__SF.state.memory.reaches.join(","),
+    [...window.__SF.state.memory.reaches].sort().join(","),
   );
   assert.equal(
     evidence.reachCounts,
-    "spring-gully,drainage-groove",
+    "drainage-groove,spring-gully",
     "only routes actually stood on are remembered",
   );
   await page.click("#memory-toggle");

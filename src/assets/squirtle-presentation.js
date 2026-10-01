@@ -15,15 +15,27 @@ export class SquirtlePresentation extends PlayableCreature {
     this.bones = new Map();
     this.materials = [];
     this.phase = 0;
+    this.swimPhase = 0;
+    this.breathPhase = 0;
+    this.idleTime = 0;
+    this.shakeTime = 0;
+    this.wasAquatic = false;
     this.shell = 0;
     // Collada SID -> semantic role verified against source node hierarchy.
     const roles = {
       joint1: "Head",
+      joint2: "Snout",
       joint3: "LArm",
+      joint4: "LForearm",
       joint9: "LThigh",
+      joint10: "LCalf",
       joint13: "RArm",
+      joint14: "RForearm",
       joint19: "RThigh",
+      joint20: "RCalf",
       joint23: "Tail1",
+      joint24: "Tail2",
+      joint25: "Tail3",
     };
     handle.root.traverse((o) => {
       if (o.isBone)
@@ -45,47 +57,225 @@ export class SquirtlePresentation extends PlayableCreature {
       }
     });
   }
+  get isLiving() {
+    return true;
+  }
+  get isShaking() {
+    return this.shakeTime > 0;
+  }
+  get idleDuration() {
+    return this.idleTime;
+  }
+  get shellRetraction() {
+    return this.shell;
+  }
+  get swimStroke() {
+    return this.swimPhase;
+  }
   present(b, dt) {
-    this.phase += dt * Math.max(1, Math.hypot(b.vx, b.vz) * 8);
+    const aquatic = b.mode === "swim" || b.mode === "dive";
+    const speed = Math.hypot(b.vx, b.vz);
+    const isMoving = speed > 0.08;
     const inShell = b.mode === "slide";
+
+    // Water exit detection: stepping out of water triggers a brief water-shedding shake
+    if (this.wasAquatic && !aquatic && b.grounded) {
+      this.shakeTime = 0.6;
+    }
+    this.wasAquatic = aquatic;
+    this.shakeTime = Math.max(0, this.shakeTime - dt);
+
+    // Idle duration tracking on dry land
+    if (!isMoving && b.grounded && !aquatic) {
+      this.idleTime += dt;
+    } else {
+      this.idleTime = 0;
+    }
+
+    // Kinematic phase progressions
+    this.phase += dt * Math.max(1, speed * 8);
+    this.swimPhase += dt * (aquatic ? (isMoving ? 6.2 : 2.5) : 0);
+    this.breathPhase += dt * 2.2;
     this.shell += (Number(inShell) - this.shell) * (1 - Math.exp(-14 * dt));
+
     this.root.position.set(b.x, b.y, b.z);
     this.root.rotation.y = b.yaw;
+
+    // Reset bones to base rest pose before applying procedural kinematics
     for (const { node, q, scale } of this.bones.values()) {
       node.quaternion.copy(q);
       node.scale.copy(scale);
     }
-    const rotate = (name, amount) => {
+
+    const rotateX = (name, amount) => {
+      const bone = this.bones.get(name);
+      if (bone) bone.node.rotateX(amount);
+    };
+    const rotateY = (name, amount) => {
       const bone = this.bones.get(name);
       if (bone) bone.node.rotateY(amount);
     };
-    const gait =
-      Math.sin(this.phase) *
-      Math.min(0.3, Math.hypot(b.vx, b.vz) * 0.1) *
-      (1 - this.shell);
-    rotate("LThigh", gait);
-    rotate("RThigh", -gait);
-    rotate("LArm", -gait * 0.7);
-    rotate("RArm", gait * 0.7);
-    // New procedural poses; never represented as verified source animation clips.
-    for (const name of ["Head", "LArm", "RArm", "LThigh", "RThigh", "Tail1"]) {
+    const rotateZ = (name, amount) => {
       const bone = this.bones.get(name);
-      if (bone) bone.node.scale.multiplyScalar(1 - this.shell * 0.92);
+      if (bone) bone.node.rotateZ(amount);
+    };
+
+    if (aquatic && !inShell) {
+      if (b.jetTime > 0) {
+        // Hydrodynamic Water Jet streamline posture
+        rotateX("Head", 0.15);
+        rotateZ("LArm", -0.45);
+        rotateZ("RArm", 0.45);
+        rotateY("LArm", -0.5);
+        rotateY("RArm", -0.5);
+        rotateY("LThigh", -0.35);
+        rotateY("RThigh", -0.35);
+        rotateX("Tail1", 0.1);
+        rotateX("Tail2", 0.05);
+      } else if (isMoving) {
+        // Aquatic forward breaststroke and flutter propulsion
+        const stroke = Math.sin(this.swimPhase);
+        const power = Math.max(0, stroke);
+        const recovery = Math.min(0, stroke);
+
+        rotateY("LArm", stroke * 0.45);
+        rotateY("RArm", stroke * 0.45);
+        rotateZ("LArm", -0.2 - power * 0.35 + recovery * 0.2);
+        rotateZ("RArm", 0.2 + power * 0.35 - recovery * 0.2);
+        rotateY("LForearm", stroke * 0.25);
+        rotateY("RForearm", stroke * 0.25);
+
+        const kick = Math.cos(this.swimPhase);
+        rotateY("LThigh", kick * 0.35);
+        rotateY("RThigh", -kick * 0.35);
+        rotateY("LCalf", Math.abs(kick) * 0.2);
+        rotateY("RCalf", Math.abs(kick) * 0.2);
+
+        // Fluid S-curve tail rudder
+        const rudder = Math.sin(this.swimPhase + 0.8) * 0.28;
+        rotateY("Tail1", rudder * 0.6);
+        rotateY("Tail2", rudder * 0.9);
+        rotateY("Tail3", rudder * 1.2);
+        rotateX("Head", 0.12 + Math.sin(this.swimPhase) * 0.05);
+      } else {
+        // Treading water (buoyant gentle paddle & tail drift)
+        const tread = Math.sin(this.swimPhase);
+        rotateY("LArm", tread * 0.18 - 0.1);
+        rotateY("RArm", tread * 0.18 - 0.1);
+        rotateZ("LArm", -0.2 + tread * 0.08);
+        rotateZ("RArm", 0.2 - tread * 0.08);
+        rotateY("LThigh", Math.cos(this.swimPhase) * 0.15);
+        rotateY("RThigh", -Math.cos(this.swimPhase) * 0.15);
+        rotateY("Tail1", Math.sin(this.swimPhase * 0.7) * 0.15);
+        rotateY("Tail2", Math.sin(this.swimPhase * 0.7 + 0.5) * 0.2);
+        rotateX("Head", 0.15 + tread * 0.04);
+      }
+    } else if (!inShell && b.grounded) {
+      if (isMoving) {
+        // Terrestrial quadrupedal/bipedal gait with arm & tail counter-sway
+        const gait =
+          Math.sin(this.phase) * Math.min(0.3, speed * 0.1) * (1 - this.shell);
+        rotateY("LThigh", gait);
+        rotateY("RThigh", -gait);
+        rotateY("LArm", -gait * 0.7);
+        rotateY("RArm", gait * 0.7);
+        rotateY("LForearm", -gait * 0.35);
+        rotateY("RForearm", gait * 0.35);
+        rotateY("Tail1", -gait * 0.4);
+        rotateY("Tail2", -gait * 0.3);
+      } else {
+        // Living idle respiration & natural tail sway
+        const breath = Math.sin(this.breathPhase);
+        rotateX("Head", breath * 0.035);
+        rotateZ("LArm", -0.18 + breath * 0.02);
+        rotateZ("RArm", 0.18 - breath * 0.02);
+        rotateY("LArm", -0.12);
+        rotateY("RArm", -0.12);
+
+        const tailSway = Math.sin(this.breathPhase * 0.8) * 0.18;
+        rotateY("Tail1", tailSway * 0.6);
+        rotateY("Tail2", tailSway * 0.8);
+        rotateY("Tail3", tailSway);
+
+        // Curious idle glance after settling
+        if (this.idleTime > 1.5) {
+          const lookCycle = (this.idleTime - 1.5) * 0.6;
+          const lookYaw =
+            Math.sin(lookCycle) * Math.min(0.38, (this.idleTime - 1.5) * 0.2);
+          rotateY("Head", lookYaw);
+          rotateZ("Head", Math.sin(lookCycle * 0.5) * 0.08);
+        }
+      }
+
+      // Water shake-off when emerging from water
+      if (this.shakeTime > 0) {
+        const shakeIntensity = this.shakeTime / 0.6;
+        const shake = Math.sin(this.shakeTime * 42) * 0.32 * shakeIntensity;
+        rotateY("Head", shake);
+        rotateY("Tail1", -shake * 1.2);
+        rotateY("Tail2", -shake * 1.5);
+        rotateY("Tail3", -shake * 1.8);
+        rotateZ("LArm", shake * 0.5);
+        rotateZ("RArm", -shake * 0.5);
+      }
+    } else if (!inShell && b.jetTime > 0) {
+      // Land Water Jet launch posture
+      rotateX("Head", 0.2);
+      rotateY("LArm", -0.4);
+      rotateY("RArm", -0.4);
+      rotateZ("LArm", -0.3);
+      rotateZ("RArm", 0.3);
+      rotateY("LThigh", -0.3);
+      rotateY("RThigh", -0.3);
+      rotateX("Tail1", 0.15);
     }
-    const aquatic = b.mode === "swim" || b.mode === "dive";
-    const targetTilt = inShell ? Math.PI / 2 : aquatic ? 0.85 : 0;
+
+    // Retract extremities cleanly into shell when sliding
+    const shellRetract = 1 - this.shell * 0.92;
+    for (const name of [
+      "Head",
+      "Snout",
+      "LArm",
+      "RArm",
+      "LForearm",
+      "RForearm",
+      "LThigh",
+      "RThigh",
+      "LCalf",
+      "RCalf",
+      "Tail1",
+      "Tail2",
+      "Tail3",
+    ]) {
+      const bone = this.bones.get(name);
+      if (bone) bone.node.scale.multiplyScalar(shellRetract);
+    }
+
+    const targetTilt = inShell
+      ? Math.PI / 2
+      : aquatic
+        ? b.mode === "dive"
+          ? 0.95
+          : 0.82
+        : 0;
     this.visual.rotation.x = THREE.MathUtils.damp(
       this.visual.rotation.x,
       targetTilt,
       8,
       dt,
     );
+
+    // Tactile impact wobble in shell
+    this.visual.rotation.z =
+      inShell && b.impact > 0 ? Math.sin(b.impact * 40) * 0.18 : 0;
+
     this.visual.position.y = inShell
       ? 0.21
       : aquatic
-        ? 0.12
-        : Math.abs(Math.sin(this.phase)) *
-          Math.min(0.012, Math.hypot(b.vx, b.vz) * 0.004);
+        ? 0.12 + Math.sin(this.swimPhase) * (isMoving ? 0.018 : 0.01)
+        : isMoving
+          ? Math.abs(Math.sin(this.phase)) * Math.min(0.012, speed * 0.004)
+          : Math.sin(this.breathPhase) * 0.003;
   }
   dispose() {
     if (this.disposed) return;

@@ -51,7 +51,7 @@
     }
   ],
   "modes": [
-    "flee",
+    "forage",
     "forage",
     "forage",
     "forage",
@@ -66,55 +66,55 @@
   ],
   "drink": {
     "at": {
-      "x": -6.01,
-      "z": -15.79
+      "x": -5.14,
+      "z": -14.63
     },
     "inWater": true,
     "issue": null,
     "sites": 12,
     "drinkers": 4
   },
-  "drinkNote": "Drink tracks in 2 places; nearest 2 m W.",
+  "drinkNote": "Drink tracks in 2 places; nearest 3 m NW.",
   "drySamples": [
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 27
     }
   ],
   "dryGrowth": 0,
@@ -122,12 +122,12 @@
     "issue": "dry",
     "drinking": 0,
     "parched": 7,
-    "wetness": 0.1,
-    "note": "Drink tracks in 2 places; nearest 2 m W. Now the shallows are too dry to drink at.",
-    "tracks": 31
+    "wetness": 0.101,
+    "note": "Drink tracks in 2 places; nearest 3 m W. Now the shallows are too dry to drink at.",
+    "tracks": 27
   },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
-  "savedFamiliarity": 0.41500000000000004,
+  "savedFamiliarity": 0.405,
   "teardown": {
     "geometries": 0,
     "textures": 0
