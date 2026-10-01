@@ -149,7 +149,7 @@
       104
     ]
   },
-  "touchKeyboardMoveMeters": 0.79,
+  "touchKeyboardMoveMeters": 0.61,
   "stickDrag": {
     "stick": {
       "x": 0,
@@ -164,5 +164,5 @@
     },
     "drifted": 0.023
   },
-  "stickMovedMeters": 0.878
+  "stickMovedMeters": 1.216
 }

@@ -104,6 +104,76 @@ try {
   assert.equal(evidence.adaptiveAb.findings.bufferShrank, true);
   assert.equal(evidence.adaptiveAb.findings.layoutUnchanged, true);
   assert.equal(evidence.adaptiveAb.findings.scaleReduced, true);
+  // A carved groove forces high tessellation on the chunk that holds it, which is
+  // only one of nine streamed chunks. Both the "in it" and "looking at it from the
+  // next chunk over" views are measured, because the second is where detail cost
+  // can be paid for nothing.
+  const measureScene = async (label) => {
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => {
+      window.__SF.loop.frames.length = 0;
+    });
+    await page.waitForFunction(
+      () => window.__SF.loop.frames.length >= 120,
+      null,
+      { timeout: 120000 },
+    );
+    const m = await page.evaluate(() => {
+      const g = window.__SF,
+        s = g.stats(),
+        f = s.frames.slice(10).sort((a, b) => a - b);
+      return {
+        samples: f.length,
+        medianMs: f[Math.floor(f.length * 0.5)],
+        p95Ms: f[Math.floor(f.length * 0.95)],
+        memory: s.memory,
+        render: s.render,
+      };
+    });
+    evidence.scenarios.push({ label, ...m });
+    return m;
+  };
+  const lookAtTheCut = async (label, x, z, yaw) => {
+    await page.evaluate(
+      ([x, z, yaw]) => {
+        const g = window.__SF;
+        g.state.frontier.bypass = 1;
+        g.state.frontier.channelErosion = 12;
+        Object.assign(g.body, {
+          x,
+          z,
+          y: g.state.sampleHeight(x, z),
+          vx: 0,
+          vy: 0,
+          vz: 0,
+          yaw,
+        });
+        g.rig.initial = true;
+        g.streaming.refreshTerrain();
+      },
+      [x, z, yaw],
+    );
+    await page.waitForFunction(
+      () => window.__SF.streaming.stats().queued === 0,
+      null,
+      {
+        timeout: 60000,
+      },
+    );
+    return measureScene(label);
+  };
+  evidence.channelCut = await lookAtTheCut(
+    "channel-cut (standing in the groove)",
+    -10,
+    12,
+    Math.PI,
+  );
+  evidence.channelDistant = await lookAtTheCut(
+    "channel-cut (viewed from the next chunk over)",
+    -30,
+    30,
+    Math.atan2(22, -20),
+  );
   await page.evaluate(async () => {
     await window.__SF.dispose();
   });

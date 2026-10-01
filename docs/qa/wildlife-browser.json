@@ -67,54 +67,54 @@
   "drink": {
     "at": {
       "x": -5.65,
-      "z": -15.81
+      "z": -15.83
     },
     "inWater": true,
     "issue": null,
     "sites": 11,
-    "drinkers": 5
+    "drinkers": 6
   },
   "drinkNote": "Drink tracks in 2 places; nearest 2 m W.",
   "drySamples": [
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 31
+      "tracks": 29
     }
   ],
   "dryGrowth": 0,
@@ -122,9 +122,9 @@
     "issue": "dry",
     "drinking": 0,
     "parched": 7,
-    "wetness": 0.101,
+    "wetness": 0.1,
     "note": "Drink tracks in 2 places; nearest 2 m W. Now the shallows are too dry to drink at.",
-    "tracks": 31
+    "tracks": 29
   },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
   "savedFamiliarity": 0.41500000000000004,

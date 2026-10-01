@@ -134,7 +134,11 @@ export class ChunkManager {
         const ring = Math.max(Math.abs(i), Math.abs(j));
         const b=CHANNEL_BOUNDS;
         const overlaps=(ci+i+1)*WORLD.chunk>=b.minX && (ci+i)*WORLD.chunk<=b.maxX && (cj+j+1)*WORLD.chunk>=b.minZ && (cj+j)*WORLD.chunk<=b.maxZ;
-        const lod = overlaps && this.state.frontier?.stage>0 ? 128 : ring <= 1 ? 32 : ring === 2 ? 16 : 8;
+        // A carved groove is under half a metre wide and fits inside one 24 m chunk, so
+        // only the chunk you stand on needs 128 segments. Forcing it on the ring around you
+        // quadruples the scene for detail nobody can resolve from 24 m away.
+        const cut = overlaps && this.state.frontier?.stage > 0;
+        const lod = cut ? (ring === 0 ? 128 : Math.max(32, ring === 1 ? 64 : 16)) : ring <= 1 ? 32 : ring === 2 ? 16 : 8;
         const gi = ci + i, gj = cj + j;
         const k = this.keyOf(gi, gj);
         wanted.add(k);

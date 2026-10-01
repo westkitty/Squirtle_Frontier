@@ -57,3 +57,45 @@ textures, 40 draw calls, 31,236 triangles and 122 line primitives on the frontie
 19 geometries in the Lab, zero on teardown; the journeys' frontier bound is 24.
 `docs/qa/REACHES.md` records why one shared line mesh and a slightly higher bound
 were the cheaper trade than either per-reach geometry or dropping the legibility.
+
+## Chunk detail budget (2026-10-01)
+
+A carved groove is 0.44 m wide but the chunk that holds it is 24 m across, and
+`ChunkManager.rebuildList` used to answer that by forcing 128 segments on _every_
+streamed chunk whose bounds overlapped the channel. With `Streaming.radius = 1` that
+means the chunk you stand on and up to eight neighbours, i.e. one 32,768-triangle
+mesh per overlap where 32 segments is the ordinary neighbourhood density.
+
+The rule is now distance-shaped: 128 for the chunk the body is on, 64 for the ring
+around it (still double the ordinary 32, so an adjacent chunk never looks cheaper than
+the rest of the neighbourhood), and the plain ring LOD beyond. Physics is unaffected:
+contact height is analytic `sampleHeight`, and the standing chunk keeps full density so
+the ground under the shell matches it vertex for vertex.
+
+Measured in the same shared-CPU ANGLE SwiftShader page, `npm run perf` scenarios,
+one run per rule, only `src/terrain.js` differing:
+
+| view                            | triangles before | triangles after | median ms before | after |
+| ------------------------------- | ---------------- | --------------- | ---------------- | ----- |
+| standing in the groove (ring 0) | 55,241           | 55,241          | 83.2             | 83.3  |
+| viewed from the next chunk over | 56,445           | 31,869          | 66.6             | 50.0  |
+
+The saving is the deterministic part (-24,576 triangles, -43.5%); the one-frame median
+shift is not, since these medians quantise to 16.6 ms multiples and the control A/B of
+adaptive resolution in this environment has already shown ±16 ms of run-to-run noise.
+No regression on the ordinary run: high 66.7 ms median (166.7 p95), low 49.9 (83.4),
+23 geometries / 40 calls / 31,236 triangles on the bank, teardown zero.
+
+Whether the cheaper ring is _visible_ was answered with a control rather than an
+opinion: `tools/png-diff.mjs` decodes two 900x560 screenshots and reports mean channel
+delta, worst pixel and the share of pixels moved by more than 24/765. Both shots come
+from the same forced-stage-4 pose, so anything that differs is animation. The pair
+where nothing changed (standing in the groove) differs by 0.0011 mean and 0.003% of
+pixels; the far view where the chunk dropped to 64 segments differs by 0.0005 and
+0.001%; the third pose tried, standing 5 cm from the chunk border and looking down the
+groove, differs by 0.0227 and 0.001%. So at viewing distance the removed tessellation
+is not visible at all, and up close against a border it is a sub-pixel shape shift on
+one in 100,000 pixels, recorded here rather than smoothed over.
+
+Still unknown after this: any real GPU or mobile number, and whether 64 is enough
+detail for a _wider_ cut if the channel is ever carved to more than one chunk.

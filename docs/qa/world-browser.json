@@ -65,22 +65,22 @@
     "followed": 2
   },
   "record": {
-    "y": -7.498870976986353,
+    "y": -7.5509649966186245,
     "caption": "About 629 years ago. A water house drew from the spring. Cut stone remembers its cistern."
   },
   "teardown": {
     "chunks": {
       "active": 0,
       "queued": 0,
-      "loads": 26,
-      "unloads": 26
+      "loads": 27,
+      "unloads": 27
     },
     "memory": {
       "geometries": 0,
       "textures": 0
     },
     "render": {
-      "frame": 285,
+      "frame": 299,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
