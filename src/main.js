@@ -731,7 +731,16 @@ async function boot() {
         creature.present(body, dt, attention);
         if (state.place === "frontier")
           scenery.update(body, dt, state.waterLevel);
-        audio.update(body, Settings.values);
+        audio.update(body, Settings.values, {
+          water: (state.place === "frontier"
+            ? liveRegion
+            : state.place === "lab"
+              ? labRegion
+              : recordRegion
+          ).water(body.x, body.z, state.waterLevel),
+          isShaking: creature?.isShaking ?? false,
+          isSleeping: creature?.isSleeping ?? false,
+        });
         saveTime += dt;
         if (saveTime >= 30) {
           saveTime = 0;

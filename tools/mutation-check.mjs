@@ -199,6 +199,18 @@ const MUTATIONS = [
     to:
       "    const isResting = false;",
   },
+  {
+    what: "water jet fails to activate hydrodynamic surge on jet voice",
+    file: "src/audio.js",
+    from: "    const jetLevel = body.jetTime > 0 ? 0.38 : 0;",
+    to: "    const jetLevel = 0;",
+  },
+  {
+    what: "dive mode fails to activate submerged cavern sub-drone",
+    file: "src/audio.js",
+    from: "    const subLevel = body.mode === \"dive\" ? 0.26 : 0;",
+    to: "    const subLevel = 0;",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of
