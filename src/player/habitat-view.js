@@ -67,7 +67,13 @@ export class HabitatView {
         roughness: 0.4,
       }),
     );
+    // Warm umber against pale bank and green reeds: the herd has to read as
+    // animals first and vegetation never.
     this.animalMat = this.own(
+      new THREE.MeshStandardMaterial({ color: 0x8b6a45, roughness: 0.9 }),
+    );
+    // The basin visitors are frogs among reeds, so they keep the reed tone.
+    this.frogMat = this.own(
       new THREE.MeshStandardMaterial({ color: 0x768e46, roughness: 1 }),
     );
     this.dummy = new THREE.Object3D();
@@ -186,7 +192,7 @@ export class HabitatView {
     this.preyHeads = this.pool(this.sphere, this.animalMat, 12, this.wetland);
     this.preyLegs = this.pool(this.sphere, this.animalMat, 24, this.wetland);
     this.predatorMat = this.own(
-      new THREE.MeshStandardMaterial({ color: 0x66513e, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: 0x2f2a33, roughness: 0.85 }),
     );
     this.predators = this.pool(this.sphere, this.predatorMat, 3, this.wetland);
     this.predatorHeads = this.pool(
@@ -313,7 +319,7 @@ export class HabitatView {
       3.15,
     );
     this.reeds = this.pool(this.cylinder, this.green, 48);
-    this.animals = this.pool(this.sphere, this.animalMat, 12);
+    this.animals = this.pool(this.sphere, this.frogMat, 12);
     this.visitor = new THREE.Group();
     this.group.add(this.visitor);
     this.visitorMat = this.own(
@@ -454,12 +460,36 @@ export class HabitatView {
         pool.setMatrixAt(index, this.dummy.matrix);
       };
       prey.forEach((a, i) => {
+        // Drinking lowers the muzzle to the water; a herd that cannot drink paces.
+        const drinking = a.mode === "drink";
         const hop =
-          a.mode === "forage"
+          a.mode === "forage" || drinking
             ? 0
-            : Math.abs(Math.sin(time * 12 + a.phase)) * 0.08;
-        part(this.animals, i, a, 0, 0.1 + hop, 0, 0.16, 0.1, 0.23);
-        part(this.preyHeads, i, a, 0, 0.18 + hop, 0.17, 0.14, 0.09, 0.12);
+            : Math.abs(
+                Math.sin(time * (a.mode === "parched" ? 6 : 12) + a.phase),
+              ) * (a.mode === "parched" ? 0.03 : 0.08);
+        part(
+          this.animals,
+          i,
+          a,
+          0,
+          0.1 + hop - (drinking ? 0.025 : 0),
+          0,
+          0.16,
+          0.1,
+          0.23,
+        );
+        part(
+          this.preyHeads,
+          i,
+          a,
+          drinking ? 0.05 : 0,
+          0.18 + hop - (drinking ? 0.075 : 0),
+          0.17 + (drinking ? 0.06 : 0),
+          0.14,
+          0.09,
+          0.12,
+        );
         for (let j = 0; j < 2; j++)
           part(
             this.preyLegs,

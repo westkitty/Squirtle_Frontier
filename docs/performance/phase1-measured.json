@@ -1,13 +1,13 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-10-01T02:40:00.642Z",
+  "date": "2026-10-01T03:10:15.764Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
       "medianMs": 66.70000000000073,
-      "p95Ms": 150,
+      "p95Ms": 183.30000000000018,
       "memory": {
         "geometries": 22,
         "textures": 6
@@ -27,13 +27,13 @@
       "viewport": "960x640",
       "samples": 110,
       "medianMs": 33.400000000001455,
-      "p95Ms": 100,
+      "p95Ms": 83.29999999999927,
       "memory": {
         "geometries": 22,
         "textures": 6
       },
       "render": {
-        "frame": 270,
+        "frame": 269,
         "calls": 39,
         "triangles": 31236,
         "points": 0,
@@ -47,7 +47,7 @@
     "pinnedFullDetail": {
       "samples": 140,
       "medianMs": 83.29999999999927,
-      "p95Ms": 166.70000000000073,
+      "p95Ms": 166.59999999999854,
       "adaptiveValue": 1,
       "adaptiveChangesCumulative": 2,
       "pixelRatio": 1,
@@ -58,8 +58,8 @@
     },
     "adaptiveEnabled": {
       "samples": 100,
-      "medianMs": 66.60000000000582,
-      "p95Ms": 133.40000000000146,
+      "medianMs": 83.20000000000437,
+      "p95Ms": 150,
       "adaptiveValue": 0.85,
       "adaptiveChangesCumulative": 3,
       "pixelRatio": 0.85,
@@ -72,8 +72,8 @@
       "bufferShrank": true,
       "layoutUnchanged": true,
       "scaleReduced": true,
-      "medianDeltaMs": -16.7,
-      "p95DeltaMs": -33.3,
+      "medianDeltaMs": -0.1,
+      "p95DeltaMs": -16.6,
       "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
     }
   },

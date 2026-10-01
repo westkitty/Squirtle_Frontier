@@ -29,6 +29,25 @@ Approval gates remain waived for progression; nothing here is a human-assistive-
 
 No screen-reader (NVDA/VoiceOver/TalkBack) session, no real-device touch usability test, no desktop-GPU or mobile frame-rate measurement, no WCAG certification, and no sign-off that motion/contrast settings are sufficient for photosensitivity. Production completion is still not claimed.
 
-## Perf evidence regenerated in the save-integrity pass (2026-09-30)
+## Perf evidence after the wildlife-water pass (2026-09-30)
 
-`docs/performance/phase1-measured.json` was rewritten by `npm run perf` after the version 6 save work: high 66.7 ms median (p95 150) and low 33.4 ms median (p95 100) on ANGLE SwiftShader at 960x640, 22 geometries / six textures / 39 draw calls / 31,236 triangles, teardown 0 geometries and 0 textures with nine chunk loads and nine unloads. The adaptive A/B moved 83.3 ms to 66.6 ms median (p95 166.7 to 133.4) at identical 960x640 CSS with an 816x544 buffer. Absolute medians differ from the earlier 100.0/50.1 ms sample because the shared CPU is contended; the A/B direction and the unchanged geometry/triangle counts are the parts that replicate. This remains non-hardware evidence: the 60 fps desktop and 30 fps mobile-class targets are still not demonstrated anywhere.
+`docs/performance/phase1-measured.json` is rewritten by `npm run perf`. Latest run:
+high 66.7 ms median (183.3 p95) and low
+33.4 ms (83.3 p95) on ANGLE SwiftShader at 960x640;
+39 draw calls, 22 geometries,
+6 textures, 31,236 triangles;
+teardown 0 geometries and
+0 textures with
+9 chunk loads and
+9 unloads.
+
+Adaptive A/B this run: median 83.3 to
+83.2 ms (-0.1 ms)
+and p95 166.6 to 150.0 ms
+at a 816x544 buffer with unchanged
+960x640 CSS. An earlier sample measured -16.6 ms median for the
+same control and this one did not replicate it, so the medians are treated as
+noise-dominated under shared-CPU software rendering while the structural assertions
+(buffer shrinks, layout and triangle counts unchanged, scale reverts on opt-out) are
+the reproducible result. The 60 fps desktop and 30 fps mobile-class targets remain
+undemonstrated anywhere, and no hardware or mobile measurement exists.

@@ -14,43 +14,43 @@
     },
     {
       "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 15,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
         "geometries": 11,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 15,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 15,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -174,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 116,
+      "frame": 120,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

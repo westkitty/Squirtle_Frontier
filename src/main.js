@@ -88,6 +88,15 @@ async function boot() {
           ...settlementObstacles,
         ],
         sample: (x, z) => channelSample(x, z, state.frontier.stage),
+        // The wetland node is what animals react to when they choose a shore.
+        get drinkQuality() {
+          const node = state.watershed.nodes[2];
+          return {
+            wetness: node.wetness,
+            contamination: node.contamination,
+            sediment: node.sediment,
+          };
+        },
         water: (x, z) => {
           const water = region.water(x, z);
           if (!water) return null;
@@ -223,6 +232,16 @@ async function boot() {
     );
     // The survey panel is only refreshed while visible; opening it must show the
     // current world state on the first frame, not after the HUD cadence catches up.
+    const BEARINGS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    // Eight octants, and the round happens first so 7.6 wraps to N instead of
+    // reaching an index the table does not have.
+    const compassTo = (dx, dz) => {
+      const octant = Math.atan2(dx, -dz),
+        step = Math.PI / 4;
+      return BEARINGS[
+        Math.round(((octant + Math.PI * 2) % (Math.PI * 2)) / step) % 8
+      ];
+    };
     const refreshMemoryPanel = () => {
       document.querySelector("#remembered").textContent =
         state.memory.places
@@ -242,6 +261,28 @@ async function boot() {
       document.querySelector("#house-note").textContent = house.visits
         ? `${responses[house.response]} (${house.visits} visit${house.visits > 1 ? "s" : ""}).`
         : "The water house by the trough has not taken note of you yet.";
+      const drinkCells = Object.keys(state.memory.drinks);
+      let drinkNote = drinkCells.length
+        ? null
+        : "No drink tracks yet. Animals drink where the shallows run clean.";
+      for (const key of drinkCells) {
+        const [cx, cz] = key.split(",").map(Number),
+          x = cx * 5 + 2.5,
+          z = cz * 5 + 2.5,
+          d = Math.hypot(x - body.x, z - body.z);
+        if (drinkNote === null || d < drinkNote.d)
+          drinkNote = { d, bearing: compassTo(x - body.x, z - body.z) };
+      }
+      const issue = {
+        dry: "the shallows are too dry to drink at",
+        fouled: "the water is fouled and the herd will not drink",
+        gone: "there is no open water left in the shallows",
+      }[wildlife.waterIssue];
+      document.querySelector("#drink-note").textContent =
+        (drinkNote
+          ? `Drink tracks in ${drinkCells.length} place${drinkCells.length > 1 ? "s" : ""}; nearest ${Math.round(drinkNote.d)} m ${drinkNote.bearing}.`
+          : "No drink tracks yet. Animals drink where the shallows run clean.") +
+        (drinkNote && wildlife.parched && issue ? ` Now ${issue}.` : "");
       document.querySelector("#companion").textContent = n
         ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
         : "No familiar visitor yet. Life needs water and time.";
@@ -480,13 +521,15 @@ async function boot() {
         }
         const previousTick = state.frontier.tick;
         state.update(dt);
-        if (state.frontier.tick !== previousTick)
+        if (state.frontier.tick !== previousTick) {
           state.memory.observe(
             body,
             state.place,
             state.frontier.tick,
             state.ecosystem,
           );
+          state.memory.noteDrinks(body, wildlife.drinkers);
+        }
         if (state.frontier.tick !== previousTick)
           state.settlement.observe(body, state.place, state.frontier.tick);
         wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);

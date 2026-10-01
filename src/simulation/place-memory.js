@@ -14,6 +14,19 @@ export class PlaceMemory {
     this.places = [];
     this.notable = null;
     this.lastEncounter = -1000;
+    this.drinks = {};
+  }
+  // Where the herd was seen drinking, as observed from here. Behavior, not
+  // population: it never changes how many animals exist.
+  noteDrinks(body, drinkers) {
+    if (!drinkers?.length) return;
+    for (const site of drinkers) {
+      if (Math.hypot(site.x - body.x, site.z - body.z) > 10) continue;
+      const key = `${Math.floor(site.x / 5)},${Math.floor(site.z / 5)}`;
+      if (!(key in this.drinks) && Object.keys(this.drinks).length >= 200)
+        return;
+      this.drinks[key] = Math.min(255, (this.drinks[key] ?? 0) + 1);
+    }
   }
   // Called only for present player observations. Never from offline simulation.
   observe(body, place, tick, ecosystem) {
@@ -60,6 +73,7 @@ export class PlaceMemory {
   snapshot() {
     return {
       cells: { ...this.cells },
+      drinks: { ...this.drinks },
       places: [...this.places],
       notable: this.notable ? { ...this.notable } : null,
       lastEncounter: this.lastEncounter,
@@ -94,6 +108,23 @@ export class PlaceMemory {
     )
       throw new Error("Invalid landmarks");
     r.places = [...s.places];
+    if (s.drinks !== undefined) {
+      if (!s.drinks || typeof s.drinks !== "object" || Array.isArray(s.drinks))
+        throw new Error("Invalid drink tracks");
+      const keys = Object.keys(s.drinks);
+      if (keys.length > 200) throw new Error("Too many drink tracks");
+      for (const [k, v] of keys.map((key) => [key, s.drinks[key]])) {
+        if (
+          !/^-?\d{1,2},-?\d{1,2}$/.test(k) ||
+          k.split(",").some((n) => Number(n) < -14 || Number(n) > 14) ||
+          !Number.isInteger(v) ||
+          v < 1 ||
+          v > 255
+        )
+          throw new Error("Invalid drink track");
+        r.drinks[k] = v;
+      }
+    }
     if (!Number.isSafeInteger(s.lastEncounter) || s.lastEncounter < -1000)
       throw new Error("Invalid encounter time");
     r.lastEncounter = s.lastEncounter;

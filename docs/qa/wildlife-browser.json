@@ -64,6 +64,68 @@
     "stalk",
     "stalk"
   ],
+  "drink": {
+    "at": {
+      "x": -5.65,
+      "z": -15.81
+    },
+    "inWater": true,
+    "issue": null,
+    "sites": 11,
+    "drinkers": 5
+  },
+  "drinkNote": "Drink tracks in 2 places; nearest 2 m W.",
+  "drySamples": [
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    },
+    {
+      "issue": "dry",
+      "drinkers": 0,
+      "tracks": 31
+    }
+  ],
+  "dryGrowth": 0,
+  "dry": {
+    "issue": "dry",
+    "drinking": 0,
+    "parched": 7,
+    "wetness": 0.101,
+    "note": "Drink tracks in 2 places; nearest 2 m W. Now the shallows are too dry to drink at.",
+    "tracks": 31
+  },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
   "savedFamiliarity": 0.41500000000000004,
   "teardown": {

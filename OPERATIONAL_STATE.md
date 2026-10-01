@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 15
+revision: 16
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -211,3 +211,13 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Two tooling assumptions needed repair rather than the app: the recovery journey asserted resume from `player.x` and the Lab-exit step pressed R from the basin centre where no action is eligible. Both are now explicit fixtures with the pose-aware assertions.
 - `npm run perf` re-run after the pose work: high 66.7 ms median (p95 150) and low 33.4 ms median (p95 100) on ANGLE SwiftShader, with the adaptive A/B moving 83.3 to 66.6 ms median at identical CSS size (816x544 buffer). Absolute medians swing run to run under shared CPU; the A/B delta is the reproducible signal, and neither figure is hardware or mobile evidence. Evidence `docs/performance/phase1-measured.json`, written by the tool.
 - Still open for "finished": production wildlife/settlement depth, broader traversable route topology, richer Lab play, authored terrain/art pass, real screen-reader and device validation, hardware frame-rate evidence, asset/legal review for distribution, and full human QA. Full project NOT complete; gate waivers are not evidence of quality.
+
+## Wildlife water-behaviour checkpoint
+
+- Near wildlife gained a reason to move that the player can read: per-animal thirst drives prey onto any shore the world's own `water(x, z)` predicate reports as wet, gated on wetland wetness > 0.25 and `(1 - contamination) * (1 - sediment/2)` > 0.5, with 2.2 s committed drinks. A flush (jet 6 m, landing 2 m) or the water turning bad mid-drink cancels a drink rather than queueing one; below none of that, thirsty animals pace (`parched`) and the panel names the reason. Predators favour committed drinkers. Herd counts still come only from `Ecosystem`, so this is legibility, not a second population or mortality model.
+- Shore discovery reuses the body/camera water authority (16 rays, 0.5 m steps to 6.5 m, cached 1 s) and every decision reads one frame-start snapshot, keeping behaviour deterministic and order-independent; the new tests pin both properties explicitly.
+- Places remembered gained `drinks`: per-5 m cells where a drink was observed within 10 m, capped at 200 cells and 255 sightings, validated on restore, tolerant of saves written before the field existed (no version bump, because the nested decoder accepts its absence), and surfaced as "Drink tracks in 2 places; nearest 2 m W" plus a reason when the herd will not drink.
+- 68 checks pass, including seven in `tools/wildlife-water.test.mjs`. `browser:wildlife` now runs a real-system loop: clearing landslide debris wets the shallows, drinking starts and is logged, a drinker is verified standing where `region.water` says there is water; re-blocking the spring dries it and across eight samples after the flip no new tracks are recorded. All ten journeys plus `npm run build` rerun green.
+- Screenshot inspection forced two repairs in the same pass: the herd was painted the reed green and disappeared into the marsh (prey now umber, predators charcoal, basin frogs keep the reed tone under their own material), and the drink line sat under two paragraphs. A near-black frame turned out to be the fixture camera parked inside the wetland bowl at water level, not a renderer fault, so the vantage moved to the rim.
+- Measured cost: 22 geometries / 6 textures / 39 calls / 31,236 triangles unchanged by the pass. SwiftShader medians 66.7 ms high, 33.4 ms low; the adaptive A/B median gain did not replicate this sample (-0.1 ms vs -16.6 ms earlier), so only its structural assertions are claimed. Hardware and mobile frame rates remain unmeasured.
+- Still primitive: sphere-bodied animals share a silhouette with terrain rocks, drinking is a head dip without contact animation, thirst is session-only and unsaved, and the herd stays leashed 7 m to the reed shallows, so this is one watering place rather than migration or pathfinding. Production wildlife depth, traversable route topology, richer Lab play, authored terrain art, screen-reader and real-device validation, hardware frame-rate evidence, asset/legal review and full human QA remain open. Full project NOT complete; waived gates are not evidence of quality.

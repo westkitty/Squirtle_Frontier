@@ -45,6 +45,152 @@ try {
   await p.waitForFunction(() =>
     window.__SF.wildlife.actors.some((a) => a.mode === "evade"),
   );
+  // Wetland repair decides whether the herd has somewhere to drink. The
+  // clearing uses the real debris action; low predation keeps drinking visible
+  // in a short window, so this is an ecological fixture, not a played repair.
+  await p.evaluate(() => {
+    const g = window.__SF;
+    g.state.ecosystem.prey = 0.9;
+    g.state.ecosystem.predators = 0.2;
+    for (let i = 0; i < 40; i++)
+      g.state.watershed.clearDebris("landslide", 0.1);
+    // Stand on the north rim looking into the shallows: close enough to observe
+    // drink tracks, high enough to see the herd.
+    Object.assign(g.body, {
+      x: -6,
+      z: -9.5,
+      y: g.state.sampleHeight(-6, -9.5),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+    });
+    g.rig.initial = true;
+  });
+  await p.waitForFunction(
+    () => window.__SF.state.watershed.nodes[2].wetness > 0.4,
+    null,
+    { timeout: 150000, polling: 200 },
+  );
+  await p.waitForFunction(
+    () => window.__SF.wildlife.actors.some((a) => a.mode === "drink"),
+    null,
+    { timeout: 150000, polling: 200 },
+  );
+  // Screenshot vantage only: turn to face a drinking animal from 3.5 m away so
+  // the behaviour is actually in frame. Position still comes from the real world.
+  await p.evaluate(() => {
+    const g = window.__SF,
+      a = g.wildlife.actors.find((x) => x.mode === "drink");
+    if (!a) return;
+    Object.assign(g.body, {
+      x: a.x,
+      z: a.z + 3.5,
+      y: g.state.sampleHeight(a.x, a.z + 3.5),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+    });
+    g.body.yaw = Math.atan2(a.x - g.body.x, a.z - g.body.z);
+    g.rig.initial = true;
+  });
+  report.drink = await p.evaluate(() => {
+    const g = window.__SF,
+      a = g.wildlife.actors.find((x) => x.mode === "drink");
+    return {
+      at: { x: +a.x.toFixed(2), z: +a.z.toFixed(2) },
+      inWater: !!g.region.water(a.x, a.z),
+      issue: g.wildlife.waterIssue,
+      sites: g.wildlife.sites.length,
+      drinkers: g.wildlife.drinkers.length,
+    };
+  });
+  assert.equal(
+    report.drink.inWater,
+    true,
+    "a drinker must stand where the world has water",
+  );
+  assert.equal(report.drink.issue, null);
+  await p.click("#memory-toggle");
+  await p.waitForFunction(
+    () => document.querySelector("#drink-note").textContent.length > 0,
+    null,
+    { timeout: 10000 },
+  );
+  report.drinkNote = await p.evaluate(
+    () => document.querySelector("#drink-note").textContent,
+  );
+  assert.match(report.drinkNote, /Drink tracks in \d+ places?/);
+  assert.match(
+    report.drinkNote,
+    /nearest \d+ m [NSEW]{1,2}\./,
+    "the panel must name a real bearing",
+  );
+  assert.doesNotMatch(report.drinkNote, /undefined/);
+  await p.screenshot({ path: "artifacts/wildlife-drinking.png" });
+  // Re-block the spring and the shallows dry out: drinking stops, the panel says why.
+  await p.evaluate(() => {
+    const g = window.__SF;
+    g.state.watershed.nodes[1].blockage = 0.95;
+    g.state.watershed.nodes[0].flow = 0.05;
+  });
+  // Wait well past the behavioural threshold (0.25) so nothing is compared
+  // while a drink is finishing or a tick is still buffered.
+  await p.waitForFunction(
+    () =>
+      window.__SF.wildlife.waterIssue === "dry" &&
+      window.__SF.wildlife.drinkers.length === 0 &&
+      window.__SF.state.watershed.nodes[2].wetness < 0.15,
+    null,
+    { timeout: 200000, polling: 200 },
+  );
+  // Any drink already in progress aborts on the next frame, then the count is
+  // frozen: give it a beat and compare against the total at the flip.
+  const tracksAtIssue = await p.evaluate(
+    () =>
+      window.__SF.state.memory.drinks &&
+      Object.values(window.__SF.state.memory.drinks).reduce((a, b) => a + b, 0),
+  );
+  const samples = [];
+  for (let i = 0; i < 8; i++) {
+    await p.waitForTimeout(1000);
+    samples.push(
+      await p.evaluate(() => ({
+        issue: window.__SF.wildlife.waterIssue,
+        drinkers: window.__SF.wildlife.drinkers.length,
+        tracks: Object.values(window.__SF.state.memory.drinks).reduce(
+          (a, b) => a + b,
+          0,
+        ),
+      })),
+    );
+  }
+  report.drySamples = samples;
+  report.dryGrowth = samples.length
+    ? samples[samples.length - 1].tracks - tracksAtIssue
+    : 0;
+  report.dry = await p.evaluate(() => ({
+    issue: window.__SF.wildlife.waterIssue,
+    drinking: window.__SF.wildlife.actors.filter((a) => a.mode === "drink")
+      .length,
+    parched: window.__SF.wildlife.actors.filter((a) => a.mode === "parched")
+      .length,
+    wetness: +window.__SF.state.watershed.nodes[2].wetness.toFixed(3),
+    note: document.querySelector("#drink-note").textContent,
+    tracks: Object.values(window.__SF.state.memory.drinks).reduce(
+      (a, b) => a + b,
+      0,
+    ),
+  }));
+  assert.equal(report.dry.drinking, 0, "nobody drinks at a dry shallow");
+  assert.ok(report.dry.parched > 0, "thirsty animals should pace");
+  assert.match(report.dry.note, /too dry to drink at/);
+  assert.equal(
+    report.dryGrowth,
+    0,
+    "no new drink tracks may be logged while the shallows are dry",
+  );
+  await p.screenshot({ path: "artifacts/wildlife-parched.png" });
+  await p.click("#memory-toggle");
   // Set settlement history, then let real ticks allocate bowl water and display welcome.
   await p.evaluate(() => {
     const g = window.__SF;
@@ -111,7 +257,7 @@ try {
   assert.equal(report.teardown.textures, 0);
   assert.deepEqual(report.errors, []);
   console.log(
-    "Wildlife stalk/evade, visible settlement bowl, persisted familiarity and 12 lifecycle returns passed.",
+    "Wildlife stalk/evade, wetland-gated drinking, dry-shallow avoidance, visible settlement bowl, persisted familiarity and 12 lifecycle returns passed.",
   );
 } finally {
   await writeFile(
