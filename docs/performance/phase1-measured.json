@@ -1,25 +1,25 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-10-01T21:59:50.349Z",
+  "date": "2026-10-01T22:21:45.560Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 66.59999999999854,
-      "p95Ms": 133.39999999999782,
+      "medianMs": 50.099999999998545,
+      "p95Ms": 133.40000000000146,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 146,
+        "frame": 147,
         "calls": 40,
         "triangles": 31236,
         "points": 0,
         "lines": 122
       },
-      "heap": 18188473,
+      "heap": 20402490,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
     },
     {
@@ -27,7 +27,7 @@
       "viewport": "960x640",
       "samples": 110,
       "medianMs": 33.30000000000291,
-      "p95Ms": 133.29999999999563,
+      "p95Ms": 83.30000000000291,
       "memory": {
         "geometries": 23,
         "textures": 6
@@ -39,20 +39,20 @@
         "points": 0,
         "lines": 122
       },
-      "heap": 18761635,
+      "heap": 21147476,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "label": "channel-cut (standing in the groove)",
       "samples": 110,
-      "medianMs": 33.39999999999418,
-      "p95Ms": 50.10000000000582,
+      "medianMs": 66.59999999999127,
+      "p95Ms": 200,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 702,
+        "frame": 681,
         "calls": 39,
         "triangles": 55241,
         "points": 0,
@@ -62,14 +62,14 @@
     {
       "label": "channel-cut (viewed from the next chunk over)",
       "samples": 110,
-      "medianMs": 16.69999999999709,
-      "p95Ms": 33.40000000000873,
+      "medianMs": 83.30000000000291,
+      "p95Ms": 250.10000000000582,
       "memory": {
         "geometries": 21,
         "textures": 6
       },
       "render": {
-        "frame": 860,
+        "frame": 823,
         "calls": 25,
         "triangles": 31869,
         "points": 0,
@@ -80,8 +80,8 @@
   "adaptiveAb": {
     "pinnedFullDetail": {
       "samples": 140,
-      "medianMs": 50,
-      "p95Ms": 133.40000000000146,
+      "medianMs": 66.69999999999709,
+      "p95Ms": 216.59999999999854,
       "adaptiveValue": 1,
       "adaptiveChangesCumulative": 2,
       "pixelRatio": 1,
@@ -92,8 +92,8 @@
     },
     "adaptiveEnabled": {
       "samples": 100,
-      "medianMs": 33.400000000001455,
-      "p95Ms": 66.69999999999709,
+      "medianMs": 50.099999999998545,
+      "p95Ms": 183.29999999999563,
       "adaptiveValue": 0.85,
       "adaptiveChangesCumulative": 3,
       "pixelRatio": 0.85,
@@ -107,20 +107,20 @@
       "layoutUnchanged": true,
       "scaleReduced": true,
       "medianDeltaMs": -16.6,
-      "p95DeltaMs": -66.7,
+      "p95DeltaMs": -33.3,
       "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
     }
   },
   "channelCut": {
     "samples": 110,
-    "medianMs": 33.39999999999418,
-    "p95Ms": 50.10000000000582,
+    "medianMs": 66.59999999999127,
+    "p95Ms": 200,
     "memory": {
       "geometries": 23,
       "textures": 6
     },
     "render": {
-      "frame": 702,
+      "frame": 681,
       "calls": 39,
       "triangles": 55241,
       "points": 0,
@@ -129,14 +129,14 @@
   },
   "channelDistant": {
     "samples": 110,
-    "medianMs": 16.69999999999709,
-    "p95Ms": 33.40000000000873,
+    "medianMs": 83.30000000000291,
+    "p95Ms": 250.10000000000582,
     "memory": {
       "geometries": 21,
       "textures": 6
     },
     "render": {
-      "frame": 860,
+      "frame": 823,
       "calls": 25,
       "triangles": 31869,
       "points": 0,

@@ -34,6 +34,7 @@ import { AssetManager } from "./assets/asset-manager.js";
 import { SquirtlePresentation } from "./assets/squirtle-presentation.js";
 import { createBody } from "./player/body-state.js";
 import { stepBody } from "./player/squirtle-controller.js";
+import { resolveAttentionTarget } from "./player/creature-attention.js";
 import { CreatureCamera } from "./player/creature-camera.js";
 import { region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
@@ -719,7 +720,14 @@ async function boot() {
           yaw: +body.yaw.toFixed(4),
           place: state.place,
         };
-        creature.present(body, dt);
+        const attention = resolveAttentionTarget({
+          body,
+          place: state.place,
+          state,
+          wildlife,
+          settlement: state.settlement,
+        });
+        creature.present(body, dt, attention);
         if (state.place === "frontier")
           scenery.update(body, dt, state.waterLevel);
         audio.update(body, Settings.values);
@@ -850,6 +858,8 @@ async function boot() {
         frames: [...loop.frames],
         assets: assets.stats(),
         mode: body.mode,
+        attention: creature?.attention ?? null,
+        gaze: creature ? { yaw: creature.gazeYaw, pitch: creature.gazePitch } : null,
       }),
     };
     renderer.setAnimationLoop((now) => loop.frame(now));

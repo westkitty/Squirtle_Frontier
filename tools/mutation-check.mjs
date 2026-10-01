@@ -171,6 +171,26 @@ const MUTATIONS = [
       "    if (this.wasAquatic && !aquatic && b.grounded) {\n      this.shakeTime = 0.6;\n    }",
     to: "    if (false) {\n      this.shakeTime = 0.6;\n    }",
   },
+  {
+    what: "attention targets behind Squirtle outside field of view are attended anyway",
+    file: "src/player/creature-attention.js",
+    from: "    if (distH > OMNI_PROXIMITY && yawDiff > ATTENTION_FOV) return;",
+    to: "    if (false) return;",
+  },
+  {
+    what: "gaze yaw ignores anatomical clamp and exceeds limits",
+    file: "src/assets/squirtle-presentation.js",
+    from: "      const clampedYaw = Math.max(-0.85, Math.min(0.85, rawYawDiff));",
+    to: "      const clampedYaw = rawYawDiff;",
+  },
+  {
+    what: "shell slide tracks attention targets instead of retracting head",
+    file: "src/assets/squirtle-presentation.js",
+    from:
+      "    if (inShell) {\n      // Complete suppression in shell slide: head retracts inside shell\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+    to:
+      "    if (false) {\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

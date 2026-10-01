@@ -6,7 +6,7 @@ export class PlayableCreature {
     this.bounds = { height: 0.55, radius: 0.23 };
     this.contacts = { left: [-0.12, 0, 0.06], right: [0.12, 0, 0.06] };
   }
-  present(_body, _dt) {
+  present(_body, _dt, _attentionTarget = null) {
     throw new Error("Presentation adapter required");
   }
   jetOrigin(target = new THREE.Vector3()) {

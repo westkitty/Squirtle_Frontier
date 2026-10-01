@@ -169,6 +169,97 @@ test("shell slide retracts all extremities and responds to impacts", () => {
   presentation.dispose();
 });
 
+test("attention target orients gaze yaw and pitch within physiological clamping bounds", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.yaw = 0; // Facing +Z
+  b.grounded = true;
+  b.mode = "land";
+
+  // Target 45 degrees to the right (+X, +Z) and elevated
+  const target = { x: 3, y: 1.5, z: 3 };
+
+  // Step presentation several frames for smooth saccadic tracking
+  for (let i = 0; i < 30; i++) presentation.present(b, 1 / 60, target);
+
+  assert.ok(presentation.attention === target, "active attention must be set");
+  assert.ok(presentation.gazeYaw > 0.3, "head must turn right toward target");
+  assert.ok(presentation.gazePitch > 0.1, "head must tilt up toward elevated target");
+
+  // Extreme target at 90 degrees to the right (+X, 0)
+  const extremeTarget = { x: 10, y: 0, z: 0 };
+  for (let i = 0; i < 30; i++) presentation.present(b, 1 / 60, extremeTarget);
+
+  assert.ok(
+    presentation.gazeYaw <= 0.85,
+    "gaze yaw must not exceed physiological limit (0.85 rad)",
+  );
+  assert.ok(
+    presentation.gazeYaw >= -0.85,
+    "gaze yaw must not exceed negative physiological limit",
+  );
+  assert.ok(
+    presentation.gazePitch <= 0.45 && presentation.gazePitch >= -0.38,
+    "gaze pitch must stay within physiological limits",
+  );
+  presentation.dispose();
+});
+
+test("running fast focuses gaze forward along travel direction", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.yaw = 0;
+  b.grounded = true;
+  b.mode = "land";
+
+  const target = { x: 3, y: 0, z: 3 };
+  for (let i = 0; i < 30; i++) presentation.present(b, 1 / 60, target);
+  assert.ok(presentation.gazeYaw > 0.3, "initial gaze turns toward target");
+
+  // Accelerate into run
+  b.vx = 0;
+  b.vz = 3.5; // speed > 2.2
+  for (let i = 0; i < 30; i++) presentation.present(b, 1 / 60, target);
+
+  assert.equal(presentation.attention, null, "attention is suppressed while running fast");
+  assert.ok(Math.abs(presentation.gazeYaw) < 0.1, "gaze resets forward along travel direction");
+  presentation.dispose();
+});
+
+test("shell slide suppresses attention tracking and zeroes look angles", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.mode = "slide";
+  b.grounded = true;
+
+  const target = { x: 4, y: 1, z: 2 };
+  for (let i = 0; i < 15; i++) presentation.present(b, 1 / 60, target);
+
+  assert.equal(presentation.attention, null, "attention must be null in shell slide");
+  assert.equal(presentation.gazeYaw, 0, "gaze yaw must be exactly 0 in shell slide");
+  assert.equal(presentation.gazePitch, 0, "gaze pitch must be exactly 0 in shell slide");
+  presentation.dispose();
+});
+
+test("clearing attention target decays gaze back to resting orientation", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.yaw = 0;
+  b.grounded = true;
+  b.mode = "land";
+
+  const target = { x: 3, y: 0, z: 3 };
+  for (let i = 0; i < 30; i++) presentation.present(b, 1 / 60, target);
+  assert.ok(presentation.gazeYaw > 0.3);
+
+  // Clear attention target
+  for (let i = 0; i < 40; i++) presentation.present(b, 1 / 60, null);
+
+  assert.equal(presentation.attention, null);
+  assert.ok(Math.abs(presentation.gazeYaw) < 0.08, "gaze yaw must decay back toward neutral");
+  presentation.dispose();
+});
+
 test("presentation cleanly disposes materials, skeletons and releases asset handle", () => {
   const { presentation, isReleased } = createMockSquirtle();
   presentation.dispose();

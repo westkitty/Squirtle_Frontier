@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 25
+revision: 26
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -301,4 +301,23 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Mutation suite (`tools/mutation-check.mjs`) expanded from 20 to 23 documented-contract mutations: freezing idle without breathing, swimming without flipper stroke, and failing water-exit shake are now killed by named tests (23/23 caught in ~98s).
 - Tooling portability: `tools/browser-launch.mjs` updated with Darwin Google Chrome fallback, allowing headless browser test suites to run natively on macOS. `tools/world-browser.mjs` reach assertion made order-independent via sorting.
 - Validation: All 118 unit tests, architecture checks (`npm run check`), 23/23 mutations (`npm run mutate`), production bundle build (`npm run build`), and browser journeys (`browser`, `browser:world`, `browser:habitat`, `browser:wildlife`, `browser:watershed`, `browser:channel`, `browser:multitab`, `browser:a11y`, `browser:dist`, `npm run perf`) pass with zero errors and zero resource leaks (0 geometries / 0 textures at teardown).
+
+## Squirtle environmental curiosity and contextual attention checkpoint
+
+- Squirtle's living creature awareness expanded with deterministic, pure spatial attention resolution (`src/player/creature-attention.js`, `resolveAttentionTarget`) and anatomically constrained gaze kinematics (`src/assets/squirtle-presentation.js`).
+- Attention resolution engine prioritizes salient world entities by biological and environmental relevance:
+  1. Living wildlife (Priority 10): Nearby reed frogs (`radius: 8m`) in shallows or Lab, and drinking/foraging herd animals (`radius: 9m`).
+  2. Active environmental hazards (Priority 8): Burning fire sites (`radius: 11m`, `heat > 0.05`).
+  3. Settlement caretaker & domestic elements (Priority 6-7): Caretaker at doorway (`radius: 14m`), transitioning to filled water bowl (`radius: 5m`, Priority 7) when fresh water is available.
+  4. Spatial landmarks (Priority 4-5): Listening Basin stone archway (`radius: 7m`), landslide debris (`radius: 8m`), and Deep Record central strata column.
+- Gaze gating & anatomical clamping: Target acquisition is gated by Squirtle's visual forward arc (`ATTENTION_FOV = 1.2 rad` / ~69° half-angle) unless within close omnidirectional proximity (`OMNI_PROXIMITY = 2.4m`). Head orientation smoothly saccades (`approach` rate 5.5) with strict anatomical limits preventing unnatural neck clipping with the shell rim (yaw clamped to `[-0.85, 0.85]` rad / +/- 49°; pitch clamped to `[-0.38, 0.45]` rad / -22° downward to +26° upward). Sympathetic snout pitch alignment (`0.25 * lookPitch`) and inquisitive roll micro-tilts accompany active fixation.
+- Self-preservation and locomotion overrides: Fast running (`speed > 2.2`) refocuses gaze forward along movement velocity; shell slide (`mode === "slide"`) completely suppresses attention tracking (`gazeYaw = 0, gazePitch = 0, attention = null`) ensuring all extremities and head remain retracted within the shell; water jet propulsion maintains streamlined hydrodynamic alignment.
+- Presentation adapter & runtime diagnostics: `PlayableCreatureAdapter` present signature formally accepts `attentionTarget`; `src/main.js` samples attention in the simulation loop and feeds presentation; live attention state and gaze angles are exposed in `window.__SF.stats()` for browser journeys.
+- Dedicated unit tests:
+  - `tools/creature-attention.test.mjs` (7 new checks): wildlife priority over landmarks, visual FOV gating vs close omni-proximity, spatial radius bounds, fire hazard detection, settlement caretaker and bowl transitions, Lab frog detection, and Deep Record column awareness.
+  - `tools/squirtle-presentation.test.mjs` (4 new checks): gaze orientation within physiological clamping bounds, fast running forward focus, shell slide attention suppression, and graceful gaze decay to rest upon target loss.
+  - Total unit test suite expanded from 118 to 129 checks (all pass).
+- Mutation suite (`tools/mutation-check.mjs`): Added 3 documented-contract mutations (attending targets behind Squirtle outside FOV, exceeding anatomical gaze yaw clamp, and tracking targets while inside shell slide), expanding the suite to 26/26 mutations killed by named unit tests in ~105s.
+- Validation: All 129 unit tests (`npm test`), architecture checks (`npm run check`), 26/26 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass cleanly with zero resource leaks (0 geometries / 0 textures at teardown).
+
 

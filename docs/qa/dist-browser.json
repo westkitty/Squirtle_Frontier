@@ -2,35 +2,35 @@
   "errors": [],
   "requested": [
     "/",
-    "/assets/index-C9mBL0Lq.js",
+    "/assets/index-DzbYZK-n.js",
     "/assets/index--ueI0DJO.css",
     "/assets/manifest.json",
     "/assets/runtime/squirtle/squirtle.glb",
-    "http://127.0.0.1:4173/7daf916a-d49f-473e-8ab6-13785e3a1c1e",
-    "http://127.0.0.1:4173/8b3fa86d-c9aa-4148-8496-904e7cbb35dc",
+    "http://127.0.0.1:4173/4bcaa4c9-1eea-4334-88eb-261b365f30c3",
+    "http://127.0.0.1:4173/5d3843d1-27ce-4c19-a7cc-a09d9e64f4c5",
     "/",
-    "/assets/index-C9mBL0Lq.js",
+    "/assets/index-DzbYZK-n.js",
     "/assets/index--ueI0DJO.css",
     "/assets/manifest.json",
     "/assets/runtime/squirtle/squirtle.glb",
-    "http://127.0.0.1:4173/ec087278-201f-40d4-b014-dc92a7ec252a",
-    "http://127.0.0.1:4173/c0678892-ba61-4ee7-8950-d3c7cab966a9"
+    "http://127.0.0.1:4173/70098009-fe33-44ff-94fa-93f3e53543de",
+    "http://127.0.0.1:4173/0d3c5127-10ea-43b3-bb46-ba70d94ca293"
   ],
   "devGraph": [],
   "bundle": [
-    "/assets/index-C9mBL0Lq.js",
+    "/assets/index-DzbYZK-n.js",
     "/assets/index--ueI0DJO.css",
     "/assets/manifest.json",
     "/assets/runtime/squirtle/squirtle.glb"
   ],
-  "movedMeters": 1.5945483867653927,
+  "movedMeters": 1.6678654460443951,
   "savedPosition": {
     "x": -10,
-    "z": 16.405451613234607
+    "z": 16.332134553955605
   },
   "afterReload": {
     "x": -10,
-    "z": 16.266,
+    "z": 16.193,
     "bypass": 0.6,
     "stage": 1,
     "assets": {

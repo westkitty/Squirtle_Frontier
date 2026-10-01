@@ -134,8 +134,8 @@
   "adaptiveOn": {
     "checked": true,
     "enabled": true,
-    "pixelRatio": 0.7,
-    "width": 672
+    "pixelRatio": 0.85,
+    "width": 816
   },
   "adaptiveOff": {
     "stored": false,
@@ -157,7 +157,7 @@
       104
     ]
   },
-  "touchKeyboardMoveMeters": 0.863,
+  "touchKeyboardMoveMeters": 1.118,
   "stickDrag": {
     "stick": {
       "x": 0,
@@ -172,5 +172,5 @@
     },
     "drifted": 0.015
   },
-  "stickMovedMeters": 1.012
+  "stickMovedMeters": 1.017
 }

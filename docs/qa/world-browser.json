@@ -26,7 +26,7 @@
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 16,
       "textures": 6
     },
     {
@@ -111,7 +111,7 @@
       7
     ],
     "band": 8,
-    "y": -21.46
+    "y": -21.42
   },
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
@@ -126,7 +126,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 654,
+      "frame": 608,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
@@ -138,6 +138,19 @@
       "references": 0,
       "records": 0
     },
-    "mode": "land"
+    "mode": "land",
+    "attention": {
+      "id": "lab-basin",
+      "type": "water",
+      "x": 0,
+      "y": -0.2,
+      "z": 0,
+      "priority": 5,
+      "distance": 5
+    },
+    "gaze": {
+      "yaw": -0.5798285424655466,
+      "pitch": -0.2921553271115951
+    }
   }
 }

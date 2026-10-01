@@ -21,6 +21,10 @@ export class SquirtlePresentation extends PlayableCreature {
     this.shakeTime = 0;
     this.wasAquatic = false;
     this.shell = 0;
+    this.lookYaw = 0;
+    this.lookPitch = 0;
+    this.attentionTime = 0;
+    this.activeAttention = null;
     // Collada SID -> semantic role verified against source node hierarchy.
     const roles = {
       joint1: "Head",
@@ -72,7 +76,16 @@ export class SquirtlePresentation extends PlayableCreature {
   get swimStroke() {
     return this.swimPhase;
   }
-  present(b, dt) {
+  get gazeYaw() {
+    return this.lookYaw;
+  }
+  get gazePitch() {
+    return this.lookPitch;
+  }
+  get attention() {
+    return this.activeAttention;
+  }
+  present(b, dt, attentionTarget = null) {
     const aquatic = b.mode === "swim" || b.mode === "dive";
     const speed = Math.hypot(b.vx, b.vz);
     const isMoving = speed > 0.08;
@@ -119,6 +132,48 @@ export class SquirtlePresentation extends PlayableCreature {
       const bone = this.bones.get(name);
       if (bone) bone.node.rotateZ(amount);
     };
+
+    // Contextual attention & gaze tracking
+    if (inShell) {
+      // Complete suppression in shell slide: head retracts inside shell
+      this.lookYaw = 0;
+      this.lookPitch = 0;
+      this.attentionTime = 0;
+      this.activeAttention = null;
+    } else if (b.jetTime > 0 || speed > 2.2) {
+      // Forward focus during high-speed travel or jet launch
+      this.lookYaw += (0 - this.lookYaw) * (1 - Math.exp(-8 * dt));
+      this.lookPitch += (0 - this.lookPitch) * (1 - Math.exp(-8 * dt));
+      this.attentionTime = 0;
+      this.activeAttention = null;
+    } else if (attentionTarget) {
+      this.attentionTime += dt;
+      this.activeAttention = attentionTarget;
+      const dx = attentionTarget.x - b.x;
+      const dz = attentionTarget.z - b.z;
+      const distH = Math.max(0.1, Math.hypot(dx, dz));
+      const targetYaw = Math.atan2(dx, dz);
+      const rawYawDiff = Math.atan2(
+        Math.sin(targetYaw - b.yaw),
+        Math.cos(targetYaw - b.yaw),
+      );
+      const targetY = attentionTarget.y !== undefined ? attentionTarget.y : b.y;
+      const dy = targetY - (b.y + 0.32);
+      const rawPitchDiff = Math.atan2(dy, distH);
+
+      // Anatomical clamping: Squirtle neck/head physiological rotation bounds
+      const clampedYaw = Math.max(-0.85, Math.min(0.85, rawYawDiff));
+      const clampedPitch = Math.max(-0.38, Math.min(0.45, rawPitchDiff));
+
+      // Saccadic approach and fixation
+      this.lookYaw += (clampedYaw - this.lookYaw) * (1 - Math.exp(-5.5 * dt));
+      this.lookPitch += (clampedPitch - this.lookPitch) * (1 - Math.exp(-5.5 * dt));
+    } else {
+      this.attentionTime = 0;
+      this.activeAttention = null;
+      this.lookYaw += (0 - this.lookYaw) * (1 - Math.exp(-4 * dt));
+      this.lookPitch += (0 - this.lookPitch) * (1 - Math.exp(-4 * dt));
+    }
 
     if (aquatic && !inShell) {
       if (b.jetTime > 0) {
@@ -169,6 +224,10 @@ export class SquirtlePresentation extends PlayableCreature {
         rotateY("Tail1", Math.sin(this.swimPhase * 0.7) * 0.15);
         rotateY("Tail2", Math.sin(this.swimPhase * 0.7 + 0.5) * 0.2);
         rotateX("Head", 0.15 + tread * 0.04);
+        if (this.activeAttention) {
+          rotateY("Head", this.lookYaw);
+          rotateX("Head", this.lookPitch);
+        }
       }
     } else if (!inShell && b.grounded) {
       if (isMoving) {
@@ -183,6 +242,10 @@ export class SquirtlePresentation extends PlayableCreature {
         rotateY("RForearm", gait * 0.35);
         rotateY("Tail1", -gait * 0.4);
         rotateY("Tail2", -gait * 0.3);
+        if (this.activeAttention) {
+          rotateY("Head", this.lookYaw * 0.5);
+          rotateX("Head", this.lookPitch * 0.5);
+        }
       } else {
         // Living idle respiration & natural tail sway
         const breath = Math.sin(this.breathPhase);
@@ -197,8 +260,13 @@ export class SquirtlePresentation extends PlayableCreature {
         rotateY("Tail2", tailSway * 0.8);
         rotateY("Tail3", tailSway);
 
-        // Curious idle glance after settling
-        if (this.idleTime > 1.5) {
+        // Curious idle glance after settling or focused attention
+        if (this.activeAttention) {
+          rotateY("Head", this.lookYaw);
+          rotateX("Head", this.lookPitch);
+          rotateZ("Head", Math.sin(this.attentionTime * 2.0) * 0.05);
+          rotateX("Snout", this.lookPitch * 0.25);
+        } else if (this.idleTime > 1.5) {
           const lookCycle = (this.idleTime - 1.5) * 0.6;
           const lookYaw =
             Math.sin(lookCycle) * Math.min(0.38, (this.idleTime - 1.5) * 0.2);

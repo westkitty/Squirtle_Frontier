@@ -12,10 +12,10 @@
     "before": 655,
     "after": 707
   },
-  "levelAfterReload": 0.182405,
+  "levelAfterReload": 0.185495,
   "levelFollowsGraph": {
     "raised": 0.132632,
-    "back": 0.182405,
-    "was": 0.6688755512342976
+    "back": 0.185495,
+    "was": 0.6793596832917667
   }
 }

@@ -51,7 +51,7 @@
     }
   ],
   "modes": [
-    "forage",
+    "flee",
     "forage",
     "forage",
     "forage",
@@ -72,7 +72,7 @@
     "inWater": true,
     "issue": null,
     "sites": 12,
-    "drinkers": 4
+    "drinkers": 3
   },
   "drinkNote": "Drink tracks in 2 places; nearest 3 m NW.",
   "drySamples": [
@@ -123,7 +123,7 @@
     "drinking": 0,
     "parched": 7,
     "wetness": 0.101,
-    "note": "Drink tracks in 2 places; nearest 3 m W. Now the shallows are too dry to drink at.",
+    "note": "Drink tracks in 2 places; nearest 3 m NW. Now the shallows are too dry to drink at.",
     "tracks": 27
   },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
