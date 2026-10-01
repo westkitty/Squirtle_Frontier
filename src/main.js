@@ -607,20 +607,14 @@ async function boot() {
             diversion: state.frontier.diversion,
             read: state.memory.strata,
           });
-          if (ledger.inBank) strataHold = { band: -1, depth: null, held: 0 };
-          else if (
-            strataHold.band === ledger.layer &&
-            strataHold.depth === ledger.depth
-          )
-            strataHold.held += dt;
-          else
-            strataHold = { band: ledger.layer, depth: ledger.depth, held: 0 };
+          strataHold = advanceStrataHold(strataHold, ledger, body.vy, dt);
           if (
-            !ledger.inBank &&
-            strataHold.held > 1.2 &&
+            strataHoldReady(strataHold) &&
             state.memory.markStrata(ledger.layer, ledger.layers)
-          )
+          ) {
             strataLoggedAt = state.elapsed;
+            strataHold = { band: -1, held: 0 };
+          }
           status.textContent =
             record.describe(body.y) +
             (state.elapsed - strataLoggedAt < 2.5
@@ -631,6 +625,9 @@ async function boot() {
           applyWaterJet(state.watershed, body, dt);
           applyWorldJet(state.frontier, body, dt);
         }
+        // A reading is earned in the shaft or not at all: leaving must not bank progress
+        // toward logging a band that was never stood in.
+        if (state.place !== "record") strataHold = { band: -1, held: 0 };
         const previousTick = state.frontier.tick;
         state.update(dt);
         if (state.frontier.tick !== previousTick) {

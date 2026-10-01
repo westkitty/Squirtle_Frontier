@@ -188,8 +188,8 @@ try {
       Object.assign(g.body, { x: 0, z: 0, y: -12.4, vx: 0, vy: 0, vz: 0 });
       g.rig.initial = true;
     });
-  const readRecord = async () => {
-    await pinInShaft();
+  const readRecord = async (pin = true) => {
+    if (pin) await pinInShaft();
     return page.evaluate(() => ({
       y: window.__SF.body.y,
       hidden: document.querySelector("#record-readout").hidden,
@@ -260,26 +260,30 @@ try {
   assert.match(cutRow.value, /% of the 22 m below you/);
   assert.match(cutRow.value, /^the side groove is /);
   evidence.recordRows = recordDom.rows;
-  // Standing in a band is the whole mechanic: hold the pin until the shaft agrees the
-  // band was read, and require the readout, the memory and the panel to say the same.
-  // The shaft floats the player up, so keep re-pinning while the hold accumulates: the
-  // reading has to be earned by standing still in one band, not by a fixture that stops
-  // the simulation.
-  let logged = await readRecord();
-  for (let i = 0; i < 60 && !logged.live.strata.length; i++) {
-    await pinInShaft();
-    await page.waitForTimeout(120);
-    logged = await readRecord();
+  // Earning a reading must not need a fixture. Sink to the floor of the shaft with the
+  // descend key, let go, and require the band to log itself while nothing but the
+  // simulation moves the body: pinning here would have proven only the pin, which is
+  // exactly how a hold rule no player could satisfy once shipped.
+  await page.keyboard.down("KeyQ");
+  await page.waitForFunction(() => window.__SF.body.y < -21, null, {
+    timeout: 30000,
+  });
+  await page.keyboard.up("KeyQ");
+  const read = () => readRecord(false);
+  let logged = await read();
+  for (let i = 0; i < 150 && !logged.live.strata.length; i++) {
+    await page.waitForTimeout(100);
+    logged = await read();
   }
   assert.ok(
     logged.live.strata.length > 0,
-    "a band stood in for over a second has to be logged",
+    "sitting on the floor of the shaft has to log the band you are in",
   );
-  // Same frame-skew rule as before: settle until the painted rows and a recomputation
-  // from the state read alongside them agree, then assert the agreement it reached.
+  // Rows are painted during a frame and the graph advances in it, so settle until the
+  // screen and a recomputation from the same read agree, then assert what it reached.
   let loggedMismatch = "unsettled";
   for (let i = 0; i < 40; i++) {
-    logged = await readRecord();
+    logged = await read();
     loggedMismatch =
       expectRows(logged)
         .map((r) => r.value)
@@ -295,12 +299,17 @@ try {
   assert.equal(
     logged.live.strata.length,
     1,
-    "one band held still is one band learned, not one per second",
+    "one band sat in is one band learned, not one per second",
   );
   assert.equal(
     logged.live.strata[0] + 1,
     band,
     "the learned band has to be the one the readout is on",
+  );
+  assert.equal(
+    band,
+    8,
+    "the floor of the shaft sits in the deepest band, not a hypothetical one",
   );
   assert.match(logged.rows[1].value, /· read$/);
   assert.equal(
@@ -312,7 +321,11 @@ try {
     null,
     "a logged band has to be in the measurement too",
   );
-  evidence.recordLogged = { strata: logged.live.strata, band };
+  evidence.recordLogged = {
+    strata: logged.live.strata,
+    band,
+    y: +logged.y.toFixed(2),
+  };
   await page.evaluate(() => {
     if (document.querySelector("#memory").hidden)
       document.querySelector("#memory-toggle").click();

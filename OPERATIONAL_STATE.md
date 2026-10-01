@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 21
+revision: 22
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -264,3 +264,11 @@ R/contextual button near the wooden platform advances the existing regional simu
 - `browser:world` holds the pin, requires the log, requires `strata.length === 1`, requires the learned index to be the band the readout is on, and requires the row-for-row equality with the Node-recomputed measurement to survive the new read state; before the dive it asserts the panel claims nothing. 104 checks pass, all ten journeys, build, `browser:dist` and `npm run perf` green at 31,236 triangles and 66.7/33.4 ms ordinary-run medians, unchanged from the recorded baseline; the hold is three comparisons per frame inside the shaft only.
 - Two strict assertions earning their keep: the row-equality check caught this pass's own harness bug (reading `strata` from the wrong level of the probe, which would have compared an unread ledger against a read screen forever), and a fixture that pinned the body without the descend key logged nothing at all — the shaft will not record a band nobody stood in.
 - Still open: the first hold rule (an unchanged depth reading) was unreachable in play, because the shaft floats the player at ~6 m/s; the physical rule replaced it and is scenario-tested. No survey of the carved mesh behind `your cut`, no per-reach wear history, readings never gate or reward anything (deliberate: no objective layer), no fluid or per-cell water, hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.
+
+## Wiring is behaviour checkpoint
+
+- A follow-up defect of the strata pass, recorded because it is the interesting kind: the loop in `src/main.js` was still running the first, unreachable hold rule after the patch that was supposed to replace it silently no-op'd on prettier-reflowed anchor text. 105 checks and three browser journeys were green because every one of them pins the body, and a fixture that passes under both rules proves neither.
+- `tools/arch-check.mjs` now fails on any named import from a relative module that is never referenced again in its own file — the fingerprint a dead splice leaves. Zero false positives repo-wide, verified to bite by aliasing an import to an unused name. This is a permanent harness rule, not a note to self.
+- The shipped rule is `advanceStrataHold(hold, ledger, body.vy, dt)` called from the record branch, with the hold reset whenever `state.place !== "record"` so leaving the shaft cannot bank progress toward a reading nobody made. 105 checks pass with the wiring in place; build, `browser:world`, movement, a11y, dist and perf green at 31,236 ordinary-run triangles.
+- `browser:world` no longer pins its way to a reading: it holds the descend key to the floor of the shaft, releases, and requires the deepest band to log itself from input alone (`y: -21.5`, `strata: [7]`, band 8), then requires row-for-row equality with a Node-side recomputation with no fixture in sight. That is the shape of check that would have caught the dead splice, and it is part of the ladder now rather than a note about what is missing.
+- Still open: other journeys still lean on teleports and pins, so the "the fixture passes either way" weakness survives elsewhere in the ladder. Everything else from the strata checkpoint stands.

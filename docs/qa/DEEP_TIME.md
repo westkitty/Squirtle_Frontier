@@ -84,17 +84,22 @@ only bleeds it, and `STRATA_HOLD_SECONDS = 0.9` of that is a reading.
   hand-edited list (`[3, 40]`, `[3, 3]`, `[1.5]`, `"0"`) is refused outright, and the
   whole-save round trip is covered in `tools/save-integrity.test.mjs`.
 
-`browser:world` drives it: pins the body in a band, waits for the log, then requires the
-screen to still equal the Node-recomputed measurement _including_ the read state, requires
-`strata.length === 1` (not one per second), requires the learned index to be the band the
-readout is on, and requires the Memory panel to say the same thing in prose. Before the dive
-it asserts the opposite — `Nothing of the record is logged. Hold still inside a band of it
-until the shaft agrees you read it.` — because a panel that pre-fills a reading is worse
-than none. An earlier version of this rule accepted an unchanged _depth reading_ instead of
-a band plus a steady body, which no player could satisfy: the shaft floats you at ~6 m/s, so
-a hold that needs a frozen depth never fires outside a test fixture. That version is gone.
+`browser:world` drives it the way a player would: hold the descend key to the floor of the
+shaft, let go, and require the deepest band to log itself with nothing but the simulation
+moving the body — no re-pinning, because a pin would prove only the pin. It then requires
+band 8 from the readout (`y: -21.5` in `docs/qa/world-browser.json`), `strata.length === 1`
+(not one per second), the learned index to be the band on screen, row-for-row equality with
+the Node-recomputed measurement _including_ the read state, and the Memory panel to say the
+same thing in prose. Before the dive the panel is asserted to claim nothing — `Nothing of
+the record is logged. Hold still inside a band of it until the shaft agrees you read it.` —
+because a panel that pre-fills a reading is worse than none. An earlier version of this rule
+accepted an unchanged _depth reading_ instead of a band plus a steady body, which no player
+could satisfy: the shaft floats you at ~6 m/s, so a hold that needs a frozen depth never
+fires outside a fixture. That version is gone, and the floor path is what the ladder now
+exercises, by input rather than by a pin.
 
-The scenarios are measured, not assumed (`tools/deep-time.test.mjs`, all at `dt = 1/60`):
+The scenarios are measured, not assumed (`tools/deep-time.test.mjs`, all at `dt = 1/60`,
+driving `advanceStrataHold` directly — which is also why the check below mattered):
 
 | what the player is doing                     | result                                    |
 | -------------------------------------------- | ----------------------------------------- |
@@ -150,6 +155,24 @@ written while you look.
   evaluation and asserts the derivation (`level === waterLevelFor(wetness)`) plus a
   live-follow probe (set `wetness = 0.5`, the level moves in the same frame, set it back,
   the level returns). Three consecutive runs green.
+
+## The pass that shipped the wrong rule, and the check that now forbids it
+
+The hold rule described above is what the docs said and what `deep-history.js` implemented,
+but the first commit of this pass wired _nothing_ to it: the follow-up patch that replaced
+the loop body had anchored on text prettier had already re-flowed, so the splice silently
+no-op'd and `src/main.js` kept calling its own earlier, unreachable rule. 105 unit checks,
+`browser:world`, a11y and movement were all green, because every one of them passes when a
+fixture pins the body — a test that tolerates both rules is not a test of either.
+
+The fix is not "read the diff harder" (though that is how it was found, in the verification
+pass after the commit). `tools/arch-check.mjs` now refuses any named import from a relative
+module that is not referenced at least once more in the file: an orphaned import is exactly
+the fingerprint a dead splice leaves behind, and the two orphaned symbols here were the whole
+bug. Repo-wide the rule is clean at zero false positives, and it bites: aliasing one import
+to an unused name fails the check with `unused import canaryUnused: src/main.js`. The same
+incident also cost a `git checkout -- src/main.js` used to undo a probe, which reverted the
+_fix_ along with the probe; throwaway edits belong in a `/tmp` copy, not in the working tree.
 
 ## Measured, not assumed
 

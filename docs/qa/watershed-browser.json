@@ -6,16 +6,16 @@
   "senseAfterFlood": "Touch the water to listen to its current. You are on the North run, water in patches; 6 m to the shallows, 0.6 m above the water.",
   "waterLevel": {
     "before": -0.029331,
-    "after": 0.182261
+    "after": 0.182164
   },
   "shorelineCells": {
     "before": 655,
     "after": 707
   },
-  "levelAfterReload": 0.182261,
+  "levelAfterReload": 0.182164,
   "levelFollowsGraph": {
     "raised": 0.132632,
-    "back": 0.182261,
-    "was": 0.6683847473042164
+    "back": 0.182164,
+    "was": 0.6680575446841622
   }
 }
