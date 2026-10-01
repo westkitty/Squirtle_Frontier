@@ -7,7 +7,13 @@ import { reachWaterState } from "./simulation/water-level.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
-import { deepTimeLedger, recordRows } from "./simulation/deep-history.js";
+import {
+  RECORD_BANDS,
+  advanceStrataHold,
+  deepTimeLedger,
+  recordRows,
+  strataHoldReady,
+} from "./simulation/deep-history.js";
 import { LANDMARKS } from "./simulation/place-memory.js";
 import * as THREE from "three";
 import { pixelRatioFor } from "./render-quality.js";
@@ -319,6 +325,10 @@ async function boot() {
             REACHES.filter((r) => readReachWater()[r.id]?.flowing).length
           } holding water.`
         : "No channels followed yet. Water runs down from the rim to the shallows.";
+      const logged = state.memory.strata.length;
+      document.querySelector("#strata-note").textContent = logged
+        ? `The record is read in ${logged} of ${RECORD_BANDS} bands, down to band ${Math.max(...state.memory.strata) + 1}.`
+        : "Nothing of the record is logged. Hold still inside a band of it until the shaft agrees you read it.";
       document.querySelector("#companion").textContent = n
         ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
         : "No familiar visitor yet. Life needs water and time.";
@@ -526,6 +536,9 @@ async function boot() {
         ],
       );
     };
+    // Standing in a band for a moment is what turns a depth into a record.
+    let strataHold = { band: -1, held: 0 },
+      strataLoggedAt = -10;
     let hudTime = 0,
       saveTime = 0,
       lastRender = null,
@@ -584,18 +597,36 @@ async function boot() {
             body.x *= 3.4 / r;
             body.z *= 3.4 / r;
           }
-          status.textContent = record.describe(body.y);
-          renderRecordReadout(
-            deepTimeLedger({
-              eras: record.eras,
-              y: body.y,
-              tick: state.frontier.tick,
-              history: state.frontier.history,
-              nodes: state.watershed.nodes,
-              stage: state.frontier.stage,
-              diversion: state.frontier.diversion,
-            }),
-          );
+          const ledger = deepTimeLedger({
+            eras: record.eras,
+            y: body.y,
+            tick: state.frontier.tick,
+            history: state.frontier.history,
+            nodes: state.watershed.nodes,
+            stage: state.frontier.stage,
+            diversion: state.frontier.diversion,
+            read: state.memory.strata,
+          });
+          if (ledger.inBank) strataHold = { band: -1, depth: null, held: 0 };
+          else if (
+            strataHold.band === ledger.layer &&
+            strataHold.depth === ledger.depth
+          )
+            strataHold.held += dt;
+          else
+            strataHold = { band: ledger.layer, depth: ledger.depth, held: 0 };
+          if (
+            !ledger.inBank &&
+            strataHold.held > 1.2 &&
+            state.memory.markStrata(ledger.layer, ledger.layers)
+          )
+            strataLoggedAt = state.elapsed;
+          status.textContent =
+            record.describe(body.y) +
+            (state.elapsed - strataLoggedAt < 2.5
+              ? " This band is logged."
+              : "");
+          renderRecordReadout(ledger);
         } else {
           applyWaterJet(state.watershed, body, dt);
           applyWorldJet(state.frontier, body, dt);

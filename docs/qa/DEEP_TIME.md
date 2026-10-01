@@ -38,7 +38,7 @@ At `y = −12.4` in a save that has been left to run, from the journey's own evi
 | `recorded`                   | `about 895 years ago`                                                           |
 | `basin clock`                | `9 ticks · ledger empty`                                                        |
 | `water moved`                | `0.8 units of wear · 0.01 of sediment in the shallows`                          |
-| `your cut`                   | `0.03 m of floor · 0.1% of the 22 m below you`                                  |
+| `your cut`                   | `the side groove is 0.03 m deep · 0.1% of the 22 m below you`                   |
 | `trend`                      | `no second entry yet`                                                           |
 | `the shaft does not convert` | `record in years, basin in ticks; nothing in the water translates between them` |
 
@@ -59,6 +59,57 @@ Two rows are conditional and both directions are tested: `while you were here` a
 when reeds fell while your side route took supply, or when wear accumulated with nothing
 cut — and it stays away when the reeds are rising. `ledger N entries over M s` appears
 only once `frontier.history` has a first and a last entry.
+
+## Standing still is the only way to read it
+
+A shaft you can measure is still a shaft that does not know you were there, so the record
+now keeps a reading. The rule lives in `advanceStrataHold(hold, ledger, vy, dt)` beside the
+ledger it reads, and it is deliberately physical: time inside one band counts while
+`|vy| <= STRATA_SETTLE_SPEED` (0.6 m/s), leaving the band throws the count away, moving fast
+only bleeds it, and `STRATA_HOLD_SECONDS = 0.9` of that is a reading.
+
+- `PlaceMemory.strata` (indices, not flags — eight booleans would be a wider save contract
+  than the fact) with `markStrata(index, count)`: idempotent, bounds-checked, sorted.
+  Hovering a band for a minute is one reading, not sixty.
+- The ledger takes `read` as an input and the readout answers with `· read` / `· unread` on
+  the band row plus a `record read` row: `1 of 8 bands logged`, or, before anything is
+  logged, `nothing logged · hold still inside a band to read it`. The row is the tutorial;
+  there is no marker, no counter in the corner, no objective.
+- `RECORD_BANDS = 8` is now the single source for the generator, the save validator and the
+  Memory panel's `The record is read in 1 of 8 bands, deepest the 4.` — because the panel
+  cannot read it off `record.eras`, which is `null` everywhere outside the shaft.
+- The caption confirms once: `… This band is logged.` for 2.5 s, then the record's own
+  sentence again.
+- The field is additive at v6: a save written before it existed loads with `[]`, a
+  hand-edited list (`[3, 40]`, `[3, 3]`, `[1.5]`, `"0"`) is refused outright, and the
+  whole-save round trip is covered in `tools/save-integrity.test.mjs`.
+
+`browser:world` drives it: pins the body in a band, waits for the log, then requires the
+screen to still equal the Node-recomputed measurement _including_ the read state, requires
+`strata.length === 1` (not one per second), requires the learned index to be the band the
+readout is on, and requires the Memory panel to say the same thing in prose. Before the dive
+it asserts the opposite — `Nothing of the record is logged. Hold still inside a band of it
+until the shaft agrees you read it.` — because a panel that pre-fills a reading is worse
+than none. An earlier version of this rule accepted an unchanged _depth reading_ instead of
+a band plus a steady body, which no player could satisfy: the shaft floats you at ~6 m/s, so
+a hold that needs a frozen depth never fires outside a test fixture. That version is gone.
+
+The scenarios are measured, not assumed (`tools/deep-time.test.mjs`, all at `dt = 1/60`):
+
+| what the player is doing                     | result                                    |
+| -------------------------------------------- | ----------------------------------------- |
+| hovering still in a band                     | logs at 0.92 s                            |
+| sitting on the floor of the shaft            | logs at 0.92 s                            |
+| tapping Q to hold depth against the buoyancy | logs at 1.57 s                            |
+| descending through the shaft at 1.5 m/s      | never                                     |
+| free-rising at 6 m/s, or dropping at 6 m/s   | never                                     |
+| bobbing across a band boundary               | never — the count does not transfer bands |
+
+Two things that check taught in the open: the strict row-equality assertion caught the
+harness reading `strata` from the wrong level of its own probe (a silent `undefined` would
+have compared an unread ledger against a read screen forever), and a fixture that pinned the
+body without holding the descend key never logged anything — the shaft refuses to record a
+band it was not stood in, which is the behaviour the mechanic is made of.
 
 ## Two clocks, and the projection that was not shipped
 
@@ -105,9 +156,14 @@ written while you look.
 `deepTimeLedger` plus `recordRows` costs 5.7 µs per call measured in Node (20,000 calls,
 real 8-era graph, 90-entry history): it runs once per frame in the same branch that already
 built the caption, so the added work is a rounding error against a 16.6 ms frame, and the
-DOM is written only when a row's string signature changes.
+DOM is written only when a row's string signature changes. The hold-to-read path adds four
+comparisons per frame and only while `state.place === "record"`, and the frame after logging
+a band is one signature change wide. Ordinary-run triangles are unchanged at 31,236 across
+the runs that shipped this; the two recorded medians of the same build were 66.7 / 33.4 ms
+and 83.3 / 50.0 ms, which is shared-CPU software-rendering noise of the kind
+`OPERATIONAL_STATE.md` already refuses to interpret, not a result about this change.
 
-`npm run check` 101/101 (was 90; +11 here). Build clean, `browser:dist` boots the
+`npm run check` 104/104 (90 at the start of the instrument work; +13 in `tools/deep-time.test.mjs`, +1 in `tools/save-integrity.test.mjs`). Build clean, `browser:dist` boots the
 static bundle, all ten journeys green, `tools/png-diff` untouched. Triangles in an ordinary
 run unchanged at 31,236 and geometries/textures at teardown 0/0 — the readout is HUD DOM,
 not scene content, and it costs nothing per frame beyond a string compare. Frame medians
@@ -119,8 +175,9 @@ rendering and are recorded rather than interpreted; there is no hardware or mobi
 - Strata remain authored canon: 8 bands, 2.3 m each. The readout now says so out loud —
   the bands tile 20.5 m of the 22 m shaft, and the 1.5 m of bank above them is reported as
   bank instead of being assigned a date.
-- The cut is measured as floor height (`CHANNEL_DEPTH[stage]`), not as a carved mesh:
-  `your cut` reports the channel the stage implies, not a survey of the hole.
+- The cut is measured as the channel the bypass stage implies (`CHANNEL_DEPTH[stage]`),
+  and the row now says so (`the side groove is 0.03 m deep`) rather than implying a hole in
+  the shaft floor. It is still not a survey of the carved mesh.
 - No years-per-tick conversion, no fill projection, no per-reach wear history.
 - Screen-reader and real-device review, and the ten-minute objective-free enjoyment gate,
   remain unverified by anyone but a human.

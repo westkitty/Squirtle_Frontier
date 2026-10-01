@@ -1,5 +1,8 @@
 import { hash2i } from "../rng.js";
 import { CHANNEL_DEPTH } from "./channel-terrain.js";
+// How many bands the record has. One number, because the generator, the save validator
+// and the panel all have to agree on it.
+export const RECORD_BANDS = 8;
 // Seeded aggregate eras, inspired by LF's bounded history: never centuries of actors.
 export function deepHistory(seed) {
   const events = [
@@ -8,7 +11,7 @@ export function deepHistory(seed) {
     "A long dry season lowered the reeds. Wind laid sand over the mud.",
     "Floodwater crossed the old bank. Seeds settled in a new wetland.",
   ];
-  return Array.from({ length: 8 }, (_, i) => ({
+  return Array.from({ length: RECORD_BANDS }, (_, i) => ({
     id: i,
     depth: 1.5 + i * 2.3,
     yearsAgo: 80 + i * 160 + Math.floor(hash2i(i, 21, seed) * 70),
@@ -53,6 +56,7 @@ export function deepTimeLedger({
   nodes = [],
   stage = 0,
   diversion = 0,
+  read = [],
 } = {}) {
   const depth = Math.max(0, -y);
   // The top of the record is not the top of the shaft: the first band starts 1.5 m down
@@ -79,6 +83,10 @@ export function deepTimeLedger({
     depth: +finite(depth).toFixed(1),
     inBank,
     bankAbove: +finite(bankAbove).toFixed(1),
+    // What the player has stood still long enough to read, counted not guessed: the only
+    // way a band is in here is that they were inside it.
+    readCount: Array.isArray(read) ? read.length : 0,
+    layerRead: Array.isArray(read) && read.includes(layer),
     floor: RECORD_DEPTH,
     thickness: era ? layerThickness(eras, layer) : 0,
     material: era
@@ -119,7 +127,7 @@ export function recordRows(ledger) {
       label: "layer",
       value: l.inBank
         ? `bank over record · ${l.bankAbove} m above the first band`
-        : `${l.layer + 1} of ${l.layers} · ${l.thickness.toFixed(1)} m of ${l.material ?? "unsorted sediment"}`,
+        : `${l.layer + 1} of ${l.layers} · ${l.thickness.toFixed(1)} m of ${l.material ?? "unsorted sediment"} · ${l.layerRead ? "read" : "unread"}`,
     },
     {
       label: "recorded",
@@ -128,6 +136,12 @@ export function recordRows(ledger) {
         : l.yearsAgo === null
           ? "no date on this layer"
           : `about ${l.yearsAgo} years ago`,
+    },
+    {
+      label: "record read",
+      value: l.readCount
+        ? `${l.readCount} of ${l.layers} bands logged`
+        : "nothing logged · hold still inside a band to read it",
     },
     {
       label: "basin clock",
@@ -143,7 +157,7 @@ export function recordRows(ledger) {
     },
     {
       label: "your cut",
-      value: `${l.cutMetres.toFixed(2)} m of floor · ${l.cutShare.toFixed(1)}% of the ${l.floor} m below you`,
+      value: `the side groove is ${l.cutMetres.toFixed(2)} m deep · ${l.cutShare.toFixed(1)}% of the ${l.floor} m below you`,
     },
     {
       label: "trend",
@@ -163,15 +177,43 @@ export function recordRows(ledger) {
   // Two implications, and only ever stated as correlation: the sim knows the side route
   // takes supply off the wetland, and it knows the spring wears its channel with nobody
   // here. Anything sharper than that would be invention.
+  const trend = rows.findIndex((r) => r.label === "trend");
   if (l.trend && l.trend.reeds < 0 && l.diversion > 0.1)
-    rows.splice(6, 0, {
+    rows.splice(trend, 0, {
       label: "while you were here",
       value: `reeds fell ${Math.abs(l.trend.reeds).toFixed(2)} as your side route took ${l.diversion} of the supply`,
     });
   else if (l.stage === 0 && l.wear > 0)
-    rows.splice(6, 0, {
+    rows.splice(trend, 0, {
       label: "while you were here",
       value: `nothing was cut, and the graph still recorded ${group(l.wear)} units of wear`,
     });
   return rows;
+}
+// Reading a band should be a thing a player can actually do while the shaft tries to float
+// them, and should not be a thing that happens to them by accident. So: time in one band
+// counts while they are roughly holding still, leaving the band throws the count away, and
+// moving fast only bleeds it. Falling through four strata logs nothing; sitting on the floor
+// of the shaft with the whole record above you logs the band you are in.
+export const STRATA_HOLD_SECONDS = 0.9;
+export const STRATA_SETTLE_SPEED = 0.6;
+export function advanceStrataHold(hold, ledger, vy = 0, dt = 0) {
+  const step = Number.isFinite(dt) && dt > 0 ? dt : 0,
+    band =
+      ledger && !ledger.inBank && Number.isInteger(ledger.layer)
+        ? ledger.layer
+        : -1,
+    steady = Number.isFinite(vy) && Math.abs(vy) <= STRATA_SETTLE_SPEED;
+  if (band < 0) return { band: -1, held: 0 };
+  const before = Number.isFinite(hold?.held) ? hold.held : 0;
+  if (hold?.band !== band) return { band, held: 0 };
+  return {
+    band,
+    held: steady
+      ? Math.min(STRATA_HOLD_SECONDS + step, before + step)
+      : Math.max(0, before - step * 0.6),
+  };
+}
+export function strataHoldReady(hold) {
+  return Number.isFinite(hold?.held) && hold.held >= STRATA_HOLD_SECONDS;
 }

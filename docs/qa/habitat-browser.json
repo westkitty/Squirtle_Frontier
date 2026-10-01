@@ -26,66 +26,6 @@
     },
     {
       "memory": {
-        "geometries": 12,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 12,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 16,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 16,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
-        "geometries": 16,
-        "textures": 6
-      },
-      "assets": {
-        "cached": 1,
-        "referencedIds": 1,
-        "references": 1,
-        "records": 1
-      }
-    },
-    {
-      "memory": {
         "geometries": 16,
         "textures": 6
       },
@@ -134,7 +74,67 @@
     },
     {
       "memory": {
-        "geometries": 12,
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 16,
+        "textures": 6
+      },
+      "assets": {
+        "cached": 1,
+        "referencedIds": 1,
+        "references": 1,
+        "records": 1
+      }
+    },
+    {
+      "memory": {
+        "geometries": 16,
         "textures": 6
       },
       "assets": {
@@ -149,16 +149,16 @@
   "return": {
     "place": "lab",
     "ecosystem": {
-      "reeds": 0.9682056258262124,
-      "insects": 0.944393330833349,
-      "prey": 0.767194595247201,
-      "predators": 0.39492407796375273,
+      "reeds": 0.9684838286190004,
+      "insects": 0.9438582453479114,
+      "prey": 0.7666070402791555,
+      "predators": 0.394773476962641,
       "cistern": 1,
-      "labWater": 0.9772806735949614,
-      "labReeds": 0.8342919076849326,
-      "labInsects": 0.769460040838197,
-      "labFrogs": 0.7228520046639972,
-      "eligibleSeconds": 1580
+      "labWater": 0.9802601111664972,
+      "labReeds": 0.8333553713825956,
+      "labInsects": 0.7683704550644126,
+      "labFrogs": 0.7224809391167245,
+      "eligibleSeconds": 1579
     }
   },
   "restSeconds": 300,
@@ -174,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 114,
+      "frame": 118,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

@@ -1,4 +1,5 @@
 import { hash2i, clamp } from "../rng.js";
+import { RECORD_BANDS } from "./deep-history.js";
 import { REACHES, reachAt } from "./reaches.js";
 export const LANDMARKS = [
   { id: "bank", name: "The first bank", x: -10, z: 18 },
@@ -17,6 +18,23 @@ export class PlaceMemory {
     this.lastEncounter = -1000;
     this.drinks = {};
     this.reaches = [];
+    // Bands of the Deep Record the player has stood inside long enough to read.
+    // Indices, not flags: eight booleans would be a wider save contract than the fact.
+    this.strata = [];
+  }
+  // Learning a band is the only write, and it is idempotent: hovering the same stratum
+  // for a minute is one reading, not sixty.
+  markStrata(index, count = RECORD_BANDS) {
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= count ||
+      this.strata.includes(index)
+    )
+      return false;
+    this.strata.push(index);
+    this.strata.sort((a, b) => a - b);
+    return true;
   }
   // Where the herd was seen drinking, as observed from here. Behavior, not
   // population: it never changes how many animals exist.
@@ -84,6 +102,7 @@ export class PlaceMemory {
       cells: { ...this.cells },
       drinks: { ...this.drinks },
       reaches: [...this.reaches],
+      strata: [...this.strata],
       places: [...this.places],
       notable: this.notable ? { ...this.notable } : null,
       lastEncounter: this.lastEncounter,
@@ -121,6 +140,18 @@ export class PlaceMemory {
       )
         throw new Error("Invalid followed reaches");
       r.reaches = [...s.reaches];
+    }
+    if (s.strata !== undefined) {
+      if (
+        !Array.isArray(s.strata) ||
+        s.strata.length > RECORD_BANDS ||
+        new Set(s.strata).size !== s.strata.length ||
+        s.strata.some(
+          (n) => !Number.isInteger(n) || n < 0 || n > RECORD_BANDS - 1,
+        )
+      )
+        throw new Error("Invalid read strata");
+      r.strata = [...s.strata];
     }
     if (
       new Set(s.places).size !== s.places.length ||

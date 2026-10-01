@@ -52,8 +52,8 @@
   ],
   "bypass": 0.1,
   "suppression": {
-    "heat": 0.7499999999999999,
-    "soaked": 0.09999999999999999
+    "heat": 0.6749999999999998,
+    "soaked": 0.15
   },
   "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
@@ -75,11 +75,15 @@
     },
     {
       "label": "layer",
-      "value": "6 of 8 · 2.3 m of pale silt"
+      "value": "6 of 8 · 2.3 m of pale silt · unread"
     },
     {
       "label": "recorded",
       "value": "about 895 years ago"
+    },
+    {
+      "label": "record read",
+      "value": "nothing logged · hold still inside a band to read it"
     },
     {
       "label": "basin clock",
@@ -91,7 +95,7 @@
     },
     {
       "label": "your cut",
-      "value": "0.03 m of floor · 0.1% of the 22 m below you"
+      "value": "the side groove is 0.03 m deep · 0.1% of the 22 m below you"
     },
     {
       "label": "trend",
@@ -102,6 +106,13 @@
       "value": "record in years, basin in ticks; nothing in the water translates between them"
     }
   ],
+  "recordLogged": {
+    "strata": [
+      5
+    ],
+    "band": 6
+  },
+  "strataNote": "The record is read in 1 of 8 bands, down to band 6.",
   "teardown": {
     "chunks": {
       "active": 0,
@@ -114,7 +125,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 256,
+      "frame": 339,
       "calls": 11,
       "triangles": 9488,
       "points": 0,

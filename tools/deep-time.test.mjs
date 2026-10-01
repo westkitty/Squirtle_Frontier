@@ -2,7 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import {
+  RECORD_BANDS,
   RECORD_DEPTH,
+  STRATA_HOLD_SECONDS,
+  advanceStrataHold,
+  strataHoldReady,
   RECORD_MATERIALS,
   deepHistory,
   deepTimeLedger,
@@ -10,6 +14,7 @@ import {
   recordRows,
 } from "../src/simulation/deep-history.js";
 import { DeepRecord, recordRegion } from "../src/player/deep-record.js";
+import { PlaceMemory } from "../src/simulation/place-memory.js";
 
 const eras = deepHistory(1337);
 const history = [
@@ -156,6 +161,7 @@ test("no number reaches the readout that was not measured in the ledger", () => 
     // the screen shows a number the measurement never held.
     sample({ y: -12.367, stage: 3, diversion: 0.45 }),
     sample({ y: -1.21 }),
+    sample({ read: [0, 1, 2, 3, 4, 5, 6, 7], stage: 2, diversion: 0 }),
   ]) {
     const allowed = new Set();
     for (const value of Object.values(ledger)) {
@@ -246,6 +252,125 @@ test("the shaft's mouth is measured, not described", () => {
   // One tenth of a metre lower and you are in the first band of record proper.
   const inRecord = recordRows(sample({ y: -1.5 }))[1];
   assert.match(inRecord.value, /^1 of 8 · /);
+});
+
+test("a band you stood inside is logged, and the shaft says so", () => {
+  const read = recordRows(sample({ read: [5] }));
+  assert.match(read[1].value, /· read$/);
+  assert.equal(
+    read.find((r) => r.label === "record read").value,
+    "1 of 8 bands logged",
+  );
+  const unread = recordRows(sample({ read: [1] }));
+  assert.match(unread[1].value, /· unread$/);
+  assert.equal(sample({ read: [1] }).layerRead, false);
+  assert.equal(sample({ read: [1] }).readCount, 1);
+  // Nobody has read anything yet: the instrument admits it instead of pretending a total.
+  const fresh = recordRows(sample({ read: [] }));
+  assert.equal(
+    fresh.find((r) => r.label === "record read").value,
+    "nothing logged · hold still inside a band to read it",
+  );
+  assert.match(fresh[1].value, /· unread$/);
+  // In the bank there is no band to claim as read, so the row stays silent about it.
+  assert.doesNotMatch(
+    recordRows(sample({ y: -0.4, read: [5] }))[1].value,
+    /read$/,
+    "the bank is not a band of the record",
+  );
+});
+
+test("reading a band takes standing in it, and falling through does not", () => {
+  const dt = 1 / 60,
+    at = (y) =>
+      deepTimeLedger({ eras, y, tick: 0, history: [], nodes: [], read: [] });
+  const run = (step, frames = 600) => {
+    let hold = { band: -1, held: 0 };
+    for (let i = 0; i < frames; i++) {
+      const at2 = step(i, dt);
+      if (!at2) return { hold, frames: i, ready: false };
+      const { y, vy } = at2;
+      hold = advanceStrataHold(hold, at(y), vy, dt);
+      if (strataHoldReady(hold)) return { hold, frames: i + 1, ready: true };
+    }
+    return { hold, frames, ready: false };
+  };
+  const still = run(() => ({ y: -12.4, vy: 0 }));
+  assert.equal(still.ready, true);
+  assert.ok(
+    Math.abs(still.frames * dt - STRATA_HOLD_SECONDS) < 2 * dt,
+    "the hold is the documented length, not a fudge",
+  );
+  assert.equal(
+    run(() => ({ y: -21.9, vy: 0 })).ready,
+    true,
+    "the floor can be read",
+  );
+  // Transit either way must never read a band, however long the shaft is.
+  assert.equal(
+    run((i, s) => {
+      const y = -2 - Math.min(i * 6 * s, 20);
+      return y <= -21.9 ? null : { y, vy: 6 };
+    }).ready,
+    false,
+  );
+  assert.equal(
+    run((i, s) => {
+      const y = -12.4 + i * 6 * s;
+      return y >= -0.3 ? null : { y, vy: -6 };
+    }).ready,
+    false,
+  );
+  // Hovering with taps is the way it is actually done, and it still reads.
+  assert.equal(
+    run((i, s) => ({
+      y: -12.4 + Math.sin(i / 17) * 0.7,
+      vy: -0.55 * Math.cos(i / 17),
+    })).ready,
+    true,
+  );
+  // In the bank there is nothing to read, and the hold cannot be carried between bands.
+  assert.equal(run(() => ({ y: -0.4, vy: 0 })).ready, false);
+  let carry = { band: -1, held: 0 };
+  for (let i = 0; i < 400; i++)
+    carry = advanceStrataHold(carry, at(i % 2 ? -12.4 : -6.5), 0, dt);
+  assert.equal(carry.held, 0, "a hold does not transfer to the next band");
+  assert.equal(strataHoldReady({ band: 2, held: NaN }), false);
+  assert.deepEqual(advanceStrataHold(null, null, 0, dt), { band: -1, held: 0 });
+  assert.equal(RECORD_BANDS, eras.length);
+});
+
+test("learning a band is idempotent, bounded and saved", () => {
+  const memory = new PlaceMemory(1337);
+  assert.equal(memory.strata.length, 0);
+  assert.equal(memory.markStrata(5, 8), true);
+  assert.equal(memory.markStrata(5, 8), false, "hovering is not re-reading");
+  assert.equal(memory.markStrata(0, 8), true);
+  assert.equal(
+    memory.markStrata(8, 8),
+    false,
+    "no eighth band above the count",
+  );
+  assert.equal(memory.markStrata(-1, 8), false);
+  assert.equal(memory.markStrata(2.5, 8), false);
+  assert.deepEqual(memory.strata, [0, 5]);
+  const back = PlaceMemory.restore(memory.snapshot(), 1337);
+  assert.deepEqual(back.strata, [0, 5]);
+  // A save written before the instrument existed has no field at all, and still loads.
+  const legacy = memory.snapshot();
+  delete legacy.strata;
+  assert.deepEqual(PlaceMemory.restore(legacy, 1337).strata, []);
+  for (const strata of [[3, 3], [9], [-1], [1.5], "0", [null]])
+    assert.throws(
+      () => PlaceMemory.restore({ ...memory.snapshot(), strata }, 1337),
+      /Invalid read strata/,
+      `a fabricated strata list like ${JSON.stringify(strata)} has to be refused`,
+    );
+  // Reading is memory, not simulation: it must not touch the world it reads.
+  const before = JSON.stringify(memory.snapshot());
+  deepTimeLedger(sample({ read: memory.strata }));
+  recordRows(sample({ read: memory.strata }));
+  assert.equal(JSON.stringify(memory.snapshot()), before);
 });
 
 test("the caption the record already had is preserved", () => {

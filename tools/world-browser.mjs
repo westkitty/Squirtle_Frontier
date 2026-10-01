@@ -133,6 +133,13 @@ try {
     "No drink tracks yet. Animals drink where the shallows run clean.",
     "an empty drink log must not invent a site",
   );
+  assert.equal(
+    await page.evaluate(
+      () => document.querySelector("#strata-note").textContent,
+    ),
+    "Nothing of the record is logged. Hold still inside a band of it until the shaft agrees you read it.",
+    "the panel cannot claim a reading the player never made",
+  );
   evidence.waterNote = await page.evaluate(
     () => document.querySelector("#water-note").textContent,
   );
@@ -197,6 +204,7 @@ try {
         stage: window.__SF.state.frontier.stage,
         diversion: window.__SF.state.frontier.diversion,
         history: window.__SF.state.frontier.history,
+        strata: window.__SF.state.memory.strata,
         nodes: window.__SF.state.watershed.nodes.map((n) => ({
           id: n.id,
           erosion: n.erosion,
@@ -215,6 +223,7 @@ try {
         nodes: r.live.nodes,
         stage: r.live.stage,
         diversion: r.live.diversion,
+        read: r.live.strata,
       }),
     );
   // The rows are painted during a frame and the graph advances on the same tick, so the
@@ -249,8 +258,75 @@ try {
   );
   const cutRow = recordDom.rows.find((r) => r.label === "your cut");
   assert.match(cutRow.value, /% of the 22 m below you/);
+  assert.match(cutRow.value, /^the side groove is /);
   evidence.recordRows = recordDom.rows;
-  evidence.recordRows = recordDom.rows;
+  // Standing in a band is the whole mechanic: hold the pin until the shaft agrees the
+  // band was read, and require the readout, the memory and the panel to say the same.
+  // The shaft floats the player up, so keep re-pinning while the hold accumulates: the
+  // reading has to be earned by standing still in one band, not by a fixture that stops
+  // the simulation.
+  let logged = await readRecord();
+  for (let i = 0; i < 60 && !logged.live.strata.length; i++) {
+    await pinInShaft();
+    await page.waitForTimeout(120);
+    logged = await readRecord();
+  }
+  assert.ok(
+    logged.live.strata.length > 0,
+    "a band stood in for over a second has to be logged",
+  );
+  // Same frame-skew rule as before: settle until the painted rows and a recomputation
+  // from the state read alongside them agree, then assert the agreement it reached.
+  let loggedMismatch = "unsettled";
+  for (let i = 0; i < 40; i++) {
+    logged = await readRecord();
+    loggedMismatch =
+      expectRows(logged)
+        .map((r) => r.value)
+        .join("\n") === logged.rows.map((r) => r.value).join("\n")
+        ? null
+        : `screen ${JSON.stringify(logged.rows.map((r) => r.value))} vs measurement ${JSON.stringify(
+            expectRows(logged).map((r) => r.value),
+          )}`;
+    if (!loggedMismatch) break;
+    await page.waitForTimeout(60);
+  }
+  const band = Number(logged.rows[1].value.match(/^(\d+) of \d+/)[1]);
+  assert.equal(
+    logged.live.strata.length,
+    1,
+    "one band held still is one band learned, not one per second",
+  );
+  assert.equal(
+    logged.live.strata[0] + 1,
+    band,
+    "the learned band has to be the one the readout is on",
+  );
+  assert.match(logged.rows[1].value, /· read$/);
+  assert.equal(
+    logged.rows.find((r) => r.label === "record read").value,
+    "1 of 8 bands logged",
+  );
+  assert.equal(
+    loggedMismatch,
+    null,
+    "a logged band has to be in the measurement too",
+  );
+  evidence.recordLogged = { strata: logged.live.strata, band };
+  await page.evaluate(() => {
+    if (document.querySelector("#memory").hidden)
+      document.querySelector("#memory-toggle").click();
+  });
+  await page.waitForFunction(() => !document.querySelector("#memory").hidden);
+  await page.waitForTimeout(300);
+  evidence.strataNote = await page.evaluate(
+    () => document.querySelector("#strata-note").textContent,
+  );
+  assert.equal(
+    evidence.strataNote,
+    `The record is read in 1 of 8 bands, down to band ${evidence.recordLogged.band}.`,
+    "the panel has to report the same single reading the shaft logged",
+  );
   await page.keyboard.down("KeyE");
   await page.waitForFunction(() => window.__SF.body.y > -1, null, {
     timeout: 30000,

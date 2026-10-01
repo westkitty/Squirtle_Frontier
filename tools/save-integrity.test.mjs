@@ -148,3 +148,30 @@ test("a blocked tab can adopt the newer generation without rewriting storage", (
   assert.equal(save(follower, st, now + 2000).ok, true);
   assert.ok(JSON.parse(st.getItem(SAVE_KEY)).elapsed >= driver.elapsed);
 });
+test("bands read in the shaft survive a save, and a save without them still loads", () => {
+  const st = storage();
+  const a = new WorldState();
+  a.memory.markStrata(3, 8);
+  a.memory.markStrata(7, 8);
+  assert.equal(save(a, st, Date.now()).ok, true);
+  const b = new WorldState();
+  assert.equal(load(b, st, { offline: false }).ok, true);
+  assert.deepEqual(b.memory.strata, [3, 7]);
+  // The field is additive: a v6 written before the instrument had it loads unchanged.
+  const without = JSON.parse(st.getItem(SAVE_KEY));
+  delete without.memory.strata;
+  const c = new WorldState();
+  assert.equal(
+    load(c, { getItem: () => JSON.stringify(without) }, { offline: false }).ok,
+    true,
+  );
+  assert.deepEqual(c.memory.strata, []);
+  // And a hand-edited list is refused rather than trusted into an out-of-range index.
+  const forged = JSON.parse(st.getItem(SAVE_KEY));
+  forged.memory.strata = [3, 40];
+  const d = new WorldState();
+  assert.equal(
+    load(d, { getItem: () => JSON.stringify(forged) }, { offline: false }).ok,
+    false,
+  );
+});
