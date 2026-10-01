@@ -551,7 +551,10 @@ async function boot() {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
         senseHeld = !!controls.sense;
-        const action = placeAction(state.place, body);
+        const action = placeAction(state.place, body, {
+          settlement: state.settlement,
+          ecosystem: state.ecosystem,
+        });
         document.querySelector("#interact").hidden = !action;
         document.querySelector("#interact").textContent =
           {
@@ -560,6 +563,8 @@ async function boot() {
             rest: "Rest five minutes · R",
             record: "Enter the Deep Record · R",
             "record-exit": "Return to the basin · R",
+            "drink-bowl": "Drink fresh water · R",
+            "play-frogs": "Splash with frogs · R",
           }[action] || "";
         if (controls.interact && !interactionHeld && action) {
           if (action === "rest") {
@@ -573,6 +578,17 @@ async function boot() {
             status.textContent = r.ok
               ? "Five quiet minutes. The watershed continued while you rested."
               : r.message;
+          } else if (action === "drink-bowl") {
+            if (state.settlement.drinkBowl()) {
+              body.impact = 0.18;
+              status.textContent =
+                "You drink cool, clean water from the caretaker's bowl. The caretaker smiles.";
+            }
+          } else if (action === "play-frogs") {
+            body.vy = 1.4;
+            body.impact = 0.2;
+            status.textContent =
+              "You splash playfully in the shallows. The reed frogs chirp and hop among the reeds.";
           } else
             enterPlace(
               action === "record"

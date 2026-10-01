@@ -1,6 +1,7 @@
 // Small settlement memory, owned by WorldState. No NPC scene nodes or UI flags.
 import { clamp } from "../rng.js";
 export const WATER_HOUSE = Object.freeze({ x: -15, z: -12 });
+export const SETTLEMENT_BOWL = Object.freeze({ x: -12.6, z: -8.9 });
 export class Settlement {
   constructor() {
     this.familiarity = 0;
@@ -26,6 +27,14 @@ export class Settlement {
         this.familiarity = clamp(this.familiarity + 0.005, 0, 1);
     }
     this.present = nearby;
+  }
+  drinkBowl() {
+    if (this.bowl < 0.05) return false;
+    const consumed = Math.min(this.bowl, 0.25);
+    this.bowl -= consumed;
+    this.familiarity = clamp(this.familiarity + 0.06, 0, 1);
+    this.fear = Math.max(0, this.fear - 0.1);
+    return true;
   }
   tick(ecosystem) {
     this.waterReliability +=

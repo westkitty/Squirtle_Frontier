@@ -223,6 +223,18 @@ const MUTATIONS = [
     from: "    if (inWater && (speed > 0.25 || body.mode === \"swim\" || body.mode === \"dive\")) {",
     to: "    if (false) {",
   },
+  {
+    what: "strangers can drink from the caretaker's bowl without familiarity",
+    file: "src/simulation/place-interaction.js",
+    from: "      context.settlement.familiarity >= 0.25 &&",
+    to: "      context.settlement.familiarity >= 0 &&",
+  },
+  {
+    what: "empty basin without frogs awards splash action",
+    file: "src/simulation/place-interaction.js",
+    from: "      context?.ecosystem?.labFrogs >= 1 &&",
+    to: "      context?.ecosystem?.labFrogs >= 0 &&",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

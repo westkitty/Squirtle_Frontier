@@ -6,7 +6,12 @@ import {
   MAX_PREDATORS,
   WILDLIFE_HOME,
 } from "../src/simulation/near-wildlife.js";
-import { Settlement, WATER_HOUSE } from "../src/simulation/settlement.js";
+import {
+  Settlement,
+  WATER_HOUSE,
+  SETTLEMENT_BOWL,
+} from "../src/simulation/settlement.js";
+import { placeAction } from "../src/simulation/place-interaction.js";
 import { WorldState } from "../src/worldstate.js";
 import { save, load, advanceOffline, SAVE_KEY } from "../src/persistence.js";
 const env = { obstacles: [] };
@@ -157,3 +162,86 @@ test("settlement survives save and offline time cannot award familiarity or visi
   );
   assert.deepEqual(c.snapshot(), before);
 });
+
+test("drinking from the caretaker's bowl requires grounded proximity, familiarity, and consumes bowl volume", () => {
+  const s = new Settlement();
+  s.familiarity = 0.5;
+  s.bowl = 0.8;
+  s.fear = 0.2;
+
+  // 1. Far away from bowl
+  const farBody = { x: 0, z: 0, grounded: true };
+  assert.equal(
+    placeAction("frontier", farBody, { settlement: s }),
+    null,
+    "far body cannot drink",
+  );
+
+  // 2. Near bowl but ungrounded (in mid-air jump)
+  const airBody = { ...SETTLEMENT_BOWL, grounded: false };
+  assert.equal(
+    placeAction("frontier", airBody, { settlement: s }),
+    null,
+    "airborne body cannot drink",
+  );
+
+  // 3. Near bowl but stranger (low familiarity)
+  const strangerSettlement = new Settlement();
+  strangerSettlement.bowl = 0.8;
+  strangerSettlement.familiarity = 0.1;
+  const groundedBody = { ...SETTLEMENT_BOWL, grounded: true };
+  assert.equal(
+    placeAction("frontier", groundedBody, { settlement: strangerSettlement }),
+    null,
+    "unfamiliar creature cannot drink from caretaker's bowl",
+  );
+
+  // 4. Near bowl, grounded, familiar, filled bowl
+  assert.equal(
+    placeAction("frontier", groundedBody, { settlement: s }),
+    "drink-bowl",
+    "familiar creature near filled bowl gets drink action",
+  );
+
+  // 5. Drinking consumes bowl water, increases familiarity and soothes fear
+  const initialBowl = s.bowl;
+  const initialFam = s.familiarity;
+  const initialFear = s.fear;
+  assert.equal(s.drinkBowl(), true);
+  assert.ok(s.bowl < initialBowl, "drinking must consume bowl volume");
+  assert.ok(s.familiarity > initialFam, "drinking must deepen familiarity");
+  assert.ok(s.fear < initialFear, "drinking must soothe fear");
+
+  // 6. Empty bowl refuses drink
+  s.bowl = 0.01;
+  assert.equal(s.drinkBowl(), false, "empty bowl cannot be drunk from");
+});
+
+test("in the Lab basin, Squirtle can playfully splash with colonized reed frogs", () => {
+  const frogEco = { labFrogs: 3 };
+  const noFrogEco = { labFrogs: 0 };
+
+  // 1. In shallow basin with frogs
+  const basinBody = { x: 1.5, z: 1.0, y: -0.2 };
+  assert.equal(
+    placeAction("lab", basinBody, { ecosystem: frogEco }),
+    "play-frogs",
+    "shallow basin with frogs offers play action",
+  );
+
+  // 2. In shallow basin without frogs
+  assert.equal(
+    placeAction("lab", basinBody, { ecosystem: noFrogEco }),
+    null,
+    "empty basin without frogs has no play action",
+  );
+
+  // 3. Deep submerged dive center (where Deep Record entry is)
+  const deepBody = { x: 0, z: 0, y: -1.1 };
+  assert.equal(
+    placeAction("lab", deepBody, { ecosystem: frogEco }),
+    "record",
+    "deep shaft entrance retains record action priority",
+  );
+});
+
