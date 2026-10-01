@@ -384,3 +384,26 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Dedicated unit tests (`tools/wildlife-settlement.test.mjs`): Added 2 new tests asserting bowl grounded proximity, familiarity gating, water consumption, fear reduction, empty bowl refusal, shallow basin frog splash, and deep record priority (suite expanded from 145 to 147 checks; all pass).
 - Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (allowing strangers to drink without familiarity, and awarding frog splash in empty basins), expanding the suite to 33/33 mutations killed by named unit tests in ~118s.
 - Validation: All 147 unit tests (`npm test`), architecture checks (`npm run check`), 33/33 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys (`browser`, `browser:habitat`) pass cleanly with 0 errors and 0 resource leaks.
+
+## Loop 5: Caretaker living greeting gestures and context-sensitive ambient voice checkpoint
+
+- Deepened settlement atmosphere and living caretaker interaction in the frontier settlement:
+  - Context-sensitive ambient dialogue (`src/simulation/settlement.js`, `settlementDialogue`):
+    - Exported `settlementDialogue(settlement, body)` providing reactive, characterful ambient voice lines within 8.0m of the caretaker (`{ x: -10.2, z: -6.8 }`).
+    - Evaluates the caretaker's 4 response states:
+      - `withdraw`: Alarmed by rushed movement or water jet ("Easy there... no sudden rushes near the cistern.").
+      - `check-water`: Pensive drought inspection ("The cistern runs low. We wait for water from the wetland above.").
+      - `welcome`: Warm hospitality when supplied and calm, referencing the filled stone water bowl ("Fresh water drawn from the cistern. Drink if you are parched.") or the restored watercourse ("The water flows clean and steady today. You are welcome here, friend.").
+      - `watch`: Attentive observation ("Quiet day by the water channel.").
+  - Living anatomical gestures (`src/player/habitat-view.js`):
+    - Replaced the static caretaker model with reactive, living limb and head kinematics:
+      - Welcome arm wave: Smooth lateral greeting cadence (`arm.rotation.z = -1.1 + Math.sin(time * 4.2) * 0.16`) accompanied by conversational head nods (`head.rotation.x = 0.08 * Math.sin(time * 2.8)`).
+      - Check-water inspection posture: Pensive downward gaze inspecting the trough (`head.rotation.x = 0.22`, `arm.rotation.z = -0.2`).
+      - Subtle organic respiration: Gentle vertical torso bobbing (`position.y = h + Math.sin(time * 1.8) * 0.012`) keeping the caretaker organically alive even in idle watch state.
+  - HUD integration (`src/main.js`):
+    - Ambient dialogue lines smoothly display in the status bar when Squirtle visits the settlement without interrupting movement or menu navigation.
+  - Dedicated unit tests (`tools/wildlife-settlement.test.mjs` & `tools/habitat.test.mjs`):
+    - 2 new tests validating 8.0m distance rejection, state-specific voice line matching, animated welcoming wave cadence, and pensive trough inspection posture across elapsed time (suite expanded from 147 to 149 checks; all pass).
+  - Mutation suite (`tools/mutation-check.mjs`):
+    - Added 2 documented-contract mutations (caretaker dialogue distance rejection, and welcome arm wave failure), expanding the suite to 35/35 mutations killed by named unit tests in ~120s.
+  - Validation: All 149 unit tests (`npm test`), architecture checks (`npm run check`), 35/35 mutations (`npm run mutate`), production build (`npm run build`), and browser journey test suites pass with zero resource leaks.
