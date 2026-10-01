@@ -1,4 +1,5 @@
 import { hash2i, clamp } from "../rng.js";
+import { REACHES, reachAt } from "./reaches.js";
 export const LANDMARKS = [
   { id: "bank", name: "The first bank", x: -10, z: 18 },
   { id: "debris", name: "The broken tributary", x: -6, z: 12 },
@@ -15,6 +16,7 @@ export class PlaceMemory {
     this.notable = null;
     this.lastEncounter = -1000;
     this.drinks = {};
+    this.reaches = [];
   }
   // Where the herd was seen drinking, as observed from here. Behavior, not
   // population: it never changes how many animals exist.
@@ -36,6 +38,13 @@ export class PlaceMemory {
         this.cells[key] = 1;
       else if (this.cells[key])
         this.cells[key] = Math.min(255, this.cells[key] + 1);
+      const reach = reachAt(body.x, body.z);
+      if (
+        reach &&
+        !this.reaches.includes(reach.id) &&
+        this.reaches.length < REACHES.length
+      )
+        this.reaches.push(reach.id);
       for (const m of LANDMARKS)
         if (
           Math.hypot(body.x - m.x, body.z - m.z) < 5 &&
@@ -74,6 +83,7 @@ export class PlaceMemory {
     return {
       cells: { ...this.cells },
       drinks: { ...this.drinks },
+      reaches: [...this.reaches],
       places: [...this.places],
       notable: this.notable ? { ...this.notable } : null,
       lastEncounter: this.lastEncounter,
@@ -101,6 +111,16 @@ export class PlaceMemory {
       )
         throw new Error("Invalid survey cell");
       r.cells[k] = v;
+    }
+    if (s.reaches !== undefined) {
+      if (
+        !Array.isArray(s.reaches) ||
+        s.reaches.length > REACHES.length ||
+        new Set(s.reaches).size !== s.reaches.length ||
+        s.reaches.some((id) => !REACHES.some((r) => r.id === id))
+      )
+        throw new Error("Invalid followed reaches");
+      r.reaches = [...s.reaches];
     }
     if (
       new Set(s.places).size !== s.places.length ||

@@ -180,8 +180,8 @@ try {
     const stats = await page.evaluate(() => window.__SF.stats());
     evidence.checkpoints.push(stats);
     assert.ok(
-      stats.memory.geometries <= 23,
-      "nine chunks plus seven movement, two watershed and three habitat and two effect geometries is a hard bound",
+      stats.memory.geometries <= 24,
+      "nine chunks plus seven movement, three watershed, three habitat and two effect geometries, allowing one chunk to overlap a rebuild, is a hard bound",
     );
     assert.equal(stats.memory.textures, initial.memory.textures);
     assert.equal(stats.assets.references, 1);
@@ -213,8 +213,8 @@ try {
   });
   for (const stats of evidence.assetCycles) {
     assert.ok(
-      stats.memory.geometries <= 23,
-      "nine chunks plus seven movement, two watershed and three habitat and two effect geometries is a hard bound",
+      stats.memory.geometries <= 24,
+      "nine chunks plus seven movement, three watershed, three habitat and two effect geometries, allowing one chunk to overlap a rebuild, is a hard bound",
     );
     assert.equal(stats.memory.textures, initial.memory.textures);
     assert.equal(stats.assets.references, 1);

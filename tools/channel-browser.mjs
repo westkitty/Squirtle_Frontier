@@ -76,7 +76,7 @@ try {
     await p.waitForFunction(() => window.__SF.streaming.stats().active === 9);
     const result = await p.evaluate(inspect);
     assert.ok(result.error < 1e-5);
-    assert.ok(result.memory.geometries <= 23);
+    assert.ok(result.memory.geometries <= 24);
     evidence.cycles.push(result);
   }
   await p.evaluate(() => window.__SF.dispose());

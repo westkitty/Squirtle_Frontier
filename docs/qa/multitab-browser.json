@@ -3,59 +3,59 @@
   "driven": {
     "pose": {
       "x": -10,
-      "y": 0.868,
-      "z": 15.8188,
+      "y": 0.8693,
+      "z": 15.9288,
       "yaw": 3.1416,
       "place": "frontier"
     },
-    "elapsed": 7.766666666666648,
-    "distance": 2.1811616320933513
+    "elapsed": 7.899999999999981,
+    "distance": 2.0711642198902336
   },
   "stored": {
     "pose": {
       "x": -10,
-      "y": 0.8663,
-      "z": 15.6878,
+      "y": 0.8677,
+      "z": 15.8,
       "yaw": 3.1416,
       "place": "frontier"
     },
-    "elapsed": 7.966666666666647,
+    "elapsed": 8.083333333333318,
     "player": {
       "x": -10,
-      "z": 15.68780344457825
+      "z": 15.800032163790801
     }
   },
   "conflict": "Save changed in another tab; reload before saving. A blocked tab can adopt the newer stored world below.",
   "rejectedWriteLeftStorage": -10,
   "adopted": {
     "status": "Adopted the newer stored world (8s of growth).",
-    "elapsed": 8.06666666666665,
+    "elapsed": 8.183333333333323,
     "pose": {
       "x": -10,
-      "y": 0.8663,
-      "z": 15.6878,
+      "y": 0.8677,
+      "z": 15.8,
       "yaw": 3.1416,
       "place": "frontier"
     },
     "body": {
       "x": -10,
-      "y": 0.8663498716040674,
-      "z": 15.6878
+      "y": 0.867721656981506,
+      "z": 15.8
     }
   },
-  "diveSavedY": -0.861,
+  "diveSavedY": -0.634,
   "afterReload": {
     "place": "lab",
-    "y": -0.42,
+    "y": -0.421,
     "mode": "swim",
     "basinDistance": 0
   },
   "returned": {
     "x": -10,
-    "z": 15.68,
+    "z": 15.79,
     "expected": {
       "x": -10,
-      "z": 15.68
+      "z": 15.79
     }
   },
   "storageKeys": [

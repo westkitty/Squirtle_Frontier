@@ -1,6 +1,8 @@
 import { launchBrowser } from "./browser-launch.mjs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { REACHES, SPRING_SITE } from "../src/simulation/reaches.js";
+import { BYPASS_SITE } from "../src/simulation/frontier-systems.js";
 const browser = await launchBrowser(),
   evidence = { errors: [], cycles: [] };
 try {
@@ -56,9 +58,80 @@ try {
     soaked: window.__SF.state.frontier.soaked[0],
   }));
   await page.screenshot({ path: "artifacts/world-fire.png" });
+  // Following the water: stand at the head of the longest inflow, listen with
+  // Current Sense, then check the map learned the reach. Position is teleported.
+  const standOn = (spot) =>
+    page.evaluate((p) => {
+      const g = window.__SF;
+      Object.assign(g.body, {
+        x: p.x,
+        z: p.z,
+        y: g.state.sampleHeight(p.x, p.z),
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        yaw: Math.PI,
+      });
+      g.rig.initial = true;
+    }, spot);
+  await standOn({ x: SPRING_SITE.x, z: SPRING_SITE.z });
+  await page.waitForTimeout(1600);
+  await page.keyboard.down("KeyF");
+  await page.waitForTimeout(250);
+  evidence.senseAtSpring = await page.evaluate(
+    () => document.querySelector("#status").textContent,
+  );
+  await page.keyboard.up("KeyF");
+  assert.match(evidence.senseAtSpring, /You are on the Spring gully/);
+  assert.match(evidence.senseAtSpring, /\d+ m above the shallows\./);
+  await standOn({ x: BYPASS_SITE.x, z: BYPASS_SITE.z });
+  await page.waitForTimeout(1600);
+  await page.keyboard.down("KeyF");
+  await page.waitForTimeout(250);
+  evidence.senseAtGroove = await page.evaluate(
+    () => document.querySelector("#status").textContent,
+  );
+  await page.keyboard.up("KeyF");
+  assert.match(evidence.senseAtGroove, /You are on the Drainage groove/);
+  assert.match(
+    evidence.senseAtGroove,
+    /(still a dry groove|carrying water)/,
+    "a cut channel has to say whether it is running",
+  );
+  evidence.reachCounts = await page.evaluate(() =>
+    window.__SF.state.memory.reaches.join(","),
+  );
+  assert.equal(
+    evidence.reachCounts,
+    "spring-gully,drainage-groove",
+    "only routes actually stood on are remembered",
+  );
   await page.click("#memory-toggle");
   await page.waitForFunction(
     () => document.querySelector("#survey").children.length > 0,
+  );
+  evidence.drinkNote = await page.evaluate(
+    () => document.querySelector("#drink-note").textContent,
+  );
+  assert.equal(
+    evidence.drinkNote,
+    "No drink tracks yet. Animals drink where the shallows run clean.",
+    "an empty drink log must not invent a site",
+  );
+  evidence.waterNote = await page.evaluate(
+    () => document.querySelector("#water-note").textContent,
+  );
+  assert.match(evidence.waterNote, /Spring gully \(\d+ m\)/);
+  assert.match(evidence.waterNote, /2 of \d+ reaches\./);
+  evidence.reachGeometry = await page.evaluate(() => ({
+    geometries: window.__SF.renderer.info.memory.geometries,
+    followed: window.__SF.state.memory.reaches.length,
+  }));
+  assert.equal(evidence.reachGeometry.followed, 2);
+  assert.equal(REACHES.length, 6, "five inflows plus the cut groove");
+  assert.ok(
+    evidence.reachGeometry.geometries <= 24,
+    "one shared line mesh for the whole network",
   );
   await page.screenshot({ path: "artifacts/world-memory.png" });
   await page.click("#memory-toggle");

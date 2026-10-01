@@ -51,3 +51,9 @@ noise-dominated under shared-CPU software rendering while the structural asserti
 (buffer shrinks, layout and triangle counts unchanged, scale reverts on opt-out) are
 the reproducible result. The 60 fps desktop and 30 fps mobile-class targets remain
 undemonstrated anywhere, and no hardware or mobile measurement exists.
+
+Current ordinary-run figures after the named-reaches pass: 23 geometries, six
+textures, 40 draw calls, 31,236 triangles and 122 line primitives on the frontier,
+19 geometries in the Lab, zero on teardown; the journeys' frontier bound is 24.
+`docs/qa/REACHES.md` records why one shared line mesh and a slightly higher bound
+were the cheaper trade than either per-reach geometry or dropping the legibility.

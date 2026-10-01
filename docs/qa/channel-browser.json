@@ -4,84 +4,84 @@
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     },
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 18,
+        "geometries": 19,
         "textures": 6
       }
     }
@@ -89,23 +89,23 @@
   "afterStage": {
     "error": 1.1916847686421761e-7,
     "memory": {
-      "geometries": 22,
+      "geometries": 23,
       "textures": 6
     }
   },
   "performance": {
     "environment": "960x640 SwiftShader, stage 4; NOT hardware/mobile FPS",
-    "medianMs": 83.30000000000018,
-    "p95Ms": 166.70000000000073,
+    "medianMs": 99.90000000000146,
+    "p95Ms": 183.39999999999964,
     "render": {
-      "frame": 133,
-      "calls": 38,
+      "frame": 132,
+      "calls": 39,
       "triangles": 55241,
       "points": 0,
-      "lines": 0
+      "lines": 122
     },
     "memory": {
-      "geometries": 22,
+      "geometries": 23,
       "textures": 6
     }
   },

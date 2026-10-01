@@ -75,7 +75,9 @@ watering place, not a migration or a pathfinding system.
 ## Measured cost
 
 After the change: 22 geometries, 6 textures, 39 draw calls and 31,236 triangles in
-the ordinary run, all identical to before it. `npm run perf` medians on ANGLE
+the ordinary run, all identical to before it. (Superseded by the named-reaches pass
+in `docs/qa/REACHES.md`: 23 geometries, 40 calls and 122 line primitives, with the
+journey bound raised to 24 to allow a chunk to overlap its own rebuild.) `npm run perf` medians on ANGLE
 SwiftShader were 66.7 ms (high) and 33.4 ms (low) at 960x640. The adaptive A/B
 shrank the buffer and left layout and triangle counts identical, but its median
 gain in this sample was -0.1 ms where an earlier sample measured -16.6 ms, so the

@@ -245,7 +245,7 @@ try {
     await p.evaluate(() => window.__SF.enterPlace("frontier"));
     await p.waitForFunction(() => window.__SF.streaming.stats().active === 9);
     const s = await p.evaluate(() => window.__SF.stats());
-    assert.ok(s.memory.geometries <= 23);
+    assert.ok(s.memory.geometries <= 24);
     assert.equal(s.assets.references, 1);
     report.cycles.push(s.memory);
   }

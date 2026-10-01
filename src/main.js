@@ -2,6 +2,7 @@ import { AdaptiveScale } from "./adaptive-quality.js";
 import { NearWildlife } from "./simulation/near-wildlife.js";
 import { settlementObstacles } from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
+import { REACHES, reachAt, reachById } from "./simulation/reaches.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
@@ -262,16 +263,14 @@ async function boot() {
         ? `${responses[house.response]} (${house.visits} visit${house.visits > 1 ? "s" : ""}).`
         : "The water house by the trough has not taken note of you yet.";
       const drinkCells = Object.keys(state.memory.drinks);
-      let drinkNote = drinkCells.length
-        ? null
-        : "No drink tracks yet. Animals drink where the shallows run clean.";
+      let nearest = null;
       for (const key of drinkCells) {
         const [cx, cz] = key.split(",").map(Number),
           x = cx * 5 + 2.5,
           z = cz * 5 + 2.5,
           d = Math.hypot(x - body.x, z - body.z);
-        if (drinkNote === null || d < drinkNote.d)
-          drinkNote = { d, bearing: compassTo(x - body.x, z - body.z) };
+        if (!nearest || d < nearest.d)
+          nearest = { d, bearing: compassTo(x - body.x, z - body.z) };
       }
       const issue = {
         dry: "the shallows are too dry to drink at",
@@ -279,10 +278,20 @@ async function boot() {
         gone: "there is no open water left in the shallows",
       }[wildlife.waterIssue];
       document.querySelector("#drink-note").textContent =
-        (drinkNote
-          ? `Drink tracks in ${drinkCells.length} place${drinkCells.length > 1 ? "s" : ""}; nearest ${Math.round(drinkNote.d)} m ${drinkNote.bearing}.`
+        (drinkCells.length
+          ? `Drink tracks in ${drinkCells.length} place${
+              drinkCells.length > 1 ? "s" : ""
+            }; nearest ${Math.round(nearest.d)} m ${nearest.bearing}.`
           : "No drink tracks yet. Animals drink where the shallows run clean.") +
-        (drinkNote && wildlife.parched && issue ? ` Now ${issue}.` : "");
+        (wildlife.parched && issue ? ` Now ${issue}.` : "");
+      const followed = state.memory.reaches
+        .map((id) => reachById(id))
+        .filter(Boolean);
+      document.querySelector("#water-note").textContent = followed.length
+        ? `Water followed: ${followed
+            .map((r) => `${r.name} (${Math.round(r.length)} m)`)
+            .join(" · ")}. ${followed.length} of ${REACHES.length} reaches.`
+        : "No channels followed yet. Water runs down from the rim to the shallows.";
       document.querySelector("#companion").textContent = n
         ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
         : "No familiar visitor yet. Life needs water and time.";
@@ -553,7 +562,14 @@ async function boot() {
               state.frontier,
             )
           : null;
-        watershedView.update(state.watershed, body, !!signal, state.elapsed);
+        watershedView.update(
+          state.watershed,
+          body,
+          !!signal,
+          state.elapsed,
+          state.memory.reaches,
+          state.frontier.stage,
+        );
         scenery.water.material.opacity =
           0.35 + state.watershed.nodes[2].wetness * 0.25;
         scenery.water.material.color.setHSL(
@@ -566,9 +582,22 @@ async function boot() {
             state.ecosystem.labWater > 0.5
               ? "Fresh water carries reed seeds into the basin."
               : "The basin waits for water from the wetland.";
-        else if (controls.sense)
-          status.textContent =
-            signal?.message || "Touch the water to listen to its current.";
+        else if (controls.sense) {
+          const reach = reachAt(body.x, body.z);
+          status.textContent = `${
+            signal?.message || "Touch the water to listen to its current."
+          }${
+            reach
+              ? ` You are on the ${reach.name}${
+                  reach.cut
+                    ? state.frontier.stage > 0
+                      ? ", carrying water"
+                      : ", still a dry groove"
+                    : ""
+                }; ${Math.round(reach.toMouth)} m above the shallows.`
+              : ""
+          }`;
+        }
         state.player.x = body.x;
         state.player.z = body.z;
         // Full pose: a saved x/z pair would drop the body through a basin floor.
