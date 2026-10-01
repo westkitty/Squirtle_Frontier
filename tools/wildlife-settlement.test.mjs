@@ -12,6 +12,53 @@ import { save, load, advanceOffline, SAVE_KEY } from "../src/persistence.js";
 const env = { obstacles: [] };
 const observer = { x: -6, z: -5, vx: 0, vz: 0, jetTime: 0, mode: "land" };
 const eco = { prey: 1, predators: 1 };
+
+test("the caretaker's water sense is the cistern: renewal arrives, starvation reads as waiting", () => {
+  // Documented (README, docs/qa/WILDLIFE_SETTLEMENT.md): water renewal consumes
+  // cistern volume and water reliability changes the caretaker's response. The
+  // reliability the settlement acts on has to be the cistern it was actually given.
+  const s = new Settlement();
+  for (let i = 0; i < 720; i++) s.tick({ cistern: 0.9 });
+  assert.ok(
+    s.waterReliability > 0.7,
+    `reliability must track a fed cistern, got ${s.waterReliability}`,
+  );
+  s.familiarity = 1;
+  assert.equal(s.response, "welcome", "a familiar, water-secure house welcomes");
+  for (let i = 0; i < 2000; i++) s.tick({ cistern: 0 });
+  assert.ok(
+    s.waterReliability < 0.2,
+    `a starved cistern must drain reliability, got ${s.waterReliability}`,
+  );
+  assert.equal(
+    s.response,
+    "check-water",
+    "the same familiar house must wait for water once the cistern is gone",
+  );
+});
+
+test("the settlement response ladder reads the actual situation, in order", () => {
+  const s = new Settlement();
+  s.fear = 0.5;
+  s.familiarity = 1;
+  s.waterReliability = 0;
+  assert.equal(
+    s.response,
+    "withdraw",
+    "fear must outrank every water reading",
+  );
+  s.fear = 0;
+  assert.equal(
+    s.response,
+    "check-water",
+    "unreliable water must outrank familiarity: no welcome over an empty trough",
+  );
+  s.waterReliability = 0.5;
+  assert.equal(s.response, "welcome", "water and familiarity together welcome");
+  s.familiarity = 0.1;
+  assert.equal(s.response, "watch", "strangers are watched, not welcomed");
+});
+
 test("near actors follow aggregate budgets, despawn outside radius and never enter saved state", () => {
   const w = new NearWildlife();
   w.step(1 / 60, observer, "frontier", eco, env);

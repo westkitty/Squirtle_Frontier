@@ -111,6 +111,47 @@ const MUTATIONS = [
     from: "export const RECORD_DEPTH = 22;",
     to: "export const RECORD_DEPTH = 21;",
   },
+  {
+    what: "the basin colonises with no water, reeds, insects or prey",
+    file: "src/simulation/ecosystem.js",
+    from:
+      "    const eligible =\n      this.labWater > 0.5 &&\n      this.labReeds > 0.35 &&\n      this.labInsects > 0.25 &&\n      this.prey > 0.2;",
+    to: "    const eligible = true;",
+  },
+  {
+    what: "a lapse in eligibility keeps the colonisation clock",
+    file: "src/simulation/ecosystem.js",
+    from:
+      "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : 0;",
+    to:
+      "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : this.eligibleSeconds;",
+  },
+  {
+    what: "frogs arrive the moment the basin exists, not after sustained eligibility",
+    file: "src/simulation/ecosystem.js",
+    from: "    const arrival = 120 + (this.seed % 61);",
+    to: "    const arrival = 0;",
+  },
+  {
+    what: "the caretaker's water sense is a wish, not the cistern",
+    file: "src/simulation/settlement.js",
+    from:
+      "    this.waterReliability +=\n      (ecosystem.cistern - this.waterReliability) * (1 - Math.exp(-1 / 120));",
+    to: "    this.waterReliability = 1;",
+  },
+  {
+    what: "the bowl is filled from nothing instead of consuming cistern volume",
+    file: "src/simulation/settlement.js",
+    from: "      ecosystem.cistern -= refill * 0.002;",
+    to: "      ecosystem.cistern -= 0;",
+  },
+  {
+    what: "the herd drinks from fouled or dried shallows",
+    file: "src/simulation/near-wildlife.js",
+    from:
+      "    const drinkable =\n      !!this.sites.length && quality > 0.5 && (water?.wetness ?? 1) > 0.25;",
+    to: "    const drinkable = !!this.sites.length;",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

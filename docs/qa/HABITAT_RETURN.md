@@ -13,6 +13,7 @@ Version 3 saves include location, semantic graph/ecology and wall time. v1/v2 mi
 ## Executed
 
 - 35 source/behavior tests: propagation, delayed colonization, online/offline equivalence, cap, rollback, same-time repeated reload, backup preservation, stale saves, old migrations, Lab floor/physics and suspend/resume streaming and shared Lab wall/furniture collision proxies.
+- Colonisation contract follow-up (rev 24): named invariants in `tools/colonisation.test.mjs` and `tools/wildlife-settlement.test.mjs` own the eligibility gate, the lapse reset, the delayed seed-dependent arrival and the caretaker's cistern-tracked response; `npm run mutate` covers all of them (20 mutations, 20 caught). `browser:habitat` now repairs with real aimed jets, saves through the Settings control, rewinds the stored clock thirty minutes (time fixture), and asserts colonization as rendered instances on both sides (frontier reeds 3 → 46, Lab reeds 0 → 40, frogs 0 → 8, basin opacity 0.30 → 0.68) plus both sense sentences; vantage/door placements remain declared teleports. See the rev-24 checkpoint in `OPERATIONAL_STATE.md` and `habitat-browser.json`.
 - `npm run build`: pass, existing large-bundle warning.
 - Movement browser: physical locomotion journey, save/reload, 12 chunk returns, 30 asset cycles, touch cancellation/layout.
 - Watershed browser: Sense + active keyboard Jet + repaired graph reload; explicit setup teleport.

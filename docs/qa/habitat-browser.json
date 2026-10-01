@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 12,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 16,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -146,35 +146,40 @@
     }
   ],
   "errors": [],
-  "return": {
+  "labBefore": {
     "place": "lab",
-    "ecosystem": {
-      "reeds": 0.9684838286190004,
-      "insects": 0.9438582453479114,
-      "prey": 0.7666070402791555,
-      "predators": 0.394773476962641,
-      "cistern": 1,
-      "labWater": 0.9802601111664972,
-      "labReeds": 0.8333553713825956,
-      "labInsects": 0.7683704550644126,
-      "labFrogs": 0.7224809391167245,
-      "eligibleSeconds": 1579
-    }
+    "labReeds": 0,
+    "labFrogs": 0,
+    "basinOpacity": 0.304,
+    "labWater": 0.12
+  },
+  "frontierReedsBefore": 3,
+  "blockageCleared": 0,
+  "absence": {
+    "wetness": 0.894473281648598,
+    "labFrogs": 0.7247333663103213,
+    "labWater": 0.9631060935627669
+  },
+  "frontierReedsAfter": 46,
+  "labAfter": {
+    "labReeds": 40,
+    "labFrogs": 8,
+    "basinOpacity": 0.6821845841335026
   },
   "restSeconds": 300,
   "teardown": {
     "chunks": {
       "active": 0,
       "queued": 0,
-      "loads": 108,
-      "unloads": 108
+      "loads": 117,
+      "unloads": 117
     },
     "memory": {
       "geometries": 0,
       "textures": 0
     },
     "render": {
-      "frame": 120,
+      "frame": 139,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

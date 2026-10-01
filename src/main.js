@@ -839,6 +839,8 @@ async function boot() {
       adaptive,
       enterPlace,
       habitat,
+      // Journeys assert what the Lab actually renders; the frontier view is `habitat`.
+      labView: () => lab,
       wildlife,
       dispose: cleanup,
       stats: () => ({
