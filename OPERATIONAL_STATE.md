@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 22
+revision: 23
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -272,3 +272,10 @@ R/contextual button near the wooden platform advances the existing regional simu
 - The shipped rule is `advanceStrataHold(hold, ledger, body.vy, dt)` called from the record branch, with the hold reset whenever `state.place !== "record"` so leaving the shaft cannot bank progress toward a reading nobody made. 105 checks pass with the wiring in place; build, `browser:world`, movement, a11y, dist and perf green at 31,236 ordinary-run triangles.
 - `browser:world` no longer pins its way to a reading: it holds the descend key to the floor of the shaft, releases, and requires the deepest band to log itself from input alone (`y: -21.5`, `strata: [7]`, band 8), then requires row-for-row equality with a Node-side recomputation with no fixture in sight. That is the shape of check that would have caught the dead splice, and it is part of the ladder now rather than a note about what is missing.
 - Still open: other journeys still lean on teleports and pins, so the "the fixture passes either way" weakness survives elsewhere in the ladder. Everything else from the strata checkpoint stands.
+
+## Test authority checkpoint
+
+- `npm run mutate` (`tools/mutation-check.mjs`, new) inverts or removes one documented contract at a time, in place, keeping every file syntactically valid, and requires a **named** unit test to fail. It refuses to run on a red suite and reports a mutation whose anchor no longer matches exactly once, so the list cannot rot into a no-op — the same silent-failure class that let a stale splice ship the wrong hold rule. 14 mutations, 14 caught, about 61 s for the whole run.
+- The first run found a gap in the tests, not the game: `WATER_PAINT_LIFT` 1.5 cm → 5 cm changed nothing, because the existing check asserted `WATER_SURFACE_Y - WATER_SHORELINE === WATER_PAINT_LIFT + WATER_SHORE`, an identity true for any pair of constants. `tools/water-level.test.mjs` now pins the values, their order and the fact that the lift is measured from the surface; the mutation is killed. Suite 105 → 106.
+- Coverage limits are stated rather than implied: the harness cannot see the DOM, the render loop's wiring in `src/main.js` or GPU cost, so those stay with the journey ladder; and untuned internals (the wetland relaxation constant) are deliberately excluded, because an undocumented number having no test is a fact about the list, not the project.
+- Still open: the mutation list grows only when a contract is documented, so it under-covers the newer surfaces (habitat colonisation, settlement response, wildlife gating) that have journeys but few named invariants; other journeys still lean on teleports and pins; no survey of the carved mesh behind `your cut`; hardware/mobile FPS, screen-reader and real-device validation, asset/legal review and full human QA. Full project NOT complete; waived gates are not evidence of quality.

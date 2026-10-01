@@ -47,6 +47,7 @@ are actually holding water. Version 6 saves include location, watershed, ecologi
 
 ```sh
 npm run check
+npm run mutate
 npm run build
 npm run assets
 BROWSER_BUNDLED=1 npm run browser
@@ -62,7 +63,7 @@ BROWSER_BUNDLED=1 npm run browser:dist
 BROWSER_BUNDLED=1 npm run browser:multitab
 ```
 
-Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance.
+Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance. `npm run mutate` breaks each documented contract in turn and requires a named test to notice, so a green suite can be shown to own the rules it claims ([test authority](docs/qa/TEST_AUTHORITY.md)).
 
 Original Phase 0 evidence/tool remains historical; use the current movement browser journey for this app revision.
 
@@ -72,6 +73,6 @@ Original Phase 0 evidence/tool remains historical; use the current movement brow
 2. [Build guide](docs/SQUIRTLE_FRONTIER_BUILD_GUIDE.md)
 3. [Master prompt](docs/LM_ARENA_MASTER_BUILD_PROMPT.md)
 
-[Architecture/provenance](docs/architecture/BASELINE.md) · [Phase 0 baseline](docs/performance/BASELINE.md) · [Movement QA](docs/qa/PHASE1.md) · [Asset intake](docs/assets/SQUIRTLE_INTAKE.md)
+[Test authority](docs/qa/TEST_AUTHORITY.md) · [Architecture/provenance](docs/architecture/BASELINE.md) · [Phase 0 baseline](docs/performance/BASELINE.md) · [Movement QA](docs/qa/PHASE1.md) · [Asset intake](docs/assets/SQUIRTLE_INTAKE.md)
 
 Living Frontier remains the technical foundation; Squirtle Lab supplies character source and creature-centered requirements. Both source repositories remain untouched. Supplied fan-project assets do not imply permissive distribution rights. No prototype completion or deployment is claimed.

@@ -10,6 +10,7 @@
     "browser": "node tools/movement-browser.mjs",
     "browser:baseline": "node tools/browser-baseline.mjs",
     "assets": "node tools/asset-validate.mjs",
+    "mutate": "node tools/mutation-check.mjs",
     "asset:convert": "node tools/asset-convert.mjs",
     "perf": "node tools/movement-perf.mjs",
     "browser:watershed": "node tools/watershed-browser.mjs",

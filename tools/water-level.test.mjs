@@ -126,6 +126,32 @@ test("the painted surface and the wade line keep one rim width", () => {
   }
 });
 
+test("the paint may shimmer, but never wider than the rim it sits on", () => {
+  // The algebra above is true for any pair of constants, which is worth little: what makes
+  // the shallows read as water rather than as a flood is these two numbers and their order.
+  assert.equal(WATER_PAINT_LIFT, 0.015, "1.5 cm of lift is the authored look");
+  assert.equal(
+    WATER_SHORE,
+    0.05,
+    "5 cm of ground stays walkable under the surface",
+  );
+  assert.ok(
+    WATER_PAINT_LIFT < WATER_SHORE,
+    "ground must never look like water by more than a third of the rim",
+  );
+  // And the lift is measured from the surface, not from the shoreline it floats over.
+  // The level is quantised to six decimals, so this compares within a nanometre rather
+  // than bit for bit - the same tolerance the rim-width test above uses.
+  for (const wetness of [0, 0.05, 0.4, 1])
+    assert.ok(
+      Math.abs(
+        WATER_SURFACE_Y(waterLevelFor(wetness)) -
+          waterLevelFor(wetness) -
+          WATER_PAINT_LIFT,
+      ) < 1e-12,
+    );
+});
+
 test("the surface the body floats on is the level, not the shoreline", () => {
   const level = waterLevelFor(0.8);
   const water = waterAt(0, 0, level);
