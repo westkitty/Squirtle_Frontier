@@ -367,3 +367,20 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (failing water jet stream emission and failing aquatic wake generation), expanding the suite to 31/31 mutations killed by named unit tests in ~115s.
 - Validation: All 145 unit tests (`npm test`), architecture checks (`npm run check`), 31/31 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys (`browser`, `browser:habitat`) pass cleanly with 0 errors and 0 resource leaks.
 
+## Loop 4: Squirtle environmental play & settlement bowl social interaction checkpoint
+
+- Deepened the living companionship, social presence, and environmental play vocabulary of Squirtle across both the frontier settlement and the restored Lab basin.
+- Settlement Water Bowl Interaction:
+  - Exported authoritative spatial coordinate `SETTLEMENT_BOWL = Object.freeze({ x: -12.6, z: -8.9 })` aligning directly with the rendered stone bowl fixture.
+  - Implemented `drinkBowl()` on `Settlement`: when Squirtle approaches the bowl grounded with established familiarity (`>= 0.25`) and available bowl volume (`> 0.05`), it triggers `"Drink fresh water · R"`.
+  - Drinking consumes water from the bowl, deepens caretaker familiarity (`+0.06`), soothes fear (`-0.1`), triggers dynamic fluid impact/droplet splash, and gives warm narrative feedback ("The caretaker smiles").
+  - Strangers or empty bowls strictly refuse the drink action.
+- Lab Basin Frog Play Interaction:
+  - In `placeAction`, when in the restored Lab basin with colonized reed frogs (`ecosystem.labFrogs >= 1`, shallow basin `r < 3.2, y > -0.6`), triggers `"Splash with frogs · R"`.
+  - Splashing gives Squirtle a joyful hop (`vy = 1.4, impact = 0.2`) triggering aquatic splash particles and responsive frog chirps among the reeds.
+  - Deep shaft dive entrance (`y < -0.9`) retains strict priority for entering the Deep Record.
+- Spatial Action Engine Refactor (`src/simulation/place-interaction.js`):
+  - Signature `placeAction(place, body, context)` cleanly supports optional ecosystem and settlement context while maintaining 100% backwards compatibility when context is omitted.
+- Dedicated unit tests (`tools/wildlife-settlement.test.mjs`): Added 2 new tests asserting bowl grounded proximity, familiarity gating, water consumption, fear reduction, empty bowl refusal, shallow basin frog splash, and deep record priority (suite expanded from 145 to 147 checks; all pass).
+- Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (allowing strangers to drink without familiarity, and awarding frog splash in empty basins), expanding the suite to 33/33 mutations killed by named unit tests in ~118s.
+- Validation: All 147 unit tests (`npm test`), architecture checks (`npm run check`), 33/33 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys (`browser`, `browser:habitat`) pass cleanly with 0 errors and 0 resource leaks.
