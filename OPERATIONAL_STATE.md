@@ -351,3 +351,19 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Dedicated unit tests (`tools/audio.test.mjs`): 7 new comprehensive tests asserting single context initialization, jet surge activation, dive sub-drone engagement, land vs shallow wading locomotion frequencies, volume muting, and zero-leak resource disposal (suite expanded from 133 to 140 checks; all pass).
 - Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (failing water jet surge acoustics and failing dive sub-drone acoustics), expanding suite to 29/29 mutations killed by named unit tests in ~110s.
 - Validation: All 140 unit tests (`npm test`), architecture check (`npm run check`), 29/29 mutations (`npm run mutate`), production bundle build (`npm run build`), and browser journey test suites pass with zero resource leaks.
+
+## Loop 3: Hydrodynamic Water Jet visual stream and aquatic surface wake checkpoint
+
+- Squirtle's visual presence elevated with real-time hydrodynamic particle systems (`src/player/world-effects.js`) for its signature Water Jet ability, aquatic surface wake, and water-exit droplet scattering.
+- Hard invariant adherence:
+  - Zero new uploaded geometries: All particle systems (`this.jet`, `this.wake`, `this.splash`) reuse the existing `this.geo` (`ConeGeometry(1, 1, 5)`), maintaining the strict `geometries <= 24` memory constraint across all browser journeys.
+  - Zero-leak lifecycle: Dedicated disposal of all instanced meshes and translucent materials ensures full teardown returns memory to `{ geometries: 0, textures: 0 }`.
+- Particle system capabilities:
+  1. Water Jet stream (24 instances): When `body.jetTime > 0`, pressurized hydrodynamic water droplets erupt forward from Squirtle's snout along its facing yaw, propagating across a 2.8m cone with procedural spatial turbulence and aerodynamic elongation, visually matching the 2.8m mechanical reach of debris clearance and fire suppression.
+  2. Aquatic surface wake (16 instances): Expanding concentric ripple rings emerge when Squirtle swims or wades through water surfaces, trailing behind its velocity vector and anchored directly at `water.level + 0.015m`.
+  3. Splash & water-exit shake droplets (20 instances): Radial droplet scatter particles fling outward in parabolic trajectories during water-to-land body shakes or high-velocity fluid impacts.
+- Integration: `src/main.js` provides sampled fluid contact and creature shake status into `effects.update(state, body, { water, isShaking })`, and exposes live effect particle counts in `window.__SF.stats().effects`.
+- Dedicated unit tests (`tools/world-effects.test.mjs`): 5 new unit tests proving zero-allocation geometry sharing, 2.8m forward stream trajectory, aquatic wake surface positioning, radial splash dispersion, and clean resource disposal (unit test suite expanded from 140 to 145 checks; all pass).
+- Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (failing water jet stream emission and failing aquatic wake generation), expanding the suite to 31/31 mutations killed by named unit tests in ~115s.
+- Validation: All 145 unit tests (`npm test`), architecture checks (`npm run check`), 31/31 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys (`browser`, `browser:habitat`) pass cleanly with 0 errors and 0 resource leaks.
+
