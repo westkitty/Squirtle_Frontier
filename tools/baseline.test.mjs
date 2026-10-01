@@ -88,6 +88,7 @@ test("semantic save roundtrip excludes scenes; damaged original and live state r
     "memory",
     "place",
     "player",
+    "pose",
     "savedAt",
     "seed",
     "settlement",

@@ -17,17 +17,17 @@ npm start
 
 Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 
-| Action | Desktop | Touch |
-|---|---|---|
-| Move / run | WASD or arrows / Shift | Left stick / Run |
-| Look | Drag world | Drag world |
-| Shell-slide | Hold C | Hold Shell |
-| Water Jet | Hold Space | Hold Jet |
-| Dive / rise | Hold Q / E | Hold Dive / Rise |
-| Current Sense | Hold F in water | Hold Sense |
-| Enter / leave Lab | R near doorway | Contextual doorway button |
+| Action            | Desktop                | Touch                     |
+| ----------------- | ---------------------- | ------------------------- |
+| Move / run        | WASD or arrows / Shift | Left stick / Run          |
+| Look              | Drag world             | Drag world                |
+| Shell-slide       | Hold C                 | Hold Shell                |
+| Water Jet         | Hold Space             | Hold Jet                  |
+| Dive / rise       | Hold Q / E             | Hold Dive / Rise          |
+| Current Sense     | Hold F in water        | Hold Sense                |
+| Enter / leave Lab | R near doorway         | Contextual doorway button |
 
-Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 5 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings add adaptive resolution (pixel budget only, never simulation), tri-state camera motion, and export, confirmed import and explicit backup restoration. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Atomic multi-tab locking remains pending.
+Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 6 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings add adaptive resolution (pixel budget only, never simulation) and tri-state camera motion. Saving records the full body pose per place, so a reload resumes mid-dive in the basin instead of dropping the body onto land. Storage writes are serialized with Web Locks when the browser offers them; a tab that loses the write race is told so and can adopt the newer generation in place rather than reloading blind. Export, validated import and explicit backup restoration remain available. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Locking serializes tabs on this browser only; there is no cross-device sync.
 
 ## Validate
 
@@ -45,6 +45,7 @@ BROWSER_BUNDLED=1 npm run browser:channel
 BROWSER_BUNDLED=1 npm run browser:wildlife
 BROWSER_BUNDLED=1 npm run browser:a11y
 BROWSER_BUNDLED=1 npm run browser:dist
+BROWSER_BUNDLED=1 npm run browser:multitab
 ```
 
 Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance.

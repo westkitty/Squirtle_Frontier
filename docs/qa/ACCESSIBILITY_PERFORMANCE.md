@@ -28,3 +28,7 @@ Approval gates remain waived for progression; nothing here is a human-assistive-
 ## Not claimed
 
 No screen-reader (NVDA/VoiceOver/TalkBack) session, no real-device touch usability test, no desktop-GPU or mobile frame-rate measurement, no WCAG certification, and no sign-off that motion/contrast settings are sufficient for photosensitivity. Production completion is still not claimed.
+
+## Perf evidence regenerated in the save-integrity pass (2026-09-30)
+
+`docs/performance/phase1-measured.json` was rewritten by `npm run perf` after the version 6 save work: high 66.7 ms median (p95 150) and low 33.4 ms median (p95 100) on ANGLE SwiftShader at 960x640, 22 geometries / six textures / 39 draw calls / 31,236 triangles, teardown 0 geometries and 0 textures with nine chunk loads and nine unloads. The adaptive A/B moved 83.3 ms to 66.6 ms median (p95 166.7 to 133.4) at identical 960x640 CSS with an 816x544 buffer. Absolute medians differ from the earlier 100.0/50.1 ms sample because the shared CPU is contended; the A/B direction and the unchanged geometry/triangle counts are the parts that replicate. This remains non-hardware evidence: the 60 fps desktop and 30 fps mobile-class targets are still not demonstrated anywhere.

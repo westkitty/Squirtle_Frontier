@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 14
+revision: 15
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -10,6 +10,7 @@ status: Early causal slice including Lab/offline return / approval gates waived 
 Build a third-person systemic open-world browser game in which the player directly controls Squirtle.
 
 The project combines:
+
 - `westkitty/The_Living_Frontier` as the primary technical and systemic foundation.
 - `westkitty/Squirtle_Lab` as the source of Squirtle-specific asset, interaction, habitat, camera, presentation, and creature-scale design requirements.
 
@@ -37,6 +38,7 @@ The emotional target is awe through causal depth: the player returns to places a
 Use The Living Frontier as the primary engine substrate rather than expanding Squirtle Lab into an open-world engine.
 
 Preserve or adapt from The Living Frontier:
+
 - deterministic world generation;
 - streamed terrain chunks and LOD;
 - world-state ownership;
@@ -53,6 +55,7 @@ Preserve or adapt from The Living Frontier:
 - semantic DOM UI and touch support.
 
 Adapt from Squirtle Lab:
+
 - Squirtle runtime asset and provenance;
 - creature-first camera/framing;
 - body-specific interaction vocabulary;
@@ -81,6 +84,7 @@ Adapt from Squirtle Lab:
 ## Prototype gate
 
 Before broad production expansion, prove one representative watershed slice with:
+
 - one small streamed region;
 - Squirtle land/swim/dive/shell-slide/water-jet locomotion;
 - creature-scale camera;
@@ -97,6 +101,7 @@ Before broad production expansion, prove one representative watershed slice with
 - desktop and mobile-class performance evidence.
 
 Production expansion is blocked until the slice demonstrates:
+
 1. Squirtle movement is pleasurable without objectives.
 2. Semantic hydrology convincingly drives visible local water behavior.
 3. Streaming remains stable with creature-scale microgeometry.
@@ -124,7 +129,7 @@ Production expansion is blocked until the slice demonstrates:
 - Deterministic weather drives source supply, bounded 4x4 fire spread/fuel/ash/wetness and ash runoff. Jet suppresses nearby fire. Rain/fire/channel presentation uses two extra shared geometries and fixed instance limits. No global fluid or continuous erosion.
 - Player-only surveyed cells/landmarks, bounded 90-sample regional history, and one Lab frog identity/familiarity/fear persist. Offline time does not discover map cells or create encounters. Visitor mesh reacts simply to familiarity/fear; full AI and named settlement behavior remain pending.
 - Deep Record reached from the submerged Lab centre (R), then Q/E to descend/ascend through eight seeded aggregate historical strata; exit near surface. Lab/Record/frontier are mutually rendered, exterior chunks unload, shared Squirtle stays cached. Record reload resumes at surface; full body-pose persistence remains pending.
-- Version 5 save migrates versions 1–4; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
+- Version 5 save migrates versions 1–4; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions were pending at that checkpoint; the save-integrity checkpoint below closes them for same-browser tabs.
 - 58 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
 - Frontier geometry bound <=23; ordinary run 22 geometries / six textures / 35 calls. Software median ~133 ms high / ~83 ms low, p95 ~317 / ~167 ms at 960x640: FPS target NOT met here; hardware/mobile performance unknown.
 - Opened Deep Record, fire, map, marked-visitor and touch-settings screenshots. Found and repaired mobile nav/title overlap. Caption/controls visible, world remains crude geometry; marked visitor was partly occluded by avatar in captured pose, not a complete visual acceptance.
@@ -195,4 +200,14 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Motion preference fixed to tri-state and applied live (it previously only took effect on reload). Preference clamping no longer resets deliberate extremes. Canvas is focusable with a 3px ring; panels announce, focus on open, refresh immediately, and Escape restores the world with correct `aria-expanded`. Survey SVG capped so panel text stays visible. Input tolerates non-element event targets and failed pointer capture.
 - New `browser:a11y` (names, composited contrast 11.22 desktop / 5.15 touch lowest, 10-stop Tab walk, per-panel keyboard open/announce/close, reduced motion from OS and in game, adaptive toggle, touch targets, real CDP finger-drag stick with clean release, keyboard-only movement) and `browser:dist` (static `dist` build boots, moves, saves, reloads, one cached asset, zero teardown resources, no dev module graph). Evidence: `docs/qa/ACCESSIBILITY_PERFORMANCE.md`, `docs/qa/accessibility-browser.json`, `docs/qa/dist-browser.json`.
 - Screenshot inspection led to two repairs: the panel text was clipped by a full-width SVG map, and the settlement caretaker read as detached limbs. Both re-inspected and improved; art remains provisional.
-- Still open for “finished”: production wildlife/settlement depth, broader traversal and route topology, richer Lab play, authored terrain art, real screen-reader and device validation, hardware frame-rate evidence, asset/legal review for distribution, atomic multi-tab storage, and full human QA. Full project NOT complete; waived gates are not evidence of quality.
+- Still open for “finished”: production wildlife/settlement depth, broader traversal and route topology, richer Lab play, authored terrain art, real screen-reader and device validation, hardware frame-rate evidence, asset/legal review for distribution, and full human QA (same-browser multi-tab storage is now covered; cross-device sync is out of scope). Full project NOT complete; waived gates are not evidence of quality.
+
+## Save integrity and pose-resume checkpoint
+
+- Save version 6 records a place-scoped body pose (x, y, z, yaw) alongside the legacy x/z player field and `frontierReturn`. On boot or adoption the body resumes from the pose when it belongs to the saved place, with support state re-derived by running the real physics step for up to 0.4 s; a saved mode/grounded flag is never trusted. Out-of-range or non-finite poses reject the save atomically (previous live state untouched); versions 1–5 migrate with no pose and keep the old placement path. A submerged resume drifts upward as buoyancy reasserts, which is expected physics, not a save error.
+- `commitSave`/`commitLoad`/`commitWithLock` serialize read-modify-write through `navigator.locks` (exclusive mode) when available and degrade to a direct call in Node/older browsers. Save conflict detection is unchanged in spirit: a stale tab's write is refused instead of clobbering the newer generation. New `adoptStoredWorld` lets that tab read the newer generation in place (no rewrite, no offline credit, since a visible tab was already simulating), clears the block and resumes at the adopted pose via the "Adopt the newer stored world" control in Settings.
+- 61 checks pass, including new save-integrity tests for pose validation, lock serialization with a forced interleaving window inside the critical section, non-destructive conflict refusal and adoption idempotence. Production build passes (628 kB bundle warning).
+- New `browser:multitab` journey in one browser context: real W-key walking, save, second tab's refused write with the conflict message, in-place adoption landing within 1.5 m of the driver's saved position, a submerged Lab dive that survives reload (place `lab`, y ≈ −0.42, mode `swim`, inside the basin radius), then threshold R to return to `frontierReturn`. `docs/qa/multitab-browser.json`. Existing movement, watershed, habitat, world, recovery (now pose-aware), channel, wildlife, a11y and dist journeys rerun green.
+- Two tooling assumptions needed repair rather than the app: the recovery journey asserted resume from `player.x` and the Lab-exit step pressed R from the basin centre where no action is eligible. Both are now explicit fixtures with the pose-aware assertions.
+- `npm run perf` re-run after the pose work: high 66.7 ms median (p95 150) and low 33.4 ms median (p95 100) on ANGLE SwiftShader, with the adaptive A/B moving 83.3 to 66.6 ms median at identical CSS size (816x544 buffer). Absolute medians swing run to run under shared CPU; the A/B delta is the reproducible signal, and neither figure is hardware or mobile evidence. Evidence `docs/performance/phase1-measured.json`, written by the tool.
+- Still open for "finished": production wildlife/settlement depth, broader traversable route topology, richer Lab play, authored terrain/art pass, real screen-reader and device validation, hardware frame-rate evidence, asset/legal review for distribution, and full human QA. Full project NOT complete; gate waivers are not evidence of quality.

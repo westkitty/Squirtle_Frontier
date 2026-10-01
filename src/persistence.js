@@ -6,20 +6,29 @@ import { Ecosystem } from "./simulation/ecosystem.js";
 export const SAVE_KEY = "squirtle_frontier_baseline_v1";
 export const BACKUP_KEY = SAVE_KEY + "_backup";
 export const MAX_OFFLINE_SECONDS = 6 * 60 * 60;
-const position = (p) =>
-  p &&
-  Number.isFinite(p.x) &&
-  Number.isFinite(p.z) &&
+export const LOCK_KEY = SAVE_KEY + "_lock";
+const within = (p) =>
+  Number.isFinite(p?.x) &&
+  Number.isFinite(p?.z) &&
   Math.abs(p.x) <= 1000 &&
   Math.abs(p.z) <= 1000;
+// A pose is optional; when present it must be safe for the recorded place.
+const validPose = (p) =>
+  p == null ||
+  (within(p) &&
+    Number.isFinite(p.y) &&
+    p.y >= -24 &&
+    p.y <= 60 &&
+    Number.isFinite(p.yaw));
 function decode(text, seed) {
   const s = JSON.parse(text);
   if (
-    ![1, 2, 3, 4, 5].includes(s.version) ||
+    ![1, 2, 3, 4, 5, 6].includes(s.version) ||
     s.seed !== seed ||
     !Number.isFinite(s.elapsed) ||
     s.elapsed < 0 ||
-    !position(s.player)
+    !within(s.player) ||
+    (s.version >= 6 && !validPose(s.pose))
   )
     throw new Error("Unsupported or damaged save");
   const watershed =
@@ -36,7 +45,7 @@ function decode(text, seed) {
       s.ecoRemainder < 0 ||
       s.ecoRemainder >= 1 ||
       !["frontier", "lab", "record"].includes(s.place) ||
-      !position(s.frontierReturn))
+      !within(s.frontierReturn))
   )
     throw new Error("Invalid world clock or location");
   const frontier =
@@ -102,6 +111,7 @@ export function load(
       recovered = true;
     }
     const { s, watershed, ecosystem, frontier, memory, settlement } = decoded;
+    // Keep the newest world clock even when a caller re-enters load().
     state.watershed = watershed;
     state.ecosystem = ecosystem;
     state.frontier = frontier;
@@ -110,6 +120,7 @@ export function load(
     state.elapsed = s.elapsed;
     state.ecoRemainder = s.version >= 3 ? s.ecoRemainder : 0;
     state.player = { x: s.player.x, z: s.player.z };
+    state.pose = s.version >= 6 && s.pose ? { ...s.pose } : null;
     state.place = s.version >= 3 ? s.place : "frontier";
     state.frontierReturn =
       s.version >= 3 ? { ...s.frontierReturn } : { x: -10, z: 18 };
@@ -172,3 +183,40 @@ export function recoverBackup(state, storage) {
     return { ok: false, message: error.message };
   }
 }
+
+// Read-modify-write serialization. When the platform offers Web Locks, two
+// tabs cannot interleave a conflict check with the other tab's write.
+let held = false;
+export async function commitWithLock(fn, storage = globalThis.localStorage) {
+  const locks = globalThis.navigator?.locks;
+  if (!locks?.request) return fn();
+  return locks.request(LOCK_KEY, { mode: "exclusive" }, async () => {
+    if (held) throw new Error("Save lock re-entered");
+    held = true;
+    try {
+      return await fn();
+    } finally {
+      held = false;
+    }
+  });
+}
+export const commitSave = (state, storage, now = Date.now()) =>
+  commitWithLock(() => save(state, storage, now), storage);
+export const commitLoad = (state, storage, options) =>
+  commitWithLock(() => load(state, storage, options), storage);
+// A blocked tab can adopt the newer stored generation without a destructive
+// edit or a full reload: the winner's bytes are read as-is. No offline credit
+// is granted, because a visible tab's world was already being simulated.
+export function adoptStoredWorld(state, storage) {
+  try {
+    state.persistenceBlocked = false;
+    const result = load(state, storage, { now: Date.now(), offline: false });
+    if (result.ok) state.persistenceBlocked = !!result.recovered;
+    return result;
+  } catch (error) {
+    state.persistenceBlocked = true;
+    return { ok: false, message: error.message };
+  }
+}
+export const adoptStored = (state, storage) =>
+  commitWithLock(() => adoptStoredWorld(state, storage), storage);

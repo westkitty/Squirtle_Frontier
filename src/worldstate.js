@@ -8,7 +8,7 @@ import { Watershed } from "./simulation/watershed.js";
 import { WORLD } from "./worldgen.js";
 export class WorldState {
   constructor() {
-    this.version = 5;
+    this.version = 6;
     this.seed = WORLD.seed;
     this.elapsed = 0;
     this.watershed = new Watershed();
@@ -20,6 +20,9 @@ export class WorldState {
     this.place = "frontier";
     this.frontierReturn = { x: -10, z: 18 };
     this.player = { x: -10, z: 18 };
+    // Full body pose, scoped to the place it was recorded in. Saving x/z alone
+    // would drop a body straight through a basin floor.
+    this.pose = null;
     this.ground = new Uint8Array(WORLD.stateRes * WORLD.stateRes * 4);
   }
   sampleHeight(x, z) {
@@ -47,6 +50,7 @@ export class WorldState {
       seed: this.seed,
       elapsed: this.elapsed,
       player: { ...this.player },
+      pose: this.pose ? { ...this.pose } : null,
       watershed: this.watershed.snapshot(),
       ecosystem: this.ecosystem.snapshot(),
       frontier: this.frontier.snapshot(),

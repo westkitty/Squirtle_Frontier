@@ -1,0 +1,65 @@
+{
+  "errors": [],
+  "driven": {
+    "pose": {
+      "x": -10,
+      "y": 0.8671,
+      "z": 15.7455,
+      "yaw": 3.1416,
+      "place": "frontier"
+    },
+    "elapsed": 8.600000000000014,
+    "distance": 2.2544938346492227
+  },
+  "stored": {
+    "pose": {
+      "x": -10,
+      "y": 0.8655,
+      "z": 15.6195,
+      "yaw": 3.1416,
+      "place": "frontier"
+    },
+    "elapsed": 8.766666666666689,
+    "player": {
+      "x": -10,
+      "z": 15.619515813374766
+    }
+  },
+  "conflict": "Save changed in another tab; reload before saving. A blocked tab can adopt the newer stored world below.",
+  "rejectedWriteLeftStorage": -10,
+  "adopted": {
+    "status": "Adopted the newer stored world (9s of growth).",
+    "elapsed": 8.866666666666694,
+    "pose": {
+      "x": -10,
+      "y": 0.8655,
+      "z": 15.6195,
+      "yaw": 3.1416,
+      "place": "frontier"
+    },
+    "body": {
+      "x": -10,
+      "y": 0.8655100024770586,
+      "z": 15.6195
+    }
+  },
+  "diveSavedY": -0.606,
+  "afterReload": {
+    "place": "lab",
+    "y": -0.421,
+    "mode": "swim",
+    "basinDistance": 0
+  },
+  "returned": {
+    "x": -10,
+    "z": 15.61,
+    "expected": {
+      "x": -10,
+      "z": 15.61
+    }
+  },
+  "storageKeys": [
+    "squirtle_frontier_baseline_v1",
+    "squirtle_frontier_baseline_v1_backup"
+  ]
+}

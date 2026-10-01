@@ -143,6 +143,12 @@
             type="file"
             accept=".json,application/json" /></label
         ><button id="recover-save">Restore previous backup</button>
+        <button id="follow-tab">Adopt the newer stored world</button>
+        <p class="small">
+          Two tabs cannot both drive one world. A tab whose write was refused
+          can adopt the newer generation as stored, keeping its water, ecology
+          and body position instead of reloading blind.
+        </p>
         <p class="small">
           Replacement requires confirmation and preserves existing bytes in
           local quarantine. Export first for an external copy.

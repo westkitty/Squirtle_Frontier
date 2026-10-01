@@ -19,7 +19,8 @@
     "browser:channel": "node tools/channel-browser.mjs",
     "browser:wildlife": "node tools/wildlife-browser.mjs",
     "browser:a11y": "node tools/accessibility-browser.mjs",
-    "browser:dist": "node tools/dist-browser.mjs"
+    "browser:dist": "node tools/dist-browser.mjs",
+    "browser:multitab": "node tools/multitab-browser.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

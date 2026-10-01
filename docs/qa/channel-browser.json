@@ -95,10 +95,10 @@
   },
   "performance": {
     "environment": "960x640 SwiftShader, stage 4; NOT hardware/mobile FPS",
-    "medianMs": 116.69999999999891,
-    "p95Ms": 266.6999999999989,
+    "medianMs": 83.39999999999964,
+    "p95Ms": 183.30000000000018,
     "render": {
-      "frame": 132,
+      "frame": 133,
       "calls": 38,
       "triangles": 55241,
       "points": 0,

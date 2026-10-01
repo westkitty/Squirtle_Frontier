@@ -14,7 +14,13 @@ import { Streaming } from "./streaming.js";
 import { Input } from "./input.js";
 import { Loop } from "./loop.js";
 import { Settings } from "./settings.js";
-import { save, load, advanceOffline } from "./persistence.js";
+import {
+  save,
+  load,
+  commitSave,
+  adoptStored,
+  advanceOffline,
+} from "./persistence.js";
 import { AssetManager } from "./assets/asset-manager.js";
 import { SquirtlePresentation } from "./assets/squirtle-presentation.js";
 import { createBody } from "./player/body-state.js";
@@ -142,6 +148,25 @@ async function boot() {
             : "Stillwater Reach";
     };
     if (state.place !== "frontier") enterPlace(state.place, false);
+    // A saved generation may remember where the body actually was, including
+    // inside a room. Support state is re-derived by physics, never trusted.
+    const resumeFromSave = () => {
+      const pose = state.pose;
+      rig.initial = true;
+      if (!pose || pose.place !== state.place) return false;
+      Object.assign(body, createBody(pose.x, pose.z, pose.y));
+      body.yaw = pose.yaw;
+      const env =
+        state.place === "record"
+          ? recordRegion
+          : state.place === "lab"
+            ? labRegion
+            : liveRegion;
+      for (let i = 0; i < 24; i++) stepBody(body, { x: 0, z: 0 }, env, 1 / 60);
+      rig.initial = true;
+      return true;
+    };
+    resumeFromSave();
     const abort = new AbortController(),
       options = { signal: abort.signal };
     bindRecovery(state, status, abort.signal);
@@ -352,8 +377,28 @@ async function boot() {
     document.querySelector("#save").addEventListener(
       "click",
       () => {
-        const r = save(state, localStorage);
-        status.textContent = r.ok ? "This place is remembered." : r.message;
+        commitSave(state, localStorage).then((r) => {
+          status.textContent = r.ok
+            ? "This place is remembered."
+            : `${r.message} A blocked tab can adopt the newer stored world below.`;
+        });
+      },
+      options,
+    );
+    document.querySelector("#follow-tab").addEventListener(
+      "click",
+      async () => {
+        const before = state.place;
+        const r = await adoptStored(state, localStorage);
+        if (!r.ok) {
+          status.textContent = r.message;
+          return;
+        }
+        if (state.place !== before) enterPlace(state.place, false);
+        resumeFromSave();
+        status.textContent = `Adopted the newer stored world (${Math.round(
+          state.elapsed,
+        )}s of growth).`;
       },
       options,
     );
@@ -483,14 +528,23 @@ async function boot() {
             signal?.message || "Touch the water to listen to its current.";
         state.player.x = body.x;
         state.player.z = body.z;
+        // Full pose: a saved x/z pair would drop the body through a basin floor.
+        state.pose = {
+          x: +body.x.toFixed(4),
+          y: +body.y.toFixed(4),
+          z: +body.z.toFixed(4),
+          yaw: +body.yaw.toFixed(4),
+          place: state.place,
+        };
         creature.present(body, dt);
         if (state.place === "frontier") scenery.update(body, dt);
         audio.update(body, Settings.values);
         saveTime += dt;
         if (saveTime >= 30) {
           saveTime = 0;
-          const r = save(state, localStorage);
-          if (!r.ok) status.textContent = r.message;
+          commitSave(state, localStorage).then((r) => {
+            if (!r.ok) status.textContent = r.message;
+          });
         }
       },
       () => {
@@ -568,8 +622,9 @@ async function boot() {
         } else if (hiddenAt !== null) {
           advanceOffline(state, Math.max(0, (Date.now() - hiddenAt) / 1000));
           hiddenAt = null;
-          const r = save(state, localStorage);
-          if (!r.ok) status.textContent = r.message;
+          commitSave(state, localStorage).then((r) => {
+            if (!r.ok) status.textContent = r.message;
+          });
         }
         loop.reset();
         renderer.setAnimationLoop(
