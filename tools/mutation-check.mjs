@@ -211,6 +211,18 @@ const MUTATIONS = [
     from: "    const subLevel = body.mode === \"dive\" ? 0.26 : 0;",
     to: "    const subLevel = 0;",
   },
+  {
+    what: "water jet fails to emit forward pressurized particle stream",
+    file: "src/player/world-effects.js",
+    from: "    if (body.jetTime > 0) {",
+    to: "    if (false && body.jetTime > 0) {",
+  },
+  {
+    what: "aquatic surface wake fails to generate ripples while swimming",
+    file: "src/player/world-effects.js",
+    from: "    if (inWater && (speed > 0.25 || body.mode === \"swim\" || body.mode === \"dive\")) {",
+    to: "    if (false) {",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

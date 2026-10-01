@@ -20,6 +20,40 @@ export class WorldEffects {
     this.rain.frustumCulled = false;
     this.group.add(this.rain);
 
+    this.jetMat = new THREE.MeshBasicMaterial({
+      color: 0x9ee7ff,
+      transparent: true,
+      opacity: 0.85,
+    });
+    this.jet = new THREE.InstancedMesh(this.geo, this.jetMat, 24);
+    this.jet.frustumCulled = false;
+    this.jet.count = 0;
+    this.jet.visible = false;
+    this.group.add(this.jet);
+
+    this.wakeMat = new THREE.MeshBasicMaterial({
+      color: 0x90e6f7,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+    });
+    this.wake = new THREE.InstancedMesh(this.geo, this.wakeMat, 16);
+    this.wake.frustumCulled = false;
+    this.wake.count = 0;
+    this.wake.visible = false;
+    this.group.add(this.wake);
+
+    this.splashMat = new THREE.MeshBasicMaterial({
+      color: 0xc6f3ff,
+      transparent: true,
+      opacity: 0.75,
+    });
+    this.splash = new THREE.InstancedMesh(this.geo, this.splashMat, 20);
+    this.splash.frustumCulled = false;
+    this.splash.count = 0;
+    this.splash.visible = false;
+    this.group.add(this.splash);
+
     this.route = traceChannel();
     this.channelGeo = new THREE.BufferGeometry();
     this.channelGeo.setAttribute(
@@ -39,7 +73,7 @@ export class WorldEffects {
     this.channel.frustumCulled = false;
     this.dummy = new THREE.Object3D();
   }
-  update(state, body) {
+  update(state, body, options = {}) {
     this.rain.count = Math.floor(state.frontier.weather.rain * 96);
     for (let i = 0; i < this.rain.count; i++) {
       const x = body.x + Math.sin(i * 3.3) * 8,
@@ -101,9 +135,103 @@ export class WorldEffects {
       this.channelGeo.computeVertexNormals();
       this.channelGeo.computeBoundingSphere();
     }
+
+    // 1. Water Jet stream: pressurized aquatic propulsion forward from snout
+    if (body.jetTime > 0) {
+      this.jet.visible = true;
+      this.jet.count = 24;
+      const snoutX = body.x + Math.sin(body.yaw) * 0.28,
+        snoutY = body.y + 0.22,
+        snoutZ = body.z + Math.cos(body.yaw) * 0.28,
+        dirX = Math.sin(body.yaw),
+        dirZ = Math.cos(body.yaw);
+      for (let i = 0; i < 24; i++) {
+        const dist = (i / 23) * 2.8,
+          spread = dist * 0.1,
+          turbX = Math.sin(i * 3.7 + state.elapsed * 25) * spread,
+          turbZ = Math.cos(i * 2.9 + state.elapsed * 25) * spread,
+          turbY = (Math.sin(i * 5.1 + state.elapsed * 30) - 0.2) * spread * 0.5;
+        this.dummy.position.set(
+          snoutX + dirX * dist + turbX,
+          snoutY + turbY,
+          snoutZ + dirZ * dist + turbZ,
+        );
+        this.dummy.rotation.set(0, body.yaw, 0);
+        this.dummy.scale.set(
+          0.035 * (1 + dist * 0.35),
+          0.12 * (1 + dist * 0.6),
+          0.035 * (1 + dist * 0.35),
+        );
+        this.dummy.updateMatrix();
+        this.jet.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.jet.instanceMatrix.needsUpdate = true;
+    } else {
+      this.jet.count = 0;
+      this.jet.visible = false;
+    }
+
+    // 2. Aquatic surface wake: expanding concentric ripples during swimming/sliding in water
+    const water = options?.water;
+    const inWater = !!water && body.y <= water.level + 0.15;
+    const speed = Math.hypot(body.vx, body.vz);
+    if (inWater && (speed > 0.25 || body.mode === "swim" || body.mode === "dive")) {
+      this.wake.visible = true;
+      this.wake.count = 16;
+      const surfY = water.level + 0.015;
+      for (let i = 0; i < 16; i++) {
+        const phase = (((state.elapsed * 1.5 + i * (1 / 16)) % 1) + 1) % 1,
+          r = 0.25 + phase * 1.4,
+          trailDist = phase * Math.min(speed, 4.0) * 0.35,
+          rx = body.x - (speed > 0.01 ? (body.vx / speed) * trailDist : 0),
+          rz = body.z - (speed > 0.01 ? (body.vz / speed) * trailDist : 0);
+        this.dummy.position.set(rx, surfY, rz);
+        this.dummy.rotation.set(-Math.PI / 2, 0, 0);
+        this.dummy.scale.set(r, 0.008, r);
+        this.dummy.updateMatrix();
+        this.wake.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.wake.instanceMatrix.needsUpdate = true;
+    } else {
+      this.wake.count = 0;
+      this.wake.visible = false;
+    }
+
+    // 3. Splash / water-exit shake droplets: radial scatter during shake or water impact
+    const isShaking = options?.isShaking ?? false;
+    const splashActive = isShaking || (inWater && body.impact > 0.06);
+    if (splashActive) {
+      this.splash.visible = true;
+      this.splash.count = 20;
+      for (let i = 0; i < 20; i++) {
+        const theta = (i / 20) * Math.PI * 2 + state.elapsed * 12,
+          arcDist = 0.35 + ((((i * 0.31 + state.elapsed * 4) % 1) + 1) % 1) * 1.1,
+          dropletY = body.y + 0.2 + Math.sin(arcDist * Math.PI) * 0.35;
+        this.dummy.position.set(
+          body.x + Math.cos(theta) * arcDist,
+          dropletY,
+          body.z + Math.sin(theta) * arcDist,
+        );
+        this.dummy.rotation.set(0, 0, 0);
+        this.dummy.scale.set(0.025, 0.06, 0.025);
+        this.dummy.updateMatrix();
+        this.splash.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.splash.instanceMatrix.needsUpdate = true;
+    } else {
+      this.splash.count = 0;
+      this.splash.visible = false;
+    }
   }
 
   dispose() {
+    this.jet.dispose();
+    this.jetMat.dispose();
+    this.wake.dispose();
+    this.wakeMat.dispose();
+    this.splash.dispose();
+    this.splashMat.dispose();
+
     this.rain.dispose();
     this.rainMat.dispose();
     this.fire.dispose();

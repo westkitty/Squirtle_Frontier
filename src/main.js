@@ -644,7 +644,17 @@ async function boot() {
         if (state.frontier.tick !== previousTick)
           state.settlement.observe(body, state.place, state.frontier.tick);
         wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
-        if (state.place === "frontier") effects.update(state, body);
+        const currentWater = (state.place === "frontier"
+          ? liveRegion
+          : state.place === "lab"
+            ? labRegion
+            : recordRegion
+        ).water(body.x, body.z, state.waterLevel);
+        if (state.place === "frontier")
+          effects.update(state, body, {
+            water: currentWater,
+            isShaking: creature?.isShaking ?? false,
+          });
         if (state.place === "frontier")
           habitat.update(
             state.ecosystem,
@@ -732,12 +742,7 @@ async function boot() {
         if (state.place === "frontier")
           scenery.update(body, dt, state.waterLevel);
         audio.update(body, Settings.values, {
-          water: (state.place === "frontier"
-            ? liveRegion
-            : state.place === "lab"
-              ? labRegion
-              : recordRegion
-          ).water(body.x, body.z, state.waterLevel),
+          water: currentWater,
           isShaking: creature?.isShaking ?? false,
           isSleeping: creature?.isSleeping ?? false,
         });
@@ -872,6 +877,11 @@ async function boot() {
         gaze: creature ? { yaw: creature.gazeYaw, pitch: creature.gazePitch } : null,
         sleeping: creature?.isSleeping ?? false,
         sleepProgress: creature?.sleepProgress ?? 0,
+        effects: {
+          jet: effects?.jet?.count ?? 0,
+          wake: effects?.wake?.count ?? 0,
+          splash: effects?.splash?.count ?? 0,
+        },
       }),
     };
     renderer.setAnimationLoop((now) => loop.frame(now));
