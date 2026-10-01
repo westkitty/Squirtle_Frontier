@@ -98,3 +98,21 @@ export const settlementObstacles = [
   { x: -15, z: -12, radius: 1.9, height: 3.9 },
   { x: -12.6, z: -12, radius: 1.05, height: 1 },
 ];
+
+export function settlementDialogue(settlement, body) {
+  if (!settlement) return null;
+  const d = Math.hypot(body.x - WATER_HOUSE.x, body.z - WATER_HOUSE.z);
+  if (d > 8.0) return null;
+  const mode = settlement.response;
+  if (mode === "withdraw")
+    return "A cautious stillness from inside the water house. The door remains barred.";
+  if (mode === "check-water")
+    return "The caretaker murmurs softly, looking down at the dry trough: 'If only the springs ran true...'";
+  if (mode === "welcome") {
+    if (settlement.bowl > 0.05)
+      return "The caretaker waves warmly: 'Fresh water for you, little friend. Rest your paws.'";
+    return "The caretaker waves with a welcoming smile: 'Good to see you by the cistern, little one.'";
+  }
+  return "The caretaker observes you quietly from the doorway, curious and still.";
+}
+

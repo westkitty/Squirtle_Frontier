@@ -10,6 +10,7 @@ import {
   Settlement,
   WATER_HOUSE,
   SETTLEMENT_BOWL,
+  settlementDialogue,
 } from "../src/simulation/settlement.js";
 import { placeAction } from "../src/simulation/place-interaction.js";
 import { WorldState } from "../src/worldstate.js";
@@ -244,4 +245,38 @@ test("in the Lab basin, Squirtle can playfully splash with colonized reed frogs"
     "deep shaft entrance retains record action priority",
   );
 });
+
+test("settlementDialogue provides context-sensitive ambient voice for all caretaker response modes", () => {
+  const s = new Settlement();
+  const nearBody = { x: -14, z: -11 }; // within 2m of WATER_HOUSE (-15, -12)
+  const farBody = { x: 0, z: 0 }; // far away (> 8m)
+
+  // 1. Distant body gets null
+  assert.equal(settlementDialogue(s, farBody), null, "distant body hears nothing");
+  assert.equal(settlementDialogue(null, nearBody), null, "missing settlement returns null");
+
+  // 2. Fearful / withdraw mode
+  s.fear = 0.5;
+  assert.match(settlementDialogue(s, nearBody), /barred/, "fearful response mentions barred door");
+
+  // 3. Drought / check-water mode
+  s.fear = 0;
+  s.waterReliability = 0.1;
+  assert.match(settlementDialogue(s, nearBody), /springs ran true/, "drought response laments dry trough");
+
+  // 4. Stranger / watch mode
+  s.waterReliability = 0.8;
+  s.familiarity = 0.1;
+  assert.match(settlementDialogue(s, nearBody), /observes you quietly/, "stranger response watches quietly");
+
+  // 5. Welcoming mode with bowl filled
+  s.familiarity = 0.5;
+  s.bowl = 0.6;
+  assert.match(settlementDialogue(s, nearBody), /Fresh water for you/, "welcoming mode with bowl gestures to water");
+
+  // 6. Welcoming mode with bowl empty
+  s.bowl = 0.02;
+  assert.match(settlementDialogue(s, nearBody), /by the cistern/, "welcoming mode without bowl gives warm greeting");
+});
+
 

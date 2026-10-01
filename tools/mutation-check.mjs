@@ -235,6 +235,18 @@ const MUTATIONS = [
     from: "      context?.ecosystem?.labFrogs >= 1 &&",
     to: "      context?.ecosystem?.labFrogs >= 0 &&",
   },
+  {
+    what: "caretaker dialogue rejects bodies within normal speaking range",
+    file: "src/simulation/settlement.js",
+    from: "  if (d > 8.0) return null;",
+    to: "  if (d > 0.1) return null;",
+  },
+  {
+    what: "caretaker welcome fails to animate welcoming arm wave gesture",
+    file: "src/player/habitat-view.js",
+    from: "        const wave = mode === \"welcome\" ? Math.sin(time * 4.2) * 0.16 : 0;",
+    to: "        const wave = 0;",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

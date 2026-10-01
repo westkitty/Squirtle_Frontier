@@ -408,13 +408,28 @@ export class HabitatView {
         const a = 1 - Math.exp(-dt * 1.5);
         this.caretaker.position.x += (target.x - this.caretaker.position.x) * a;
         this.caretaker.position.z += (target.z - this.caretaker.position.z) * a;
-        this.caretaker.position.y = h;
+        this.caretaker.position.y = h + Math.sin(time * 1.8) * 0.012;
         this.caretaker.rotation.y = Math.atan2(
           body.x - this.caretaker.position.x,
           body.z - this.caretaker.position.z,
         );
+        const wave = mode === "welcome" ? Math.sin(time * 4.2) * 0.16 : 0;
         this.arm.rotation.z =
-          mode === "welcome" ? -1.1 : mode === "withdraw" ? 0.4 : -0.15;
+          mode === "welcome"
+            ? -1.1 + wave
+            : mode === "withdraw"
+              ? 0.4
+              : mode === "check-water"
+                ? -0.25
+                : -0.15;
+        this.caretaker.rotation.x =
+          mode === "check-water"
+            ? 0.22
+            : mode === "withdraw"
+              ? -0.06
+              : mode === "welcome"
+                ? Math.sin(time * 2.0) * 0.03
+                : 0;
         this.door.visible = mode === "withdraw";
         this.bowl.visible = settlement.familiarity >= 0.25;
         this.bowlWater.visible = this.bowl.visible && settlement.bowl > 0.02;

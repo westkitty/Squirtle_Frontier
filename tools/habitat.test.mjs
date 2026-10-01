@@ -71,3 +71,32 @@ test("rest requires grounded proximity to Lab platform; no remote or underwater 
   assert.equal(placeAction("lab", { x: 0, z: 0, grounded: true }), null);
   assert.equal(placeAction("lab", { x: 0, z: 6, grounded: true }), "leave");
 });
+
+test("HabitatView animates caretaker with living welcoming gestures and pensive check-water posture", () => {
+  const scene = new THREE.Scene();
+  const view = new HabitatView(scene, { lab: false });
+  const body = createBody(-13, -10, 0);
+  const eco = { reeds: 0.5, prey: 0.5, cistern: 0.5 };
+  const s = { response: "welcome", familiarity: 0.5, bowl: 0.5 };
+
+  // 1. Welcome mode: arm waves dynamically with elapsed time
+  view.update(eco, body, 0.0, null, null, s, 1 / 60);
+  const armRot0 = view.arm.rotation.z;
+  const posY0 = view.caretaker.position.y;
+
+  view.update(eco, body, 0.4, null, null, s, 1 / 60);
+  const armRot1 = view.arm.rotation.z;
+  const posY1 = view.caretaker.position.y;
+
+  assert.notEqual(armRot0, armRot1, "caretaker arm must animate wave cadence across elapsed time");
+  assert.notEqual(posY0, posY1, "caretaker must subtly bob with respiration");
+
+  // 2. Check-water mode: caretaker tilts forward toward dry trough
+  const sCheck = { response: "check-water", familiarity: 0.5, bowl: 0.0 };
+  view.update(eco, body, 1.0, null, null, sCheck, 1 / 60);
+  assert.ok(view.caretaker.rotation.x > 0.15, "caretaker must bow head toward dry trough");
+
+  view.dispose();
+  assert.equal(scene.children.length, 0);
+});
+

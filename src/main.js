@@ -1,6 +1,9 @@
 import { AdaptiveScale } from "./adaptive-quality.js";
 import { NearWildlife } from "./simulation/near-wildlife.js";
-import { settlementObstacles } from "./simulation/settlement.js";
+import {
+  settlementObstacles,
+  settlementDialogue,
+} from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
 import { REACHES, reachAt, reachById } from "./simulation/reaches.js";
 import { reachWaterState } from "./simulation/water-level.js";
@@ -736,6 +739,9 @@ async function boot() {
                 }.`
               : ""
           }`;
+        } else if (state.place === "frontier") {
+          const dialogue = settlementDialogue(state.settlement, body);
+          if (dialogue) status.textContent = dialogue;
         }
         state.player.x = body.x;
         state.player.z = body.z;
