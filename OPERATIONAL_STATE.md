@@ -320,4 +320,22 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Mutation suite (`tools/mutation-check.mjs`): Added 3 documented-contract mutations (attending targets behind Squirtle outside FOV, exceeding anatomical gaze yaw clamp, and tracking targets while inside shell slide), expanding the suite to 26/26 mutations killed by named unit tests in ~105s.
 - Validation: All 129 unit tests (`npm test`), architecture checks (`npm run check`), 26/26 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass cleanly with zero resource leaks (0 geometries / 0 textures at teardown).
 
+## Loop 1: Squirtle living rest & slumber kinematics checkpoint
+
+- Squirtle's living physical identity expanded with peaceful sleep/wake kinematics, comfortable resting crouch, curled tail, slowed respiration cadence, and Lab platform rest integration.
+- Rest/sleep state activation: Triggered by prolonged undisturbed land stillness (`idleTime > 5.5s`) or explicit rest action on the Lab platform (`b.resting = true`). Instantly and smoothly awakens upon any player movement or action input.
+- Living slumber kinematics (`src/assets/squirtle-presentation.js`):
+  - Slowed respiration: Respiration rate slows from 2.2 Hz down to ~0.77 Hz during deep slumber (`breathRate = 2.2 * (1 - 0.65 * rest)`).
+  - Head & snout posture: Head nods gently downward onto chest (`rotateX("Head", -rest * 0.22)`), with snout slightly tucked.
+  - Relaxed front limbs: Arms fold comfortably down beside the plastron/chest (`rotateX("LArm/RArm", rest * 0.28)`, `rotateZ` relaxed, forearms folded).
+  - Resting quadrupedal crouch: Hind thighs splay outward into a stable resting sit (`rotateZ("LThigh/RThigh", +/- rest * 0.32)`), calves folded underneath.
+  - Protective curled tail: Curly tail curves protectively around the flank into a resting crescent (`rotateY("Tail1..3", tailSway * (1-rest) + rest * [0.48, 0.72, 0.96])`).
+  - Visual elevation drop: Visual center lowers by 8 cm (`-rest * 0.08m`), resting firmly on ground/platform.
+  - Saccadic gaze suppression: Active attention tracking is smoothly suppressed while sleeping (`isSleeping = restProgress > 0.45`), keeping eyes resting.
+- Diagnostics & integration: `createBody` includes `resting: false`, `stepBody` clears resting on movement, `src/main.js` rest action sets `body.resting = true`, and `window.__SF.stats()` exposes `sleeping` and `sleepProgress`.
+- Dedicated unit tests: Added 4 new tests in `tools/squirtle-presentation.test.mjs` (suite expanded from 129 to 133 checks; all pass).
+- Mutation suite: Added 1 new mutation (killing undisturbed idle standing upright instead of slumber crouch), expanding suite to 27/27 mutations killed by named unit tests.
+- Browser validation: `browser` (movement, save/reload, 12 chunk returns, 30 asset cycles, touch) and `browser:habitat` (rest guard, 12 Lab/frontier cycles) pass with zero resource leaks (0 geometries / 0 textures at teardown).
+
+
 
