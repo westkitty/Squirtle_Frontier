@@ -336,6 +336,18 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Dedicated unit tests: Added 4 new tests in `tools/squirtle-presentation.test.mjs` (suite expanded from 129 to 133 checks; all pass).
 - Mutation suite: Added 1 new mutation (killing undisturbed idle standing upright instead of slumber crouch), expanding suite to 27/27 mutations killed by named unit tests.
 - Browser validation: `browser` (movement, save/reload, 12 chunk returns, 30 asset cycles, touch) and `browser:habitat` (rest guard, 12 Lab/frontier cycles) pass with zero resource leaks (0 geometries / 0 textures at teardown).
+## Loop 2: Creature-centered procedural audio engine checkpoint
 
-
-
+- Procedural audio engine (`src/audio.js`) upgraded from a monolithic single-noise lowpass loop into a responsive, creature-centered multi-voice synthesizer operating entirely through a single zero-leak `AudioContext`.
+- Six specialized procedural voice paths:
+  1. Master output bus: AudioContext lifecycle management, master gain node with smooth exponential volume ramping and mute handling (`Settings.values.sound`).
+  2. Hydrodynamic Water Jet surge voice: Dedicated noise buffer fed through a resonant bandpass filter (Q: 3.5) with dynamic frequency sweep (450 Hz up to 800 Hz) activated during `body.jetTime > 0`, conveying pressurized aquatic thrust.
+  3. Aquatic surf & displacement voice: Lowpass-filtered fluid motion (320 Hz) with dynamic resonance and gain modulation scaling with swimming velocity in `swim` mode.
+  4. Submerged Cavern / Deep Ocean sub-drone: Low-frequency sine oscillator (55 Hz) coupled with a steep lowpass filter (130 Hz) engaging smoothly during underwater `dive` mode, generating an authentic acoustic pressure sense of being deep underwater.
+  5. Locomotion voice: Ground-contact acoustics dynamically discriminating between dry land footsteps (1050 Hz bandpass taps), shallow water wading splashes (1700 Hz bandpass with wet splatter envelope), and high-velocity shell slide friction (820 Hz continuous rasping).
+  6. Water-exit droplet shake flutter voice: High-frequency resonant bandpass filter (2400 Hz, Q: 4.0) triggered during Squirtle's water-to-land shake, creating crisp droplet scatter acoustics.
+  7. Safe lifecycle & zero-leak disposal: Explicit teardown stopping active oscillators and noise sources, ramping master gains to zero, disconnecting all audio nodes, and closing the single `AudioContext` cleanly without leaks.
+- Main loop integration (`src/main.js`): `audio.update(body, Settings.values, { water, isShaking, isSleeping })` feeds physical body state, fluid contact, and sleep status into acoustic parameter modulation.
+- Dedicated unit tests (`tools/audio.test.mjs`): 7 new comprehensive tests asserting single context initialization, jet surge activation, dive sub-drone engagement, land vs shallow wading locomotion frequencies, volume muting, and zero-leak resource disposal (suite expanded from 133 to 140 checks; all pass).
+- Mutation suite (`tools/mutation-check.mjs`): Added 2 documented-contract mutations (failing water jet surge acoustics and failing dive sub-drone acoustics), expanding suite to 29/29 mutations killed by named unit tests in ~110s.
+- Validation: All 140 unit tests (`npm test`), architecture check (`npm run check`), 29/29 mutations (`npm run mutate`), production bundle build (`npm run build`), and browser journey test suites pass with zero resource leaks.
