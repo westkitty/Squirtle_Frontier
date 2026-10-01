@@ -63,6 +63,22 @@ try {
   });
   await p.waitForFunction(() => window.__SF.state.settlement.bowl > 0.02);
   await p.screenshot({ path: "artifacts/settlement-welcome.png" });
+
+  // The Memory panel must describe the same settlement state the world shows.
+  await p.click("#memory-toggle");
+  // The panel must already be current on the first frame after opening.
+  await p.waitForFunction(
+    () => document.querySelector("#house-note").textContent.length > 0,
+    null,
+    { timeout: 5000 },
+  );
+  report.houseNote = await p.evaluate(
+    () => document.querySelector("#house-note").textContent,
+  );
+  assert.match(report.houseNote, /caretaker leaves a filled bowl/);
+  assert.match(report.houseNote, /1 visit\)/);
+  await p.screenshot({ path: "artifacts/settlement-memory.png" });
+  await p.click("#memory-toggle");
   const familiarity = await p.evaluate(
     () => window.__SF.state.settlement.familiarity,
   );

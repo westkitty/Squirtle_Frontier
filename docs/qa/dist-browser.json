@@ -1,0 +1,47 @@
+{
+  "errors": [],
+  "requested": [
+    "/",
+    "/assets/index-DlZPdLsx.js",
+    "/assets/index-IG-zuvmQ.css",
+    "/assets/manifest.json",
+    "/assets/runtime/squirtle/squirtle.glb",
+    "http://127.0.0.1:4173/ea910ab3-98f4-4f76-9a68-0e976d19118d",
+    "http://127.0.0.1:4173/670fcc2d-4de1-489c-8239-94897fb513cf",
+    "/",
+    "/assets/index-DlZPdLsx.js",
+    "/assets/index-IG-zuvmQ.css",
+    "/assets/manifest.json",
+    "/assets/runtime/squirtle/squirtle.glb",
+    "http://127.0.0.1:4173/76bcfd6e-c1d7-4832-b8bf-e9c6e1a9fc94",
+    "http://127.0.0.1:4173/850ac8ae-0de8-402c-b3b3-1d93dd01a013"
+  ],
+  "devGraph": [],
+  "bundle": [
+    "/assets/index-DlZPdLsx.js",
+    "/assets/index-IG-zuvmQ.css",
+    "/assets/manifest.json",
+    "/assets/runtime/squirtle/squirtle.glb"
+  ],
+  "movedMeters": 1.081749674032011,
+  "savedPosition": {
+    "x": -10,
+    "z": 16.91825032596799
+  },
+  "afterReload": {
+    "x": -10,
+    "z": 16.78,
+    "bypass": 0.6,
+    "stage": 1,
+    "assets": {
+      "cached": 1,
+      "referencedIds": 1,
+      "references": 1,
+      "records": 1
+    }
+  },
+  "teardown": {
+    "geometries": 0,
+    "textures": 0
+  }
+}

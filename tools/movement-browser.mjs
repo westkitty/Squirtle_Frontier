@@ -94,7 +94,14 @@ try {
   await page.mouse.up();
   await mark("drag camera");
   await page.click("#settings-toggle");
-  await page.check("#motion");
+  // Reduced motion is tri-state; "reduce" must apply immediately, not on reload.
+  await page.selectOption("#motion", "reduce");
+  assert.equal(
+    await page.evaluate(() =>
+      document.body.classList.contains("reduced-motion"),
+    ),
+    true,
+  );
   await page.selectOption("#quality", "low");
   await page.click("#reset");
   await page.click("#save");
@@ -102,6 +109,23 @@ try {
   await page.reload();
   await page.waitForFunction(() => window.__SF?.loop.frames.length > 10);
   assert.deepEqual(await page.evaluate(() => window.__SF.state.player), saved);
+  assert.equal(
+    await page.evaluate(
+      () =>
+        document.body.classList.contains("reduced-motion") &&
+        JSON.parse(localStorage.getItem("squirtle_frontier_settings_v1"))
+          .reducedMotion === true,
+    ),
+    true,
+    "preference must survive reload",
+  );
+  assert.equal(
+    await page.evaluate(
+      () => document.querySelector("canvas").clientWidth === innerWidth,
+    ),
+    true,
+    "render scaling must not change CSS layout",
+  );
   await mark("save and reload");
   // Return to matched pose for resource checks. Teleports below are explicitly lifecycle probes.
   await page.evaluate(() => {

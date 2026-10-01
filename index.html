@@ -35,8 +35,8 @@
           Settings
         </button>
       </nav>
-      <aside id="memory" hidden>
-        <h2>Places remembered</h2>
+      <aside id="memory" hidden tabindex="-1" aria-labelledby="memory-title">
+        <h2 id="memory-title">Places remembered</h2>
         <svg
           id="survey"
           viewBox="0 0 145 145"
@@ -45,9 +45,10 @@
         ></svg>
         <p id="remembered"></p>
         <p id="companion"></p>
+        <p id="house-note"></p>
       </aside>
-      <aside id="help" hidden>
-        <h2>Follow your own current</h2>
+      <aside id="help" hidden tabindex="-1" aria-labelledby="help-title">
+        <h2 id="help-title">Follow your own current</h2>
         <p>
           Dive to the centre of the Lab basin to enter the Deep Record. Water
           Jet can open the old groove beside the western doorway, or suppress
@@ -89,8 +90,13 @@
           Jet can clear it.
         </p>
       </aside>
-      <aside id="settings" hidden>
-        <h2>Make yourself at home</h2>
+      <aside
+        id="settings"
+        hidden
+        tabindex="-1"
+        aria-labelledby="settings-title"
+      >
+        <h2 id="settings-title">Make yourself at home</h2>
         <label
           >Look sensitivity
           <input
@@ -102,11 +108,18 @@
         ><label
           ><input id="invert" type="checkbox" /> Invert vertical look</label
         ><label
-          ><input id="motion" type="checkbox" /> Reduce camera motion</label
+          >Camera motion
+          <select id="motion">
+            <option value="auto">Follow the system</option>
+            <option value="reduce">Reduce camera motion</option>
+            <option value="full">Full motion</option>
+          </select></label
         ><label><input id="mute" type="checkbox" /> Mute sound</label
         ><label
           >Volume
           <input id="volume" type="range" min="0" max="1" step=".05" /></label
+        ><label
+          ><input id="adaptive" type="checkbox" /> Adaptive resolution</label
         ><label
           >Render detail
           <select id="quality">
@@ -114,7 +127,12 @@
             <option value="medium">Medium</option>
             <option value="low">Low</option>
           </select></label
-        ><button id="save">Remember this place</button
+        >
+        <p class="small">
+          Adaptive resolution only changes rendered pixels when frames run long;
+          the world, your body and the simulation keep their exact rules.
+        </p>
+        <button id="save">Remember this place</button
         ><button id="reset">Return to the bank</button>
         <hr />
         <h2>World recovery</h2>

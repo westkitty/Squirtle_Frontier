@@ -198,52 +198,56 @@ export class HabitatView {
     this.predatorLegs = this.pool(this.box, this.predatorMat, 12, this.wetland);
     this.caretaker = new THREE.Group();
     this.settlement.add(this.caretaker);
+    // Deliberately compact: at creature scale a ~1.2 m figure should read as one mass.
+    this.careTunic = this.own(
+      new THREE.MeshStandardMaterial({ color: 0xd9c9a3, roughness: 1 }),
+    );
     this.mesh(
       this.cylinder,
-      this.wood,
+      this.careTunic,
       0,
-      0.85,
+      0.55,
       0,
-      0.19,
-      0.85,
-      0.19,
+      0.2,
+      0.7,
+      0.16,
       this.caretaker,
     );
     this.mesh(
       this.sphere,
-      this.stone,
+      this.careTunic,
       0,
-      1.48,
+      1.03,
       0,
+      0.15,
       0.17,
-      0.2,
-      0.17,
+      0.15,
       this.caretaker,
     );
-    for (const x of [-0.1, 0.1])
+    for (const x of [-0.09, 0.09])
       this.mesh(
         this.box,
         this.wood,
         x,
-        0.28,
+        0.18,
         0,
+        0.1,
+        0.4,
         0.12,
-        0.55,
-        0.14,
         this.caretaker,
       );
     this.arm = this.mesh(
       this.box,
-      this.wood,
-      0.28,
-      0.95,
+      this.careTunic,
+      0.22,
+      0.68,
       0,
-      0.12,
-      0.65,
-      0.12,
+      0.09,
+      0.42,
+      0.09,
       this.caretaker,
     );
-    this.caretaker.position.set(a.x + 2.4, h, a.z + 2);
+    this.caretaker.position.set(a.x + 2.4, h, a.z + 2.4);
     this.door = this.mesh(
       this.box,
       this.wood,
@@ -260,7 +264,7 @@ export class HabitatView {
       this.stone,
       a.x + 2.4,
       h + 0.09,
-      a.z + 2,
+      a.z + 3.1,
       0.38,
       0.18,
       0.38,
@@ -271,7 +275,7 @@ export class HabitatView {
       this.waterMat,
       a.x + 2.4,
       h + 0.19,
-      a.z + 2,
+      a.z + 3.1,
       0.32,
       0.02,
       0.32,
@@ -393,8 +397,8 @@ export class HabitatView {
           mode === "withdraw"
             ? { x: SETTLEMENT.x, z: SETTLEMENT.z + 1.8 }
             : mode === "check-water"
-              ? { x: SETTLEMENT.x + 2.4, z: SETTLEMENT.z + 1.2 }
-              : { x: SETTLEMENT.x + 2.8, z: SETTLEMENT.z + 2.4 };
+              ? { x: SETTLEMENT.x + 2.4, z: SETTLEMENT.z + 3.4 }
+              : { x: SETTLEMENT.x + 2.9, z: SETTLEMENT.z + 2.6 };
         const a = 1 - Math.exp(-dt * 1.5);
         this.caretaker.position.x += (target.x - this.caretaker.position.x) * a;
         this.caretaker.position.z += (target.z - this.caretaker.position.z) * a;
@@ -404,7 +408,7 @@ export class HabitatView {
           body.z - this.caretaker.position.z,
         );
         this.arm.rotation.z =
-          mode === "welcome" ? -0.9 : mode === "withdraw" ? 0.5 : 0;
+          mode === "welcome" ? -1.1 : mode === "withdraw" ? 0.4 : -0.15;
         this.door.visible = mode === "withdraw";
         this.bowl.visible = settlement.familiarity >= 0.25;
         this.bowlWater.visible = this.bowl.visible && settlement.bowl > 0.02;
@@ -510,6 +514,8 @@ export class HabitatView {
     }
     this.reeds.instanceMatrix.needsUpdate = true;
     this.animals.instanceMatrix.needsUpdate = true;
+    // Zero-length instance batches still cost a draw call unless hidden outright.
+    for (const mesh of this.instances) mesh.visible = mesh.count > 0;
   }
   dispose() {
     for (const m of this.instances) m.dispose();

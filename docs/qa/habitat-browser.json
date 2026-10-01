@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 11,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 13,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 13,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 17,
+        "geometries": 15,
         "textures": 6
       },
       "assets": {
@@ -174,7 +174,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 108,
+      "frame": 113,
       "calls": 13,
       "triangles": 11312,
       "points": 0,

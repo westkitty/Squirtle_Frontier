@@ -15,7 +15,9 @@ export class Input {
       "keydown",
       (e) => {
         if (e.repeat) return;
-        if (e.target.closest("input,select,button,textarea")) return;
+        // Synthetic or window-targeted events have no closest(); a real UI
+        // control keeps keyboard input to itself.
+        if (e.target?.closest?.("input,select,button,textarea")) return;
         if (
           ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
             e.code,
@@ -42,7 +44,13 @@ export class Input {
         (e) => {
           e.preventDefault();
           if (type === "look") canvas.focus({ preventScroll: true });
-          element.setPointerCapture(e.pointerId);
+          // A pointer can already be gone (or be synthetic); tracking must not
+          // depend on capture succeeding.
+          try {
+            element.setPointerCapture(e.pointerId);
+          } catch {
+            /* capture is an optimisation, not a precondition */
+          }
           this.pointers.set(e.pointerId, {
             type,
             x: e.clientX,

@@ -109,6 +109,13 @@ h2 {
 aside p {
   color: #d0d7c4;
 }
+aside::-webkit-scrollbar {
+  width: 10px;
+}
+aside::-webkit-scrollbar-thumb {
+  background: #47706599;
+  border-radius: 6px;
+}
 .small {
   font-size: 11px;
   opacity: 0.65;
@@ -388,6 +395,9 @@ kbd {
 
 #survey {
   width: 100%;
+  /* A square map must not push the panel's paragraphs past its scroll area. */
+  max-width: 190px;
+  aspect-ratio: 1;
   background: #142c29;
   border: 1px solid var(--line);
 }
@@ -407,4 +417,9 @@ kbd {
 }
 canvas:focus:not(:focus-visible) {
   outline: none;
+}
+/* The world is keyboard reachable, so it needs the same clear ring as the UI. */
+canvas:focus-visible {
+  outline: 3px solid #ecd19c;
+  outline-offset: -6px;
 }

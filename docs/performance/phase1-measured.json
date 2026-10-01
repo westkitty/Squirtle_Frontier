@@ -1,48 +1,82 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-09-30T22:25:38.616Z",
+  "date": "2026-10-01T02:07:07.323Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 116.60000000000036,
-      "p95Ms": 200,
+      "medianMs": 100,
+      "p95Ms": 266.5999999999999,
       "memory": {
         "geometries": 22,
         "textures": 6
       },
       "render": {
         "frame": 142,
-        "calls": 40,
-        "triangles": 31248,
+        "calls": 39,
+        "triangles": 31236,
         "points": 0,
         "lines": 0
       },
-      "heap": 18200000,
+      "heap": 19300000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "quality": "low",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 66.69999999999709,
-      "p95Ms": 133.39999999999782,
+      "medianMs": 50.099999999998545,
+      "p95Ms": 116.60000000000218,
       "memory": {
         "geometries": 22,
         "textures": 6
       },
       "render": {
-        "frame": 272,
-        "calls": 40,
-        "triangles": 31248,
+        "frame": 270,
+        "calls": 39,
+        "triangles": 31236,
         "points": 0,
         "lines": 0
       },
-      "heap": 18200000,
+      "heap": 19300000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     }
   ],
+  "adaptiveAb": {
+    "pinnedFullDetail": {
+      "samples": 140,
+      "medianMs": 116.60000000000218,
+      "p95Ms": 216.70000000000073,
+      "adaptiveValue": 1,
+      "adaptiveChangesCumulative": 2,
+      "pixelRatio": 1,
+      "buffer": "960x640",
+      "css": "960x640",
+      "triangles": 31236,
+      "geometryBytes": 22
+    },
+    "adaptiveEnabled": {
+      "samples": 100,
+      "medianMs": 100,
+      "p95Ms": 216.6999999999971,
+      "adaptiveValue": 0.85,
+      "adaptiveChangesCumulative": 3,
+      "pixelRatio": 0.85,
+      "buffer": "816x544",
+      "css": "960x640",
+      "triangles": 31236,
+      "geometryBytes": 22
+    },
+    "findings": {
+      "bufferShrank": true,
+      "layoutUnchanged": true,
+      "scaleReduced": true,
+      "medianDeltaMs": -16.6,
+      "p95DeltaMs": 0,
+      "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
+    }
+  },
   "teardown": {
     "memory": {
       "geometries": 0,

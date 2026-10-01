@@ -1,0 +1,168 @@
+{
+  "errors": [],
+  "violations": [],
+  "desktop": {
+    "violations": [],
+    "lowestContrast": 11.22
+  },
+  "focusWalk": [
+    {
+      "id": "memory-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "help-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "settings-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "CANVAS",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "memory-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "help-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "settings-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "CANVAS",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "memory-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    },
+    {
+      "id": "help-toggle",
+      "inPage": true,
+      "visible": true,
+      "width": "3px",
+      "style": "solid",
+      "color": "rgb(236, 209, 156)"
+    }
+  ],
+  "open-memory": {
+    "focusTag": "ASIDE",
+    "focusId": "memory",
+    "inPanel": true,
+    "announced": "Places remembered open. Press Escape to return to the world."
+  },
+  "open-help": {
+    "focusTag": "ASIDE",
+    "focusId": "help",
+    "inPanel": true,
+    "announced": "Follow your own current open. Press Escape to return to the world."
+  },
+  "open-settings": {
+    "focusTag": "ASIDE",
+    "focusId": "settings",
+    "inPanel": true,
+    "announced": "Make yourself at home open. Press Escape to return to the world."
+  },
+  "reducedMotion": {
+    "bodyClass": true,
+    "stored": null
+  },
+  "reducedMotionOff": {
+    "bodyClass": false,
+    "stored": false,
+    "announced": "Full camera motion."
+  },
+  "reducedMotionAuto": {
+    "bodyClass": true,
+    "stored": null
+  },
+  "systemDefaultMotion": false,
+  "forcedReduceOverSystem": {
+    "bodyClass": true,
+    "stored": true
+  },
+  "adaptiveOn": {
+    "checked": true,
+    "enabled": true,
+    "pixelRatio": 0.85,
+    "width": 816
+  },
+  "adaptiveOff": {
+    "stored": false,
+    "enabled": false,
+    "value": 1,
+    "pixelRatio": 1,
+    "cssWidth": 960,
+    "width": 960
+  },
+  "touch": {
+    "violations": [],
+    "lowestContrast": 5.15
+  },
+  "layout": {
+    "navBelowTitle": true,
+    "stickClearsFooter": true,
+    "stickSize": [
+      104,
+      104
+    ]
+  },
+  "touchKeyboardMoveMeters": 0.538,
+  "stickDrag": {
+    "stick": {
+      "x": 0,
+      "z": 0.7142857142857143
+    },
+    "pointers": 1
+  },
+  "stickRelease": {
+    "stick": {
+      "x": 0,
+      "z": 0
+    },
+    "drifted": 0
+  },
+  "stickMovedMeters": 0.852
+}

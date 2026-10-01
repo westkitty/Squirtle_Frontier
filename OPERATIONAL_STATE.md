@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 13
+revision: 14
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -125,7 +125,7 @@ Production expansion is blocked until the slice demonstrates:
 - Player-only surveyed cells/landmarks, bounded 90-sample regional history, and one Lab frog identity/familiarity/fear persist. Offline time does not discover map cells or create encounters. Visitor mesh reacts simply to familiarity/fear; full AI and named settlement behavior remain pending.
 - Deep Record reached from the submerged Lab centre (R), then Q/E to descend/ascend through eight seeded aggregate historical strata; exit near surface. Lab/Record/frontier are mutually rendered, exterior chunks unload, shared Squirtle stays cached. Record reload resumes at surface; full body-pose persistence remains pending.
 - Version 5 save migrates versions 1–4; includes graph, regional fields, memory, location and wall clock. Six-hour offline cap, rollback handling, ordinary stale-tab conflict detection. Settings provide stored-save export, validated confirmed import and explicit backup recovery; replacements preserve prior bytes in one quarantine slot. Atomic multi-tab transactions remain pending.
-- 52 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
+- 58 automated source/behavior tests pass. Production build passes with large bundle warning (~627 kB). Movement, repair, habitat, new world and recovery browser journeys executed. World journey: keyboard bypass, fire suppression, map, dive/ascent, 12 Record/Lab cycles and zero-resource teardown. Setup teleports/seeded conditions are explicit test fixtures, not claims of entirely walked playthroughs.
 - Frontier geometry bound <=23; ordinary run 22 geometries / six textures / 35 calls. Software median ~133 ms high / ~83 ms low, p95 ~317 / ~167 ms at 960x640: FPS target NOT met here; hardware/mobile performance unknown.
 - Opened Deep Record, fire, map, marked-visitor and touch-settings screenshots. Found and repaired mobile nav/title overlap. Caption/controls visible, world remains crude geometry; marked visitor was partly occluded by avatar in captured pose, not a complete visual acceptance.
 - Keyboard-focus regression exposed by Memory panel repaired: canvas is focusable and receives focus on pointer interaction. Escape dismisses panels, opening one closes others, repeated keydown does not retrigger rest, touch clear releases captures/resets stick.
@@ -188,3 +188,11 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Current ordinary-bank SwiftShader sample median ~117 ms high / ~67 ms low, p95 200 / ~133 ms; 22 geometries, six textures, 40 calls. Targets still not met; hardware unknown.
 - Opened wildlife and settlement screenshots: animals have recognizable multipart silhouettes, but are still primitive and lack full locomotion/contact animation. Settlement screenshot is obstructed by rock/tree scenery; not a final readable presentation pass.
 - Known remaining limitations: no local capture/death model, no multi-step route planning, no human dialogue/complex settlement economy, and full production visual/accessibility/performance acceptance still outstanding. Full project NOT complete.
+
+## Accessibility, adaptive resolution and built-bundle checkpoint
+
+- Adaptive resolution added (renderer-only, 60-frame windows, 0.55–1.0 scale, cooldown, persisted opt-out); zero-count instance batches are hidden, cutting calls 40 to 39 at unchanged geometry ownership. Software A/B: median 116.6 to 100.0 ms with an 816x544 buffer and identical CSS layout; p95 unchanged in that sample. Not a hardware or mobile result; 60/30 fps still not demonstrated anywhere.
+- Motion preference fixed to tri-state and applied live (it previously only took effect on reload). Preference clamping no longer resets deliberate extremes. Canvas is focusable with a 3px ring; panels announce, focus on open, refresh immediately, and Escape restores the world with correct `aria-expanded`. Survey SVG capped so panel text stays visible. Input tolerates non-element event targets and failed pointer capture.
+- New `browser:a11y` (names, composited contrast 11.22 desktop / 5.15 touch lowest, 10-stop Tab walk, per-panel keyboard open/announce/close, reduced motion from OS and in game, adaptive toggle, touch targets, real CDP finger-drag stick with clean release, keyboard-only movement) and `browser:dist` (static `dist` build boots, moves, saves, reloads, one cached asset, zero teardown resources, no dev module graph). Evidence: `docs/qa/ACCESSIBILITY_PERFORMANCE.md`, `docs/qa/accessibility-browser.json`, `docs/qa/dist-browser.json`.
+- Screenshot inspection led to two repairs: the panel text was clipped by a full-width SVG map, and the settlement caretaker read as detached limbs. Both re-inspected and improved; art remains provisional.
+- Still open for “finished”: production wildlife/settlement depth, broader traversal and route topology, richer Lab play, authored terrain art, real screen-reader and device validation, hardware frame-rate evidence, asset/legal review for distribution, atomic multi-tab storage, and full human QA. Full project NOT complete; waived gates are not evidence of quality.

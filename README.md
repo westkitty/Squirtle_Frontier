@@ -27,7 +27,7 @@ Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 | Current Sense | Hold F in water | Hold Sense |
 | Enter / leave Lab | R near doorway | Contextual doorway button |
 
-Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 5 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings now include export, confirmed import and explicit backup restoration. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Atomic multi-tab locking remains pending.
+Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Version 5 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings add adaptive resolution (pixel budget only, never simulation), tri-state camera motion, and export, confirmed import and explicit backup restoration. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Atomic multi-tab locking remains pending.
 
 ## Validate
 
@@ -43,6 +43,8 @@ BROWSER_BUNDLED=1 npm run browser:world
 BROWSER_BUNDLED=1 npm run browser:recovery
 BROWSER_BUNDLED=1 npm run browser:channel
 BROWSER_BUNDLED=1 npm run browser:wildlife
+BROWSER_BUNDLED=1 npm run browser:a11y
+BROWSER_BUNDLED=1 npm run browser:dist
 ```
 
 Browser commands require the running dev server. `BROWSER_BUNDLED=1` uses the pinned npm-distributed Chromium fallback; alternatively use Playwright's installed browser or `BROWSER_EXECUTABLE=/path/to/chrome`. Tool binaries unpack only into temporary storage. Software-renderer timing does not establish mobile or desktop GPU performance.

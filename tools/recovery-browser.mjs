@@ -14,13 +14,11 @@ try {
     "squirtle-frontier-save.json",
   );
   page.on("dialog", (d) => d.accept());
-  await page
-    .locator("#import-save")
-    .setInputFiles({
-      name: "bad.json",
-      mimeType: "application/json",
-      buffer: Buffer.from("{broken"),
-    });
+  await page.locator("#import-save").setInputFiles({
+    name: "bad.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("{broken"),
+  });
   await page.waitForFunction(() =>
     document.querySelector("#status").textContent.includes("JSON"),
   );
@@ -29,13 +27,11 @@ try {
   );
   const replacement = JSON.parse(before);
   replacement.player = { x: -9, z: 18 };
-  await page
-    .locator("#import-save")
-    .setInputFiles({
-      name: "world.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(replacement)),
-    });
+  await page.locator("#import-save").setInputFiles({
+    name: "world.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(replacement)),
+  });
   await page.waitForFunction(() => window.__SF?.body.x === -9);
   assert.equal(
     await page.evaluate(() =>

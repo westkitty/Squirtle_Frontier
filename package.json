@@ -17,7 +17,9 @@
     "browser:world": "node tools/world-browser.mjs",
     "browser:recovery": "node tools/recovery-browser.mjs",
     "browser:channel": "node tools/channel-browser.mjs",
-    "browser:wildlife": "node tools/wildlife-browser.mjs"
+    "browser:wildlife": "node tools/wildlife-browser.mjs",
+    "browser:a11y": "node tools/accessibility-browser.mjs",
+    "browser:dist": "node tools/dist-browser.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

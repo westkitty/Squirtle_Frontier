@@ -67,6 +67,9 @@ export class WorldEffects {
       this.fire.setMatrixAt(count++, this.dummy.matrix);
     }
     this.fire.count = count;
+    this.fire.visible = count > 0;
+    this.rain.visible = this.rain.count > 0;
+    this.channel.visible = state.frontier.stage > 0;
     this.fire.instanceMatrix.needsUpdate = true;
     this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
     if (this.channelStage !== state.frontier.stage) {

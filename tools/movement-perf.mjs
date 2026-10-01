@@ -44,6 +44,66 @@ try {
     });
     evidence.scenarios.push({ quality, viewport: "960x640", ...measured });
   }
+  // Controlled A/B of the renderer-only adaptation in this same environment.
+  const measure = async (label, { enableAdaptive }) => {
+    await page.click("#settings-toggle");
+    await page.selectOption("#quality", "high");
+    if ((await page.isChecked("#adaptive")) !== enableAdaptive)
+      await page.click("#adaptive");
+    await page.click("#settings-toggle");
+    await page.evaluate(() => {
+      window.__SF.loop.frames.length = 0;
+    });
+    await page.waitForFunction(
+      () => {
+        const g = window.__SF;
+        return (
+          g.loop.frames.length >= 150 ||
+          (g.adaptive.value < 1 && g.loop.frames.length >= 110)
+        );
+      },
+      null,
+      { timeout: 120000 },
+    );
+    const r = await page.evaluate(() => {
+      const g = window.__SF,
+        f = g
+          .stats()
+          .frames.slice(10)
+          .sort((a, b) => a - b),
+        canvas = g.renderer.domElement;
+      return {
+        samples: f.length,
+        medianMs: f[Math.floor(f.length * 0.5)],
+        p95Ms: f[Math.floor(f.length * 0.95)],
+        adaptiveValue: g.adaptive.value,
+        adaptiveChangesCumulative: g.adaptive.changes,
+        pixelRatio: g.renderer.getPixelRatio(),
+        buffer: `${canvas.width}x${canvas.height}`,
+        css: `${canvas.clientWidth}x${canvas.clientHeight}`,
+        triangles: g.stats().render.triangles,
+        geometryBytes: g.stats().memory.geometries,
+      };
+    });
+    evidence.adaptiveAb ??= {};
+    evidence.adaptiveAb[label] = r;
+    return r;
+  };
+  const pinned = await measure("pinnedFullDetail", { enableAdaptive: false });
+  const adapted = await measure("adaptiveEnabled", { enableAdaptive: true });
+  evidence.adaptiveAb.findings = {
+    bufferShrank:
+      Number(adapted.buffer.split("x")[0]) <
+      Number(pinned.buffer.split("x")[0]),
+    layoutUnchanged: adapted.css === pinned.css,
+    scaleReduced: adapted.adaptiveValue < pinned.adaptiveValue,
+    medianDeltaMs: +(adapted.medianMs - pinned.medianMs).toFixed(1),
+    p95DeltaMs: +(adapted.p95Ms - pinned.p95Ms).toFixed(1),
+    note: "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured.",
+  };
+  assert.equal(evidence.adaptiveAb.findings.bufferShrank, true);
+  assert.equal(evidence.adaptiveAb.findings.layoutUnchanged, true);
+  assert.equal(evidence.adaptiveAb.findings.scaleReduced, true);
   await page.evaluate(async () => {
     await window.__SF.dispose();
   });

@@ -64,7 +64,8 @@
     "stalk",
     "stalk"
   ],
-  "savedFamiliarity": 0.41000000000000003,
+  "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
+  "savedFamiliarity": 0.41500000000000004,
   "teardown": {
     "geometries": 0,
     "textures": 0

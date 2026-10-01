@@ -1,3 +1,4 @@
+import { AdaptiveScale } from "./adaptive-quality.js";
 import { NearWildlife } from "./simulation/near-wildlife.js";
 import { settlementObstacles } from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
@@ -175,6 +176,7 @@ async function boot() {
       { ...options, once: true },
     );
     if (import.meta.hot) import.meta.hot.dispose(cleanup);
+    const adaptive = new AdaptiveScale({ enabled: Settings.get("adaptive") });
     const resize = () => {
       renderer.setPixelRatio(
         pixelRatioFor(
@@ -182,7 +184,7 @@ async function boot() {
           innerWidth,
           innerHeight,
           devicePixelRatio,
-        ),
+        ) * adaptive.value,
       );
       renderer.setSize(innerWidth, innerHeight);
       camera.aspect = innerWidth / innerHeight;
@@ -194,6 +196,43 @@ async function boot() {
       "touch",
       matchMedia("(pointer: coarse)").matches,
     );
+    // The survey panel is only refreshed while visible; opening it must show the
+    // current world state on the first frame, not after the HUD cadence catches up.
+    const refreshMemoryPanel = () => {
+      document.querySelector("#remembered").textContent =
+        state.memory.places
+          .map((id) => LANDMARKS.find((l) => l.id === id).name)
+          .join(" · ") || "Explore to remember places.";
+      const n = state.memory.notable;
+      const house = state.settlement,
+        responses = {
+          withdraw:
+            "The water house keeps its door shut while jets and hard landings stay close.",
+          "check-water":
+            "The caretaker watches the empty trough, waiting for water.",
+          watch: "The caretaker watches you from the doorway.",
+          welcome:
+            "The caretaker leaves a filled bowl by the door and lifts a hand.",
+        };
+      document.querySelector("#house-note").textContent = house.visits
+        ? `${responses[house.response]} (${house.visits} visit${house.visits > 1 ? "s" : ""}).`
+        : "The water house by the trough has not taken note of you yet.";
+      document.querySelector("#companion").textContent = n
+        ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
+        : "No familiar visitor yet. Life needs water and time.";
+      document.querySelector("#survey").replaceChildren(
+        ...Object.keys(state.memory.cells).map((key) => {
+          const [x, z] = key.split(",").map(Number),
+            r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          r.setAttribute("x", String((x + 14) * 5));
+          r.setAttribute("y", String((z + 14) * 5));
+          r.setAttribute("width", "5");
+          r.setAttribute("height", "5");
+          r.setAttribute("fill", "#96bbaa");
+          return r;
+        }),
+      );
+    };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
     document.addEventListener("keydown", () => audio.unlock(), options);
     for (const name of ["help", "settings", "memory"])
@@ -202,6 +241,9 @@ async function boot() {
         () => {
           const panel = document.querySelector(`#${name}`);
           panel.hidden = !panel.hidden;
+          status.textContent = panel.hidden
+            ? `${panel.querySelector("h2").textContent} closed.`
+            : `${panel.querySelector("h2").textContent} open. Press Escape to return to the world.`;
           for (const other of ["help", "settings", "memory"]) {
             if (other === name) continue;
             document.querySelector(`#${other}`).hidden = true;
@@ -212,6 +254,13 @@ async function boot() {
           document
             .querySelector(`#${name}-toggle`)
             .setAttribute("aria-expanded", String(!panel.hidden));
+          // Focusing the opened panel announces its heading even when it holds
+          // no controls; closing hands the world back to the canvas.
+          if (!panel.hidden) {
+            panel.focus({ preventScroll: true });
+            if (name === "memory") refreshMemoryPanel();
+          } else if (panel.contains(document.activeElement))
+            renderer.domElement.focus({ preventScroll: true });
           input.clear();
         },
         options,
@@ -220,12 +269,18 @@ async function boot() {
       "keydown",
       (e) => {
         if (e.code !== "Escape") return;
+        let closed = null;
         for (const name of ["help", "settings", "memory"]) {
-          document.querySelector(`#${name}`).hidden = true;
+          const panel = document.querySelector(`#${name}`);
+          if (!panel.hidden) {
+            panel.hidden = true;
+            closed = panel.querySelector("h2").textContent;
+          }
           document
             .querySelector(`#${name}-toggle`)
             .setAttribute("aria-expanded", "false");
         }
+        if (closed) status.textContent = `${closed} closed.`;
         input.clear();
         renderer.domElement.focus();
       },
@@ -234,15 +289,13 @@ async function boot() {
     for (const [id, key, type] of [
       ["sensitivity", "sensitivity", "number"],
       ["invert", "invertY", "boolean"],
-      ["motion", "reducedMotion", "boolean"],
       ["mute", "muted", "boolean"],
       ["volume", "volume", "number"],
       ["quality", "quality", "string"],
+      ["adaptive", "adaptive", "boolean"],
     ]) {
       const element = document.querySelector(`#${id}`);
-      if (type === "boolean")
-        element.checked =
-          key === "reducedMotion" ? Settings.motionReduced : Settings.get(key);
+      if (type === "boolean") element.checked = Settings.get(key);
       else element.value = Settings.get(key);
       element.addEventListener(
         "input",
@@ -255,11 +308,47 @@ async function boot() {
                 ? Number(element.value)
                 : element.value,
           );
-          if (key === "quality") resize();
+          Settings.applyDocument();
+          if (key === "adaptive") {
+            adaptive.setEnabled(element.checked);
+            status.textContent = element.checked
+              ? "Adaptive resolution on."
+              : "Adaptive resolution off; full detail restored.";
+          }
+          if (key === "quality" || key === "adaptive") resize();
         },
         options,
       );
     }
+    // Motion preference is tri-state: follow the system, force reduce, force full.
+    const motion = document.querySelector("#motion");
+    motion.value =
+      Settings.get("reducedMotion") === null
+        ? "auto"
+        : Settings.get("reducedMotion")
+          ? "reduce"
+          : "full";
+    const applyMotion = () => {
+      Settings.set(
+        "reducedMotion",
+        motion.value === "auto" ? null : motion.value === "reduce",
+      );
+      Settings.applyDocument();
+      status.textContent =
+        motion.value === "auto"
+          ? `Camera motion follows the system (${Settings.motionReduced ? "reduced" : "full"}).`
+          : motion.value === "reduce"
+            ? "Camera motion reduced."
+            : "Full camera motion.";
+    };
+    motion.addEventListener("change", applyMotion, options);
+    matchMedia("(prefers-reduced-motion: reduce)").addEventListener(
+      "change",
+      () => {
+        if (Settings.get("reducedMotion") === null) Settings.applyDocument();
+      },
+      options,
+    );
     document.querySelector("#save").addEventListener(
       "click",
       () => {
@@ -437,37 +526,22 @@ async function boot() {
         sun.intensity = 2.4 - state.frontier.weather.rain * 0.9;
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
+        const previousFrame = loop.frames.at(-1);
+        if (
+          previousFrame !== undefined &&
+          adaptive.add(previousFrame) !== null
+        ) {
+          resize();
+          status.textContent = `Render scale ${Math.round(adaptive.value * 100)}%.`;
+        }
         hudTime++;
         if (hudTime % 3 === 0) {
           document.querySelector("#weather").textContent =
             state.place === "frontier"
               ? state.frontier.weather.type
               : "Sheltered";
-          if (!document.querySelector("#memory").hidden) {
-            document.querySelector("#remembered").textContent =
-              state.memory.places
-                .map((id) => LANDMARKS.find((l) => l.id === id).name)
-                .join(" · ") || "Explore to remember places.";
-            const n = state.memory.notable;
-            document.querySelector("#companion").textContent = n
-              ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
-              : "No familiar visitor yet. Life needs water and time.";
-            document.querySelector("#survey").replaceChildren(
-              ...Object.keys(state.memory.cells).map((key) => {
-                const [x, z] = key.split(",").map(Number),
-                  r = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "rect",
-                  );
-                r.setAttribute("x", String((x + 14) * 5));
-                r.setAttribute("y", String((z + 14) * 5));
-                r.setAttribute("width", "5");
-                r.setAttribute("height", "5");
-                r.setAttribute("fill", "#96bbaa");
-                return r;
-              }),
-            );
-          }
+          if (!document.querySelector("#memory").hidden) refreshMemoryPanel();
+
           document.querySelector("#mode").textContent = {
             land:
               Math.hypot(body.vx, body.vz) > 0.2
@@ -516,6 +590,7 @@ async function boot() {
       rig,
       input,
       region,
+      adaptive,
       enterPlace,
       habitat,
       wildlife,
