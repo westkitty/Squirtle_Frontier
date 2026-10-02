@@ -124,11 +124,26 @@ export class Input {
       ascend: this.keys.has("KeyE") || this.actions.ascend,
     };
   }
+  // Look is an accumulator of *unapplied* device movement, not a render-frame
+  // event. The simulation takes a share of it at each fixed step, so one drag
+  // is applied exactly once no matter how many steps or frames the frame ran.
+  pendingLook() {
+    return { x: this.lookX, y: this.lookY };
+  }
+  // `remaining` is how many fixed steps are still to run this frame, including
+  // this one, which makes the shares sum to the pending amount exactly.
+  takeLook(remaining = 1) {
+    const steps = Math.max(1, Math.floor(remaining) || 1),
+      share = { x: this.lookX / steps, y: this.lookY / steps };
+    this.lookX -= share.x;
+    this.lookY -= share.y;
+    if (Math.abs(this.lookX) < 1e-9) this.lookX = 0;
+    if (Math.abs(this.lookY) < 1e-9) this.lookY = 0;
+    return share;
+  }
   consumeLook() {
-    const look = { lookX: this.lookX, lookY: this.lookY };
-    this.lookX = 0;
-    this.lookY = 0;
-    return look;
+    const look = this.takeLook(1);
+    return { lookX: look.x, lookY: look.y };
   }
   clear() {
     this.keys.clear();

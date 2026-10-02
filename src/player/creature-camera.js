@@ -1,5 +1,8 @@
 import * as THREE from "three";
 const CLEARANCE = 0.12; // Greater than the .04 near-plane half-diagonal at supported aspects.
+// Vertical look range, in radians of pitch. Kept narrow enough that the boom
+// never clips the ground plane behind the body.
+export const PITCH_LIMITS = Object.freeze({ min: -0.35, max: 0.85 });
 const EPSILON = 1e-6;
 
 // Earliest intersection of a boom with an inflated, finite-height cylinder.
@@ -86,18 +89,28 @@ export class CreatureCamera {
     to.lerpVectors(from, to, fraction);
     to.y = Math.max(to.y, this.env.sample(to.x, to.z).height + CLEARANCE);
   }
-  update(body, input, dt, settings) {
-    this.yaw -= input.lookX * 0.004 * settings.sensitivity;
-    this.pitch = THREE.MathUtils.clamp(
-      this.pitch +
-        input.lookY *
-          0.003 *
-          settings.sensitivity *
-          (settings.invertY ? -1 : 1),
-      -0.35,
-      0.85,
-    );
-
+  // Orientation authority. Called by the simulation at the point where movement
+  // direction is derived, so a look delta affects heading before it affects
+  // anything that reads it - never a step later because the renderer was busy.
+  // This is the ONLY writer of yaw/pitch that movement consumes.
+  applyLook(look, settings) {
+    const sensitivity = Number.isFinite(settings.sensitivity)
+      ? settings.sensitivity
+      : 1;
+    if (look.x) this.yaw -= look.x * 0.004 * sensitivity;
+    if (look.y)
+      this.pitch = THREE.MathUtils.clamp(
+        this.pitch + look.y * 0.003 * sensitivity * (settings.invertY ? -1 : 1),
+        PITCH_LIMITS.min,
+        PITCH_LIMITS.max,
+      );
+    this.lookedAt = (this.lookedAt || 0) + 1;
+  }
+  // Movement authority in world space: camera-relative intent for the body.
+  heading() {
+    return this.yaw;
+  }
+  update(body, dt, settings) {
     const speed = Math.hypot(body.vx, body.vz);
     const inSlide = body.mode === "slide";
     const inDive = body.mode === "dive" || body.y < -0.45;

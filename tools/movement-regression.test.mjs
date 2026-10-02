@@ -90,12 +90,8 @@ test("camera final position stays clear while orbiting and after teleport across
     rig.camera.position.set(0, 0.8, 1);
     rig.initial = false; // invalid inherited position
     for (let i = 0; i < hz * 3; i++) {
-      rig.update(
-        body,
-        { lookX: i === 0 ? 0 : 2, lookY: 0 },
-        i === hz ? 0.25 : 1 / hz,
-        settings,
-      );
+      if (i > 0) rig.applyLook({ x: 2, y: 0 }, settings);
+      rig.update(body, i === hz ? 0.25 : 1 / hz, settings);
       const p = rig.camera.position;
       assert.ok(Math.hypot(p.x, p.z - 1) >= 0.469, "camera inside pillar");
       assert.ok(p.y >= 0.12);
@@ -106,7 +102,7 @@ test("camera final position stays clear while orbiting and after teleport across
     }
     rig.yaw = 0;
     for (let i = 0; i < hz; i++)
-      rig.update(body, { lookX: 0, lookY: 0 }, 1 / hz, settings);
+      rig.update(body, 1 / hz, settings);
     assert.ok(
       rig.camera.position.distanceTo(rig.target) > 2,
       "camera failed to recover",
@@ -120,14 +116,10 @@ test("camera sensitivity covers both axes and reduced motion removes dynamic FOV
     ),
     b = new CreatureCamera(new THREE.PerspectiveCamera(55, 1, 0.04, 100), flat),
     body = createBody(0, 0, -1);
-  a.update(body, { lookX: 10, lookY: 10 }, 1 / 60, {
-    sensitivity: 1,
-    reducedMotion: true,
-  });
-  b.update(body, { lookX: 10, lookY: 10 }, 1 / 60, {
-    sensitivity: 2,
-    reducedMotion: true,
-  });
+  a.applyLook({ x: 10, y: 10 }, { sensitivity: 1 });
+  a.update(body, 1 / 60, { sensitivity: 1, reducedMotion: true });
+  b.applyLook({ x: 10, y: 10 }, { sensitivity: 2 });
+  b.update(body, 1 / 60, { sensitivity: 2, reducedMotion: true });
   assert.ok(Math.abs(b.pitch - 0.26 - 2 * (a.pitch - 0.26)) < 1e-8);
   assert.equal(a.camera.fov, 55);
 });
@@ -158,7 +150,7 @@ test("fast shell slide widens camera FOV and extends boom distance dynamically",
 
   // With reducedMotion: false, slide accelerates FOV and distance
   for (let i = 0; i < 30; i++) {
-    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+    rig.update(body, 1 / 60, {
       sensitivity: 1,
       invertY: false,
       reducedMotion: false,
@@ -176,7 +168,7 @@ test("fast shell slide widens camera FOV and extends boom distance dynamically",
 
   // With reducedMotion: true, FOV stays strictly at 55
   for (let i = 0; i < 30; i++) {
-    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+    rig.update(body, 1 / 60, {
       sensitivity: 1,
       invertY: false,
       reducedMotion: true,
@@ -194,7 +186,7 @@ test("tactile impact micro-recoil triggers on hard landing and decays smoothly",
   const body = createBody(0, 0, 0);
   body.impact = 0.5;
 
-  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+  rig.update(body, 1 / 60, {
     sensitivity: 1,
     invertY: false,
     reducedMotion: false,
@@ -207,7 +199,7 @@ test("tactile impact micro-recoil triggers on hard landing and decays smoothly",
   // Decays over settling frames
   body.impact = 0;
   for (let i = 0; i < 20; i++) {
-    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+    rig.update(body, 1 / 60, {
       sensitivity: 1,
       invertY: false,
       reducedMotion: false,

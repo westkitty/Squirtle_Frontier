@@ -557,7 +557,17 @@ async function boot() {
       // whether the player is reading a sense line without reaching out of scope.
       senseHeld = false;
     const loop = new Loop(
-      (dt) => {
+      (dt, step, count) => {
+        // Look first, then movement direction: steering is resolved at the point
+        // where it takes effect, and a frame that ran several fixed steps hands
+        // each step its share of the drag instead of leaving the later steps on an
+        // obsolete heading. Rendering frequency cannot add steering latency.
+        const look = input.takeLook(count - step);
+        if (look.x || look.y)
+          rig.applyLook(look, {
+            ...Settings.values,
+            reducedMotion: Settings.motionReduced,
+          });
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
         senseHeld = !!controls.sense;
@@ -806,7 +816,7 @@ async function boot() {
         // The authoritative body keeps stepping at 60 Hz; the pose shown is the
         // interpolated one, so a 30 Hz or 120 Hz display neither snaps nor drags.
         renderPose = interpolatedPose(body, loop.alpha);
-        rig.update(renderPose, input.consumeLook(), cameraDt, {
+        rig.update(renderPose, cameraDt, {
           ...Settings.values,
           reducedMotion: Settings.motionReduced,
         });

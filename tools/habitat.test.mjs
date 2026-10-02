@@ -53,7 +53,7 @@ test("Lab wall proxies stop body traversal and preserve a clear camera boom", as
     labRegion,
   );
   rig.yaw = 0;
-  rig.update(b, { lookX: 0, lookY: 0 }, 1 / 60, {
+  rig.update(b, 1 / 60, {
     sensitivity: 1,
     reducedMotion: true,
   });
