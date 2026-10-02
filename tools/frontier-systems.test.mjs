@@ -12,6 +12,7 @@ import { deepHistory } from "../src/simulation/deep-history.js";
 import { Watershed } from "../src/simulation/watershed.js";
 import { advanceOffline, save, load } from "../src/persistence.js";
 import { applyWorldJet } from "../src/simulation/water-interaction.js";
+import { aimFromYaw } from "../src/beam.js";
 test("weather/fire regional clock is exact online/offline across block boundaries", () => {
   for (const n of [179, 180, 181, 601]) {
     const a = new WorldState(),
@@ -178,7 +179,7 @@ test("Water Jet aimed at burnt ground rinses ash and prevents storm contaminatio
   body.jetTime = 0.35;
 
   // 1. Direct aimed Water Jet rinses ash and cools heat
-  applyWorldJet(frontier, body, 0.5);
+  applyWorldJet(frontier, body, 0.5, aimFromYaw(body.yaw, body));
   assert.ok(frontier.heat[0] < 0.6, "water jet must cool fire heat");
   assert.ok(frontier.soaked[0] > 0, "water jet must soak ground");
   assert.ok(frontier.ash[0] < 0.8, "water jet must rinse away ash");
@@ -186,7 +187,7 @@ test("Water Jet aimed at burnt ground rinses ash and prevents storm contaminatio
   // 2. Unaimed water jet (facing opposite direction Math.PI) fails to hit site
   const ashBefore = frontier.ash[0];
   body.yaw = Math.PI; // facing south away from site
-  applyWorldJet(frontier, body, 0.5);
+  applyWorldJet(frontier, body, 0.5, aimFromYaw(Math.PI, body));
   assert.equal(frontier.ash[0], ashBefore, "unaimed jet must not affect ash");
 });
 
@@ -230,4 +231,3 @@ test("6-hour offline fast-forward maintains finite bounded scalars and history l
   assert.ok(s.frontier.history.length <= 90);
   assert.ok(s.frontier.channelErosion <= 120);
 });
-

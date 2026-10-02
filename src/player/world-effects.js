@@ -1,5 +1,8 @@
 import { channelHeight, CHANNEL_DEPTH } from "../simulation/channel-terrain.js";
 import * as THREE from "three";
+import { JET_RULES } from "../beam.js";
+
+const JET_RANGE = JET_RULES.range;
 import { fireSite, traceChannel } from "../simulation/frontier-systems.js";
 import { heightAt } from "../worldgen.js";
 export class WorldEffects {
@@ -152,23 +155,33 @@ export class WorldEffects {
     if (body.jetTime > 0) {
       this.jet.visible = true;
       this.jet.count = 24;
-      const snoutX = body.x + Math.sin(body.yaw) * 0.28,
-        snoutY = body.y + 0.22,
-        snoutZ = body.z + Math.cos(body.yaw) * 0.28,
-        dirX = Math.sin(body.yaw),
-        dirZ = Math.cos(body.yaw);
+      // The stream is drawn along the aim beam - the same vector the mechanics
+      // resolve against - so what the player sees is what the jet hits, including its
+      // vertical angle. `aim` is the shared authority; a body facing is only ever the
+      // fallback when no aim was supplied at all.
+      const aim = options?.aim,
+        dirX = aim ? aim.x : Math.sin(body.yaw),
+        dirY = aim ? aim.y : 0,
+        dirZ = aim ? aim.z : Math.cos(body.yaw),
+        snoutX = body.x + dirX * 0.28,
+        snoutY = body.y + 0.22 + dirY * 0.28,
+        snoutZ = body.z + dirZ * 0.28;
       for (let i = 0; i < 24; i++) {
-        const dist = (i / 23) * 2.8,
+        const dist = (i / 23) * JET_RANGE,
           spread = dist * 0.1,
           turbX = Math.sin(i * 3.7 + state.elapsed * 25) * spread,
           turbZ = Math.cos(i * 2.9 + state.elapsed * 25) * spread,
           turbY = (Math.sin(i * 5.1 + state.elapsed * 30) - 0.2) * spread * 0.5;
         this.dummy.position.set(
           snoutX + dirX * dist + turbX,
-          snoutY + turbY,
+          snoutY + dirY * dist + turbY,
           snoutZ + dirZ * dist + turbZ,
         );
-        this.dummy.rotation.set(0, body.yaw, 0);
+        this.dummy.rotation.set(
+          -Math.asin(Math.max(-1, Math.min(1, dirY))),
+          Math.atan2(dirX, dirZ),
+          0,
+        );
         this.dummy.scale.set(
           0.035 * (1 + dist * 0.35),
           0.12 * (1 + dist * 0.6),

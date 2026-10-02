@@ -36,6 +36,13 @@ import {
 import { AssetManager } from "./assets/asset-manager.js";
 import { SquirtlePresentation } from "./assets/squirtle-presentation.js";
 import { createBody } from "./player/body-state.js";
+import {
+  JET_RULES,
+  aimFromRig,
+  aimHeading,
+  aimTarget,
+} from "./player/aim-authority.js";
+import { jetTargets } from "./simulation/water-interaction.js";
 import { interpolatedPose, resetPose } from "./player/render-pose.js";
 import { stepBody } from "./player/squirtle-controller.js";
 import { resolveAttentionTarget } from "./player/creature-attention.js";
@@ -546,7 +553,11 @@ async function boot() {
     // Standing in a band for a moment is what turns a depth into a record.
     let strataHold = { band: -1, held: 0 },
       strataLoggedAt = -10;
-    let hudTime = 0,
+    // The one Jet aim, rebuilt on every authoritative step and read by mechanics, VFX
+    // and the reticle from the same object, so none of them can disagree about it.
+    let jetAim = null,
+      jetTarget = null,
+      hudTime = 0,
       saveTime = 0,
       lastRender = null,
       // Presentation consumes the interpolated pose, so the pose and the attention
@@ -574,6 +585,11 @@ async function boot() {
         // and the aquatic read: the 3D vector carries the look pitch, and the
         // controller decides whether to obey it based on the state the body is in.
         const intent = rig.intent3(controls.x, controls.z, 1);
+        // One aim, from the same authority, for mechanics, VFX and the reticle. It is
+        // built from the *authoritative* body position: an interpolated presentation
+        // pose must never move a hit test.
+        jetAim = aimFromRig(rig, body);
+        jetTarget = aimTarget(jetAim, jetTargets(state.frontier));
         senseHeld = !!controls.sense;
         const action = placeAction(state.place, body, {
           settlement: state.settlement,
@@ -629,7 +645,17 @@ async function boot() {
             : state.place === "lab"
               ? labRegion
               : liveRegion;
-        stepBody(body, { ...controls, ...world, intent }, env, dt);
+        stepBody(
+          body,
+          {
+            ...controls,
+            ...world,
+            intent,
+            aimYaw: aimHeading(jetAim),
+          },
+          env,
+          dt,
+        );
         if (state.place === "lab") {
           const cx = Math.max(-7.5, Math.min(7.5, body.x)),
             cz = Math.max(-7.5, Math.min(7.5, body.z));
@@ -671,8 +697,8 @@ async function boot() {
           record.update(body, state.memory, strataHold, state.elapsed);
           renderRecordReadout(ledger);
         } else {
-          applyWaterJet(state.watershed, body, dt);
-          applyWorldJet(state.frontier, body, dt);
+          applyWaterJet(state.watershed, body, dt, jetAim);
+          applyWorldJet(state.frontier, body, dt, jetAim);
         }
         // A reading is earned in the shaft or not at all: leaving must not bank progress
         // toward logging a band that was never stood in.
@@ -701,6 +727,7 @@ async function boot() {
         if (state.place === "frontier")
           effects.update(state, body, {
             water: currentWater,
+            aim: jetAim,
             isShaking: creature?.isShaking ?? false,
           });
         if (state.place === "frontier")
@@ -882,7 +909,16 @@ async function boot() {
           }[body.mode];
           document.querySelector("#speed").textContent =
             `${Math.hypot(body.vx, body.vz).toFixed(1)} m/s`;
-          document.querySelector("#jet").value = 1 - body.jetCooldown / 1.1;
+          document.querySelector("#jet").value =
+            1 - body.jetCooldown / JET_RULES.cooldown;
+          // A restrained reticle: it exists only to say "the stream is coming out
+          // here, and something out there answers to it". No crosshair math, no HUD.
+          const reticle = document.querySelector("#aim");
+          // It lights for one thing only: a target the beam is actually on, which is
+          // the same test the mechanics run, so it can never promise a shot to miss.
+          const locked = !!jetTarget;
+          reticle.hidden = body.jetTime <= 0 && !locked;
+          reticle.dataset.locked = locked ? "target" : "idle";
         }
       },
     );

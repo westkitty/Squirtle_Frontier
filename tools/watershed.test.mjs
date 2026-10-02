@@ -75,8 +75,12 @@ import {
   senseWater,
   DEBRIS_SITE,
 } from "../src/simulation/water-interaction.js";
+import { aimFromYaw } from "../src/beam.js";
 test("repair requires nearby active jet aimed at debris; sense requires water", () => {
+  // The aim is the authority, so the test builds one with it rather than handing the
+  // mechanic a body heading and hoping they agree.
   const w = new Watershed(),
+    aimAt = (body) => aimFromYaw(body.yaw, body),
     b = {
       x: DEBRIS_SITE.x,
       z: DEBRIS_SITE.z + 2,
@@ -84,10 +88,17 @@ test("repair requires nearby active jet aimed at debris; sense requires water", 
       yaw: Math.PI,
       jetTime: 0.2,
     };
-  assert.equal(applyWaterJet(w, { ...b, jetTime: 0 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, { ...b, yaw: 0 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, { ...b, z: 50 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, b, 1 / 60), true);
+  assert.equal(applyWaterJet(w, { ...b, jetTime: 0 }, 1 / 60, aimAt(b)), false);
+  const away = { ...b, yaw: 0 };
+  assert.equal(applyWaterJet(w, away, 1 / 60, aimAt(away)), false);
+  const far = { ...b, z: 50 };
+  assert.equal(applyWaterJet(w, far, 1 / 60, aimAt(far)), false);
+  assert.equal(applyWaterJet(w, b, 1 / 60, aimAt(b)), true);
+  assert.equal(
+    applyWaterJet(w, b, 1 / 60, null),
+    false,
+    "no aim authority, no shot",
+  );
   assert.ok(w.nodes[1].blockage < 0.95);
   assert.equal(senseWater(w, b, false), null);
   assert.ok(senseWater(w, b, true).strength > 0);

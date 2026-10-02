@@ -472,3 +472,42 @@ canvas:focus-visible {
     font-size: 10px;
   }
 }
+
+/* The Water Jet reads its own aim off the world, not off a shooter HUD: the ring is
+   absent until a burst is out or something is actually in the beam, and it never
+   labels, numbers or brackets anything. */
+#aim {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 1.5px solid rgba(233, 245, 240, 0.55);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.55;
+  transition:
+    opacity 120ms linear,
+    transform 120ms ease-out;
+}
+#aim[data-locked="target"] {
+  opacity: 0.95;
+  border-color: #a7e8dd;
+  transform: scale(0.82);
+}
+#aim::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%;
+  background: rgba(233, 245, 240, 0.8);
+}
+body.reduced-motion #aim {
+  transition: none;
+  animation: none;
+}

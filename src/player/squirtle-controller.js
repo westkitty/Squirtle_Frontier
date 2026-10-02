@@ -12,6 +12,7 @@ import {
   withSubmersion,
 } from "./locomotion-states.js";
 import { shortestAngle } from "./render-pose.js";
+import { JET_RULES } from "../beam.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
   // The pose the renderer interpolates *from* is the one the body held when this
@@ -122,7 +123,8 @@ export function stepBody(b, input, env, dt) {
         command * AQUATIC.verticalAuthority + (key >= 0 ? spring : 0),
         -AQUATIC.verticalAuthority * 1.6,
         AQUATIC.verticalAuthority * 1.6,
-      ),      driving = Math.hypot(intent.x, intent.z) > 0.05;
+      ),
+      driving = Math.hypot(intent.x, intent.z) > 0.05;
     if (driving) {
       b.vx = approach(
         b.vx,
@@ -185,10 +187,15 @@ export function stepBody(b, input, env, dt) {
     b.pitch = approach(b.pitch ?? 0, 0, 6, dt);
   }
   if (input.jet && b.jetCooldown <= 0) {
-    b.jetCooldown = 1.1;
-    b.jetTime = 0.36;
-    b.vx += Math.sin(b.yaw) * 7.8;
-    b.vz += Math.cos(b.yaw) * 7.8;
+    b.jetCooldown = JET_RULES.cooldown;
+    b.jetTime = JET_RULES.burst;
+    // The lunge goes where the stream goes. A body that is aimed at something and a
+    // body that is travelling toward it are different situations, and the player has
+    // to feel the burst answer the aim - but the *turn* of the body is a bounded ease
+    // below, not a snap, so aiming never becomes a second steering control.
+    const launch = Number.isFinite(input.aimYaw) ? input.aimYaw : b.yaw;
+    b.vx += Math.sin(launch) * 7.8;
+    b.vz += Math.cos(launch) * 7.8;
     b.vy = aquatic
       ? b.mode === MODES.SWIM
         ? 5
@@ -200,6 +207,13 @@ export function stepBody(b, input, env, dt) {
       : 3.2;
     b.grounded = false;
   }
+  // Controlled facing while the jet is out: the body presents the aim, easing rather
+  // than snapping, and only for the burst. Steering authority over the *path* is
+  // untouched, which is what keeps a shot from becoming a turn.
+  if (b.jetTime > 0 && Number.isFinite(input.aimYaw))
+    b.yaw +=
+      shortestAngle(b.yaw, input.aimYaw) *
+      (1 - Math.exp(-JET_RULES.faceRate * dt));
   const horizontal = Math.hypot(b.vx, b.vz);
   if (horizontal > 12) {
     b.vx *= 12 / horizontal;
