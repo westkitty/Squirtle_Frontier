@@ -271,6 +271,18 @@ const MUTATIONS = [
     from: "      if (body.impact > 0.04) {\n        this.impactRecoil = Math.min(0.08, body.impact * 0.12);\n      }",
     to: "      if (body.impact > 0.04) {\n        this.impactRecoil = 0;\n      }",
   },
+  {
+    what: "read strata fail to illuminate with mineral patina",
+    file: "src/player/deep-record.js",
+    from: "      } else if (isRead) {",
+    to: "      } else if (false && isRead) {",
+  },
+  {
+    what: "active strata hold fails to pulse resonance",
+    file: "src/player/deep-record.js",
+    from: "      if (isHolding) {",
+    to: "      if (false && isHolding) {",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

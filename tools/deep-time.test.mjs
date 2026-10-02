@@ -400,3 +400,42 @@ test("the caption the record already had is preserved", () => {
   assert.ok(record.eras[0].event.length > 20);
   record.dispose();
 });
+
+test("logged strata illuminate with historical patina and active hold pulses harmonic resonance", () => {
+  const scene = new THREE.Scene();
+  const record = new DeepRecord(scene, 1337);
+  const memory = new PlaceMemory();
+
+  // 1. Initial state: all strata unread (emissive 0, roughness 1.0)
+  record.update({ y: -5 }, memory, { band: -1, held: 0 }, 0);
+  assert.equal(record.materials[0].emissive.r, 0);
+  assert.equal(record.materials[0].roughness, 1.0);
+
+  // 2. Active hold inside band 2: pulses resonance
+  record.update({ y: -6.1 }, memory, { band: 2, held: 0.45 }, 1.0);
+  assert.ok(
+    record.materials[2].emissive.g > 0.15,
+    "active hold must illuminate with pulse",
+  );
+  assert.ok(
+    record.materials[2].roughness < 1.0,
+    "active hold reduces surface roughness",
+  );
+
+  // 3. Mark strata 2 as read: keeps luminous ancient patina even when not holding
+  memory.markStrata(2, 8);
+  record.update({ y: -1 }, memory, { band: -1, held: 0 }, 2.0);
+  assert.ok(
+    record.materials[2].emissive.g > 0.05,
+    "read strata must retain luminous mineral patina",
+  );
+  assert.equal(
+    record.materials[1].emissive.g,
+    0,
+    "unread strata must remain dark",
+  );
+
+  record.dispose();
+  assert.equal(scene.children.length, 0);
+});
+

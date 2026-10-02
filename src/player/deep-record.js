@@ -43,6 +43,32 @@ export class DeepRecord {
     );
     return `About ${era.yearsAgo} years ago. ${era.event}`;
   }
+  update(body, memory, strataHold, time = 0) {
+    const read = memory?.strata ?? [];
+    for (let i = 0; i < this.eras.length; i++) {
+      const mat = this.materials[i];
+      const isRead = read.includes(i);
+      const isHolding = strataHold?.band === i && strataHold.held > 0;
+      if (isHolding) {
+        // Active resonance pulse while reading inside the band
+        const pulse = Math.sin((strataHold.held / 0.9) * Math.PI) * 0.35;
+        mat.emissive.setRGB(
+          0.08 + pulse * 0.15,
+          0.18 + pulse * 0.22,
+          0.16 + pulse * 0.2,
+        );
+        mat.roughness = 0.65;
+      } else if (isRead) {
+        // Luminous ancient mineral patina for logged strata
+        mat.emissive.setRGB(0.04, 0.11, 0.1);
+        mat.roughness = 0.72;
+      } else {
+        // Unread stone
+        mat.emissive.setRGB(0, 0, 0);
+        mat.roughness = 1.0;
+      }
+    }
+  }
   dispose() {
     this.geo.dispose();
     this.floorGeo.dispose();

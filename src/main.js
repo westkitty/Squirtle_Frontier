@@ -642,6 +642,7 @@ async function boot() {
             (state.elapsed - strataLoggedAt < 2.5
               ? " This band is logged."
               : "");
+          record.update(body, state.memory, strataHold, state.elapsed);
           renderRecordReadout(ledger);
         } else {
           applyWaterJet(state.watershed, body, dt);
