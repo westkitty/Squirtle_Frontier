@@ -58,6 +58,8 @@ export function applyWorldJet(frontier, body, dt) {
     if (hits(p, heightAt(p.x, p.z))) {
       frontier.heat[i] = Math.max(0, frontier.heat[i] - dt * 1.5);
       frontier.soaked[i] = Math.min(1, frontier.soaked[i] + dt);
+      if (frontier.ash[i] > 0)
+        frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8);
     }
   }
 }

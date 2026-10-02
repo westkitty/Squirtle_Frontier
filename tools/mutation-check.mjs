@@ -283,6 +283,18 @@ const MUTATIONS = [
     from: "      if (isHolding) {",
     to: "      if (false && isHolding) {",
   },
+  {
+    what: "water jet fails to rinse ash from fire site",
+    file: "src/simulation/water-interaction.js",
+    from: "      if (frontier.ash[i] > 0)\n        frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8);",
+    to: "      if (false && frontier.ash[i] > 0)\n        frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8);",
+  },
+  {
+    what: "offline fast-forward fails to advance regional tick",
+    file: "src/persistence.js",
+    from: "  for (let i = 0; i < ticks; i++) state.update(1);",
+    to: "  for (let i = 0; i < 0; i++) state.update(1);",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

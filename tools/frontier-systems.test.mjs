@@ -4,12 +4,14 @@ import {
   FrontierSystems,
   traceChannel,
   weatherAt,
+  fireSite,
 } from "../src/simulation/frontier-systems.js";
 import { WorldState } from "../src/worldstate.js";
 import { PlaceMemory } from "../src/simulation/place-memory.js";
 import { deepHistory } from "../src/simulation/deep-history.js";
 import { Watershed } from "../src/simulation/watershed.js";
 import { advanceOffline, save, load } from "../src/persistence.js";
+import { applyWorldJet } from "../src/simulation/water-interaction.js";
 test("weather/fire regional clock is exact online/offline across block boundaries", () => {
   for (const n of [179, 180, 181, 601]) {
     const a = new WorldState(),
@@ -161,3 +163,71 @@ test("record access is spatial/depth gated and actual swim physics reaches histo
   view.dispose();
   assert.equal(scene.children.length, 0);
 });
+
+test("Water Jet aimed at burnt ground rinses ash and prevents storm contamination", () => {
+  const frontier = new FrontierSystems(1337);
+  const site = fireSite(0);
+  frontier.heat[0] = 0.6;
+  frontier.ash[0] = 0.8;
+  frontier.soaked[0] = 0;
+
+  // Body positioned 1.2m south of site 0, facing North (+Z direction toward site)
+  // site.x is 12, site.z is -8
+  const body = createBody(site.x, site.z - 1.2, 0);
+  body.yaw = 0; // facing +Z direction (toward site.z)
+  body.jetTime = 0.35;
+
+  // 1. Direct aimed Water Jet rinses ash and cools heat
+  applyWorldJet(frontier, body, 0.5);
+  assert.ok(frontier.heat[0] < 0.6, "water jet must cool fire heat");
+  assert.ok(frontier.soaked[0] > 0, "water jet must soak ground");
+  assert.ok(frontier.ash[0] < 0.8, "water jet must rinse away ash");
+
+  // 2. Unaimed water jet (facing opposite direction Math.PI) fails to hit site
+  const ashBefore = frontier.ash[0];
+  body.yaw = Math.PI; // facing south away from site
+  applyWorldJet(frontier, body, 0.5);
+  assert.equal(frontier.ash[0], ashBefore, "unaimed jet must not affect ash");
+});
+
+test("6-hour offline fast-forward maintains finite bounded scalars and history limit", () => {
+  const s = new WorldState();
+  // 6 hours = 21,600 ticks
+  const result = advanceOffline(s, 21600);
+  assert.equal(result.seconds, 21600);
+  assert.equal(result.capped, false);
+  assert.equal(s.frontier.tick, 21600);
+
+  // All 16 fire cells remain strictly normalized in [0, 1]
+  for (let i = 0; i < 16; i++) {
+    assert.ok(
+      Number.isFinite(s.frontier.heat[i]) &&
+        s.frontier.heat[i] >= 0 &&
+        s.frontier.heat[i] <= 1,
+      `heat[${i}] must be bounded in [0, 1]`,
+    );
+    assert.ok(
+      Number.isFinite(s.frontier.fuel[i]) &&
+        s.frontier.fuel[i] >= 0 &&
+        s.frontier.fuel[i] <= 1,
+      `fuel[${i}] must be bounded in [0, 1]`,
+    );
+    assert.ok(
+      Number.isFinite(s.frontier.ash[i]) &&
+        s.frontier.ash[i] >= 0 &&
+        s.frontier.ash[i] <= 1,
+      `ash[${i}] must be bounded in [0, 1]`,
+    );
+    assert.ok(
+      Number.isFinite(s.frontier.soaked[i]) &&
+        s.frontier.soaked[i] >= 0 &&
+        s.frontier.soaked[i] <= 1,
+      `soaked[${i}] must be bounded in [0, 1]`,
+    );
+  }
+
+  // History is strictly capped at 90 entries
+  assert.ok(s.frontier.history.length <= 90);
+  assert.ok(s.frontier.channelErosion <= 120);
+});
+
