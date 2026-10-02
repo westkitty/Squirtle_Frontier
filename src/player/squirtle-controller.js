@@ -1,6 +1,15 @@
 // Body-state authority: no Three.js, imported nodes, material names or animation dependencies.
 import { clamp } from "../rng.js";
 import { recordPose } from "./render-pose.js";
+import {
+  MODES,
+  SHORE,
+  depthBands,
+  isAquatic,
+  resolveShoreMode,
+  shoreReading,
+  withSubmersion,
+} from "./locomotion-states.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
   // The pose the renderer interpolates *from* is the one the body held when this
@@ -13,38 +22,56 @@ export function stepBody(b, input, env, dt) {
   b.jetCooldown = Math.max(0, b.jetCooldown - dt);
   b.jetTime = Math.max(0, b.jetTime - dt);
   b.impact = Math.max(0, b.impact - dt);
-  const floor = env.sample(b.x, b.z),
-    water = env.water(b.x, b.z);
-  const immersed =
-    water && b.y < water.level + 0.12 && water.level - floor.height > 0.4;
+  const floor = env.sample(b.x, b.z);
+  // Depth is always measured from the active water surface to the terrain under the
+  // body, never from a hardcoded plane, so the frontier's rising level, the Lab
+  // basin and the Record all feed the same rule.
+  const shore = withSubmersion(shoreReading(env, b.x, b.z), b.y);
+  const bands = depthBands(b.mode, shore.depth);
+  const jetting = b.jetTime > 0;
   const moving = Math.hypot(input.x, input.z) > 0.08;
-  if (immersed && b.jetTime === 0) {
-    b.mode =
-      input.dive || (b.mode === "dive" && b.y < water.level - 0.2)
-        ? "dive"
-        : "swim";
-  } else if (b.grounded) {
-    if (input.slide) {
-      if (slidePressed) {
-        // Enter up to a target speed, never stack free impulses on landings/taps.
-        const boost = Math.max(0, 3 - Math.hypot(b.vx, b.vz));
-        b.vx += Math.sin(b.yaw) * boost;
-        b.vz += Math.cos(b.yaw) * boost;
-      }
-      b.mode = "slide";
-    } else b.mode = "land";
-  } else if (!immersed) b.mode = "air";
-  if (moving || input.jet || input.slide || !b.grounded || b.mode !== "land") {
-    b.resting = false;
+  // Water holds a body up, so a shore exit needs no airborne interval: `air` is
+  // only for when nothing supports the body, plus a jet that has broken the
+  // surface under power (an intentional launch still leaves the water as air).
+  const supported = b.grounded || bands.wet;
+  const breaching = jetting && shore.inWater && shore.submersion <= 0;
+  if (!supported || breaching) b.mode = MODES.AIR;
+  else {
+    const next = resolveShoreMode(b.mode, {
+      wet: bands.wet,
+      afloat: bands.afloat,
+      submersion: shore.submersion,
+      diving: !!input.dive,
+      sliding: !!input.slide,
+    });
+    if (next === MODES.SLIDE && slidePressed) {
+      // Enter up to a target speed, never stack free impulses on landings/taps.
+      const boost = Math.max(0, 3 - Math.hypot(b.vx, b.vz));
+      b.vx += Math.sin(b.yaw) * boost;
+      b.vz += Math.cos(b.yaw) * boost;
+    }
+    b.mode = next;
   }
-  const aquatic = b.mode === "swim" || b.mode === "dive";
-  const speed = aquatic ? 4.8 : input.run ? 3.8 : 2.2;
+  const aquatic = isAquatic(b.mode);
+  const wading = b.mode === MODES.WADE;
+  if (
+    moving ||
+    input.jet ||
+    input.slide ||
+    !b.grounded ||
+    b.mode !== MODES.LAND ||
+    wading
+  )
+    b.resting = false;
+  const speed = aquatic ? 4.8 : wading ? 1.7 : input.run ? 3.8 : 2.2;
   if (moving) {
     const target = Math.atan2(input.x, input.z),
       delta = Math.atan2(Math.sin(target - b.yaw), Math.cos(target - b.yaw));
-    b.yaw += delta * (1 - Math.exp(-(b.mode === "slide" ? 5 : 12) * dt));
+    b.yaw +=
+      delta *
+      (1 - Math.exp(-(b.mode === MODES.SLIDE ? 5 : wading ? 8 : 12) * dt));
   }
-  if (b.mode === "slide") {
+  if (b.mode === MODES.SLIDE) {
     b.vx -= floor.dx * 12 * dt;
     b.vz -= floor.dz * 12 * dt;
     const momentum = Math.hypot(b.vx, b.vz);
@@ -61,23 +88,23 @@ export function stepBody(b, input, env, dt) {
         ? 0.3
         : aquatic
           ? 3.4
-          : b.grounded
-            ? moving
-              ? 10
-              : 14
-            : 1.1;
-    b.vx = approach(
-      b.vx,
-      input.x * speed + (aquatic ? water.currentX : 0),
-      rate,
-      dt,
-    );
-    b.vz = approach(
-      b.vz,
-      input.z * speed + (aquatic ? water.currentZ : 0),
-      rate,
-      dt,
-    );
+          : wading
+            ? 6
+            : b.grounded
+              ? moving
+                ? 10
+                : 14
+              : 1.1;
+    // Wading drags on the surface tension and the substrate; swimming is carried by
+    // the current instead. The partial coupling keeps shallows from feeling like a
+    // dry tile while still letting a bank be walked.
+    const current = aquatic ? 1 : wading ? 0.4 : 0;
+    if (wading) {
+      b.vx *= Math.exp(-1.9 * dt);
+      b.vz *= Math.exp(-1.9 * dt);
+    }
+    b.vx = approach(b.vx, input.x * speed + shore.currentX * current, rate, dt);
+    b.vz = approach(b.vz, input.z * speed + shore.currentZ * current, rate, dt);
   }
   if (input.jet && b.jetCooldown <= 0) {
     b.jetCooldown = 1.1;
@@ -85,7 +112,7 @@ export function stepBody(b, input, env, dt) {
     b.vx += Math.sin(b.yaw) * 7.8;
     b.vz += Math.cos(b.yaw) * 7.8;
     b.vy = aquatic
-      ? b.mode === "swim"
+      ? b.mode === MODES.SWIM
         ? 5
         : input.dive
           ? -2.5
@@ -94,7 +121,6 @@ export function stepBody(b, input, env, dt) {
             : 0
       : 3.2;
     b.grounded = false;
-    if (b.mode === "swim") b.mode = "air";
   }
   const horizontal = Math.hypot(b.vx, b.vz);
   if (horizontal > 12) {
@@ -104,8 +130,8 @@ export function stepBody(b, input, env, dt) {
   if (aquatic && b.jetTime === 0) {
     const vertical = input.dive
       ? -2.6
-      : b.mode === "swim"
-        ? (water.level - 0.22 - b.y) * 8
+      : b.mode === MODES.SWIM
+        ? (shore.level - SHORE.swimFloat - b.y) * 8
         : input.ascend
           ? 3
           : 0.08;
@@ -146,10 +172,15 @@ export function stepBody(b, input, env, dt) {
   b.x = clamp(nx, -70, 70);
   b.z = clamp(nz, -70, 70);
   b.y += b.vy * dt;
-  if (aquatic && b.jetTime === 0 && water && b.y > water.level - 0.18) {
-    b.y = water.level - 0.18;
+  if (
+    aquatic &&
+    b.jetTime === 0 &&
+    shore.inWater &&
+    b.y > shore.level - SHORE.surfaceFloat
+  ) {
+    b.y = shore.level - SHORE.surfaceFloat;
     b.vy = Math.min(0, b.vy);
-    b.mode = "swim";
+    b.mode = MODES.SWIM;
   }
   const ground = env.sample(b.x, b.z).height;
   const travelled = Math.hypot(b.x - ox, b.z - oz);
@@ -165,14 +196,12 @@ export function stepBody(b, input, env, dt) {
     b.vy = 0;
     b.grounded = true;
   } else b.grounded = false;
-  if (b.mode === "dive" && water && b.y >= water.level - 0.2 && !input.dive)
-    b.mode = "swim";
   b.distance += Math.hypot(b.x - ox, b.z - oz);
   if (!Number.isFinite(b.y) || b.y < -30) {
     b.y = ground;
     b.vy = 0;
     b.vx = 0;
     b.vz = 0;
-    b.mode = "land";
+    b.mode = MODES.LAND;
   }
 }

@@ -115,4 +115,3 @@ export function settlementDialogue(settlement, body) {
   }
   return "The caretaker observes you quietly from the doorway, curious and still.";
 }
-

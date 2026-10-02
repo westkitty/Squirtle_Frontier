@@ -18,7 +18,15 @@ export function resolveAttentionTarget({
 
   const candidates = [];
 
-  const addCandidate = ({ id, type, x, z, y = null, priority, radius = ATTENTION_RADIUS }) => {
+  const addCandidate = ({
+    id,
+    type,
+    x,
+    z,
+    y = null,
+    priority,
+    radius = ATTENTION_RADIUS,
+  }) => {
     const dx = x - body.x,
       dz = z - body.z,
       distH = Math.hypot(dx, dz);
@@ -27,7 +35,10 @@ export function resolveAttentionTarget({
     // Check if within visual forward arc or very close proximity
     const targetYaw = Math.atan2(dx, dz);
     const yawDiff = Math.abs(
-      Math.atan2(Math.sin(targetYaw - body.yaw), Math.cos(targetYaw - body.yaw)),
+      Math.atan2(
+        Math.sin(targetYaw - body.yaw),
+        Math.cos(targetYaw - body.yaw),
+      ),
     );
     if (distH > OMNI_PROXIMITY && yawDiff > ATTENTION_FOV) return;
 

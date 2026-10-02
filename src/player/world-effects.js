@@ -187,7 +187,14 @@ export class WorldEffects {
     const water = options?.water;
     const inWater = !!water && body.y <= water.level + 0.15;
     const speed = Math.hypot(body.vx, body.vz);
-    if (inWater && (speed > 0.25 || body.mode === "swim" || body.mode === "dive")) {
+    if (
+      inWater &&
+      (speed > 0.25 ||
+        body.mode === "swim" ||
+        body.mode === "dive" ||
+        // A wading body makes ripples even when it is picking its feet slowly.
+        body.mode === "wade")
+    ) {
       this.wake.visible = true;
       this.wake.count = 16;
       const surfY = water.level + 0.015;
@@ -217,7 +224,8 @@ export class WorldEffects {
       this.splash.count = 20;
       for (let i = 0; i < 20; i++) {
         const theta = (i / 20) * Math.PI * 2 + state.elapsed * 12,
-          arcDist = 0.35 + ((((i * 0.31 + state.elapsed * 4) % 1) + 1) % 1) * 1.1,
+          arcDist =
+            0.35 + ((((i * 0.31 + state.elapsed * 4) % 1) + 1) % 1) * 1.1,
           dropletY = body.y + 0.2 + Math.sin(arcDist * Math.PI) * 0.35;
         this.dummy.position.set(
           body.x + Math.cos(theta) * arcDist,

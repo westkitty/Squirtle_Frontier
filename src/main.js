@@ -870,6 +870,7 @@ async function boot() {
               Math.hypot(body.vx, body.vz) > 0.2
                 ? "On little feet"
                 : "On the bank",
+            wade: "Wading the shallows",
             swim: "At the surface",
             dive: "Below the surface",
             slide: "In your shell",

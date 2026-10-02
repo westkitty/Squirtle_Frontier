@@ -98,10 +98,16 @@ export class SquirtlePresentation extends PlayableCreature {
     const isMoving = speed > 0.08;
     const inShell = b.mode === "slide";
 
-    // Water exit detection: stepping out of water triggers a brief water-shedding shake
+    const wading = b.mode === "wade";
+    // Water exit detection: stepping out of water triggers a brief water-shedding
+    // shake. Leaving the shallows counts too - the body is soaked either way - but
+    // it is a smaller shake than emerging from a swim.
     if (this.wasAquatic && !aquatic && b.grounded) {
-      this.shakeTime = 0.6;
+      this.shakeTime = wading ? 0 : 0.6;
+    } else if (this.wasWading && !wading && b.grounded && !aquatic) {
+      this.shakeTime = Math.max(this.shakeTime, 0.28);
     }
+    this.wasWading = wading;
     this.wasAquatic = aquatic;
     this.shakeTime = Math.max(0, this.shakeTime - dt);
 
@@ -184,7 +190,8 @@ export class SquirtlePresentation extends PlayableCreature {
 
       // Saccadic approach and fixation
       this.lookYaw += (clampedYaw - this.lookYaw) * (1 - Math.exp(-5.5 * dt));
-      this.lookPitch += (clampedPitch - this.lookPitch) * (1 - Math.exp(-5.5 * dt));
+      this.lookPitch +=
+        (clampedPitch - this.lookPitch) * (1 - Math.exp(-5.5 * dt));
     } else {
       this.attentionTime = 0;
       this.activeAttention = null;
@@ -259,6 +266,15 @@ export class SquirtlePresentation extends PlayableCreature {
         rotateY("RForearm", gait * 0.35);
         rotateY("Tail1", -gait * 0.4);
         rotateY("Tail2", -gait * 0.3);
+        if (wading) {
+          // Wading is high-stepping through resistance: more knee lift, a tail held
+          // up out of the water, and a body that lists as the current leans on it.
+          const lift = Math.abs(Math.sin(this.phase)) * 0.24;
+          rotateX("LThigh", -lift);
+          rotateX("RThigh", -lift * 0.8);
+          rotateX("Tail1", -0.16);
+          rotateZ("Head", Math.sin(this.phase * 0.5) * 0.05);
+        }
         if (this.activeAttention) {
           rotateY("Head", this.lookYaw * 0.5);
           rotateX("Head", this.lookPitch * 0.5);
@@ -270,7 +286,10 @@ export class SquirtlePresentation extends PlayableCreature {
         const alertWeight = 1 - rest;
 
         // Head and snout: nods with breath, settles into resting nap posture
-        rotateX("Head", breath * (0.035 * alertWeight + 0.015 * rest) - rest * 0.22);
+        rotateX(
+          "Head",
+          breath * (0.035 * alertWeight + 0.015 * rest) - rest * 0.22,
+        );
         rotateX("Snout", -rest * 0.07);
 
         // Arms: soft natural resting posture alongside plastron

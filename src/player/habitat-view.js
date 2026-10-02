@@ -3,10 +3,49 @@ import { heightAt } from "../worldgen.js";
 export const LAB_ENTRY = Object.freeze({ x: -11, z: 5 });
 export const SETTLEMENT = Object.freeze({ x: -15, z: -12 });
 export const WETLAND = Object.freeze({ x: -6, z: -15 });
-export const labHeight = (x, z) => {
+// One authored profile, read by the rendered floor, the body's contact and the
+// camera boom alike.
+//
+// The old basin dropped 1.4 m over 0.9 m of horizontal run: a 57 degree wall. The
+// body can only climb a step of 0.18 m per fixed tick and follows slopes up to a
+// unit gradient, so that wall made the shoreline a physics exception rather than a
+// place - wading was impossible because there was no shallow band to stand in. The
+// profile below keeps the same pool depth and the same dry rim, but spends the
+// height on a bank and a long shelf, and the waterline is *derived* from it.
+export const LAB_FLOOR = -1.4; // pool bottom, and the mouth of the Deep Record shaft
+export const LAB_POOL_R = 2.2; // full depth out to here
+export const LAB_BANK_R = 3.6; // foot of the bank
+export const LAB_SHELF_R = 5.0; // dry rim from here outward
+export const LAB_BANK_TOP = -0.55; // where the shallow shelf starts
+export const LAB_WATER_LEVEL = -0.2; // the surface the body floats on
+export function labHeight(x, z) {
   const d = Math.hypot(x, z);
-  return d < 2.5 ? -1.4 : d < 3.4 ? -1.4 + ((d - 2.5) / 0.9) * 1.4 : 0;
-};
+  if (d <= LAB_POOL_R) return LAB_FLOOR;
+  if (d <= LAB_BANK_R)
+    return (
+      LAB_FLOOR +
+      ((d - LAB_POOL_R) / (LAB_BANK_R - LAB_POOL_R)) *
+        (LAB_BANK_TOP - LAB_FLOOR)
+    );
+  if (d >= LAB_SHELF_R) return 0;
+  const t = (d - LAB_BANK_R) / (LAB_SHELF_R - LAB_BANK_R);
+  return LAB_BANK_TOP * (1 - t * t * (3 - 2 * t));
+}
+// Solving the profile for the waterline radius is what makes the painted disc and
+// the wet predicate agree: they cannot drift apart, because one is computed from
+// the other. Deterministic bisection, evaluated once at module load.
+function waterlineRadius(level) {
+  let lo = LAB_BANK_R,
+    hi = LAB_SHELF_R;
+  if (level <= LAB_BANK_TOP) return lo;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (labHeight(mid, 0) < level) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+export const LAB_WATER_R = waterlineRadius(LAB_WATER_LEVEL);
 export const labRegion = {
   sample: (x, z) => ({
     height: labHeight(x, z),
@@ -14,7 +53,9 @@ export const labRegion = {
     dz: (labHeight(x, z + 0.1) - labHeight(x, z - 0.1)) / 0.2,
   }),
   water: (x, z) =>
-    Math.hypot(x, z) < 3.15 ? { level: -0.2, currentX: 0, currentZ: 0 } : null,
+    Math.hypot(x, z) < LAB_WATER_R
+      ? { level: LAB_WATER_LEVEL, currentX: 0, currentZ: 0 }
+      : null,
   // Conservative circular proxies for walls and furnishings; shared by body and boom.
   obstacles: [
     ...Array.from({ length: 17 }, (_, i) => ({
@@ -312,11 +353,11 @@ export class HabitatView {
       this.cylinder,
       this.waterMat,
       0,
-      -0.2,
+      LAB_WATER_LEVEL,
       0,
-      3.15,
+      LAB_WATER_R,
       0.015,
-      3.15,
+      LAB_WATER_R,
     );
     this.reeds = this.pool(this.cylinder, this.green, 48);
     this.animals = this.pool(this.sphere, this.frogMat, 12);
@@ -444,7 +485,11 @@ export class HabitatView {
     this.reeds.count = nearby ? Math.floor(amount * 48) : 0;
     for (let i = 0; i < this.reeds.count; i++) {
       const angle = i * 2.39996,
-        radius = this.lab ? 2.8 + (i % 4) * 0.08 : 1 + (i % 8) * 0.28;
+        // In the Lab the reeds ring the shallows, so they are planted relative to the
+        // derived waterline rather than to a radius that could drift away from it.
+        radius = this.lab
+          ? LAB_WATER_R - 1.5 + (i % 4) * 0.08
+          : 1 + (i % 8) * 0.28;
       const x = center.x + Math.cos(angle) * radius,
         z = center.z + Math.sin(angle) * radius;
       const h = 0.25 + (i % 5) * 0.12,
@@ -547,7 +592,7 @@ export class HabitatView {
       this.animals.count = nearby ? Math.floor(life * 12) : 0;
       for (let i = 0; i < this.animals.count; i++) {
         const t = time * 0.12 + i * 2.4,
-          r = 3.5;
+          r = LAB_WATER_R + 0.55; // frogs hold the dry rim, not the waterline
         const x = center.x + Math.cos(t) * r,
           z = center.z + Math.sin(t) * r;
         this.dummy.position.set(x, labHeight(x, z) + 0.08, z);
