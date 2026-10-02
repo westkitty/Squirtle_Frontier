@@ -1,0 +1,74 @@
+{
+  "note": "Height samples per renderer frame along matched walks across chunk boundaries. Frame maxima are the policy claim; wall-clock here is a software-rasterizer container and is not device performance evidence.",
+  "chunk": 24,
+  "walk": {
+    "steps": 420,
+    "metres": 210,
+    "boundaries": 9
+  },
+  "walks": {
+    "open-country": {
+      "before": {
+        "label": "open country, count budget",
+        "frames": 420,
+        "totalSamples": 35937,
+        "medianFrame": 0,
+        "p95Frame": 1089,
+        "maxFrame": 2178,
+        "holes": 0,
+        "active": 9,
+        "builds": 33,
+        "wallMs": 78,
+        "msPerFrame": 0.186
+      },
+      "after": {
+        "label": "open country, sample budget",
+        "frames": 420,
+        "totalSamples": 35937,
+        "medianFrame": 0,
+        "p95Frame": 1089,
+        "maxFrame": 2178,
+        "holes": 0,
+        "active": 9,
+        "builds": 33,
+        "wallMs": 49.3,
+        "msPerFrame": 0.117
+      },
+      "driftPercent": 0
+    },
+    "carved-channel": {
+      "before": {
+        "label": "carved channel, count budget",
+        "frames": 420,
+        "totalSamples": 63206,
+        "medianFrame": 0,
+        "p95Frame": 1089,
+        "maxFrame": 17730,
+        "holes": 0,
+        "active": 9,
+        "builds": 38,
+        "wallMs": 84.8,
+        "msPerFrame": 0.202
+      },
+      "after": {
+        "label": "carved channel, sample budget",
+        "frames": 420,
+        "totalSamples": 63206,
+        "medianFrame": 0,
+        "p95Frame": 1089,
+        "maxFrame": 6120,
+        "holes": 0,
+        "active": 9,
+        "builds": 38,
+        "wallMs": 81.7,
+        "msPerFrame": 0.195
+      },
+      "driftPercent": 0
+    }
+  },
+  "budget": {
+    "heightSamples": 6000,
+    "maxChunksPerFrame": 2,
+    "pendingSwaps": 2
+  }
+}

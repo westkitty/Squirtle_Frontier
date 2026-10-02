@@ -11,19 +11,21 @@
     ]
   },
   "deep": {
-    "body": -1.4,
+    "body": -1.102,
     "mode": "dive",
     "underwater": true,
     "density": 0.13
   },
   "surfacing": {
     "stateFlips": 0,
-    "maxDensityStep": 0.00311,
+    "maxDensityStep": 0.0034,
+    "betweenFrames": 7,
     "endDensity": 0.025
   },
   "resize": {
     "requests": 13,
     "reallocations": 1,
+    "framesDuringBurst": 2,
     "applied": 3,
     "css": {
       "inline": "|",
@@ -37,7 +39,16 @@
       448
     ],
     "ratio": 0.7,
-    "size": "1024x640@0.700"
+    "size": "1024x640@0.700",
+    "frames": 467
+  },
+  "streaming": {
+    "maxFrameSamples": 2178,
+    "holes": 0,
+    "peakHeldSwaps": 0,
+    "active": 9,
+    "queued": 0,
+    "loads": 18
   },
   "errors": []
 }

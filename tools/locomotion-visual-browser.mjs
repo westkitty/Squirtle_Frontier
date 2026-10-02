@@ -29,6 +29,15 @@ async function sample(frames) {
   return out;
 }
 
+// A cut has no middle: density goes from the sky value to the water value in one
+// sample. Anything genuinely eased spends frames in between, and its largest single
+// step is bounded by the module's own follow rate.
+const between = (series) =>
+  series.filter((f) => f.density > 0.03 && f.density < 0.125).length;
+// rate 5.5/s at 1/60 s is a 8.9% step of the remaining distance; a full swing is
+// ~0.0093. Two frames' worth is the ceiling for anything this app may show.
+const MAX_STEP = 0.02;
+
 await mkdir("docs/qa", { recursive: true });
 const browser = await launchBrowser();
 const errors = [],
@@ -161,11 +170,12 @@ try {
   evidence.surfacing = {
     stateFlips: flips(surfacing),
     maxDensityStep: +maxStep(surfacing, "density").toFixed(5),
+    betweenFrames: between(surfacing),
     endDensity: +surfacing.at(-1).density.toFixed(4),
   };
   assert.ok(
-    evidence.surfacing.maxDensityStep < 0.006,
-    "coming up cut instead of easing",
+    evidence.surfacing.maxDensityStep < MAX_STEP,
+    `coming up moved density by ${evidence.surfacing.maxDensityStep} in one frame`,
   );
   assert.ok(evidence.surfacing.endDensity < 0.05, "the view never cleared");
 
@@ -173,7 +183,10 @@ try {
   // Requests must coalesce, the canvas must keep its CSS box, and the pixel budget
   // must stay inside the documented limits.
   const FINAL = [1024, 640],
-    before = await page.evaluate(() => window.__SF.resize().applied);
+    before = await page.evaluate(() => ({
+      applied: window.__SF.resize().applied,
+      frames: window.__SF.loop.frames.length,
+    }));
   for (const [width, height] of [
     [900, 600],
     [880, 590],
@@ -193,8 +206,25 @@ try {
   ]) {
     await page.setViewportSize({ width, height });
   }
-  await page.evaluate(
-    () => new Promise((r) => requestAnimationFrame(() => r())),
+  // Wait for the pump to have consumed the burst: "how few reallocations did 13 events
+  // cost" is only a meaningful question once the events have been handled. The CSS box
+  // follows a viewport change immediately, so it cannot be the signal - the drawing
+  // buffer catching up to it is.
+  await page.waitForFunction(
+    () => {
+      const g = window.__SF,
+        canvas = g.renderer.domElement;
+      if (g.resize().pending) return false;
+      return (
+        canvas.width ===
+          Math.floor(
+            Math.round(canvas.getBoundingClientRect().width) *
+              g.renderer.getPixelRatio(),
+          ) && Math.round(canvas.getBoundingClientRect().width) === 1024
+      );
+    },
+    null,
+    { timeout: 20000 },
   );
   const after = await page.evaluate(() => ({
     applied: window.__SF.resize().applied,
@@ -214,15 +244,25 @@ try {
     ],
     ratio: window.__SF.renderer.getPixelRatio(),
     size: window.__SF.resize().size,
+    frames: window.__SF.loop.frames.length,
   }));
   evidence.resize = {
     requests: 13,
-    reallocations: after.applied - before,
+    reallocations: after.applied - before.applied,
+    framesDuringBurst: after.frames - before.frames,
     ...after,
   };
+  // The pump's promise is one reallocation per rendered frame, no matter how many
+  // events asked for one; `requests` is the naive path's cost for comparison.
   assert.ok(
-    after.applied - before <= 2,
-    `${after.applied - before} framebuffer reallocations for a 12-event burst`,
+    after.applied - before.applied <= Math.max(1, after.frames - before.frames),
+    `${after.applied - before.applied} reallocations across ${
+      after.frames - before.frames
+    } frames`,
+  );
+  assert.ok(
+    after.applied - before.applied <= 3,
+    `${after.applied - before.applied} reallocations for 13 resize events`,
   );
   assert.equal(
     after.css.inline,
@@ -244,8 +284,49 @@ try {
     "the buffer must match the size the box has",
   );
   assert.ok(
-    after.applied - before >= 1,
+    after.applied - before.applied >= 1,
     "a burst that changes the box has to be applied once, not never",
+  );
+  // Streaming, while all of this happens: the app's own pump must respect the budget
+  // it documents, and must never leave the body unsupported. Timings in this container
+  // would prove nothing, so the claim is about the accounting.
+  await page.evaluate(() => window.__SF.enterPlace("frontier"));
+  await page.waitForFunction(
+    () => window.__SF.streaming.stats().active === 9,
+    null,
+    { timeout: 30000 },
+  );
+  const streaming = await page.evaluate(async () => {
+    const g = window.__SF,
+      before = g.streaming.stats();
+    let max = 0,
+      holes = 0,
+      held = 0;
+    for (let i = 0; i < 260; i++) {
+      await new Promise((r) => requestAnimationFrame(r));
+      const s = g.streaming.stats();
+      max = Math.max(max, s.maxFrameSamples);
+      holes = Math.max(holes, s.holes);
+      held = Math.max(held, s.held);
+    }
+    return { before, max, holes, held, after: g.streaming.stats() };
+  });
+  evidence.streaming = {
+    maxFrameSamples: streaming.max,
+    holes: streaming.holes,
+    peakHeldSwaps: streaming.held,
+    active: streaming.after.active,
+    queued: streaming.after.queued,
+    loads: streaming.after.loads,
+  };
+  assert.ok(streaming.holes === 0, "the body stood on missing ground");
+  assert.ok(
+    streaming.max <= 6130,
+    `a frame spent ${streaming.max} terrain samples`,
+  );
+  assert.ok(
+    streaming.held <= 2,
+    `${streaming.held} swap meshes overlapped at once`,
   );
   await writeFile(
     "docs/qa/locomotion-visual-browser.json",

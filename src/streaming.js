@@ -28,10 +28,19 @@ export class Streaming {
     }
     this.chunks.center = { i: 9999, j: 9999 };
   }
-  update(x, z) {
+  // `motion` is the body's velocity, used only to order work - it never decides what
+  // exists, so a body that stops mid-crossing still gets its ground.
+  update(x, z, motion = null) {
     if (this.terrainStage !== (this.state.frontier?.stage ?? 0))
       this.refreshTerrain();
-    this.chunks.update(x, z, 2);
+    this.chunks.update(x, z, this.chunks.budget.maxChunksPerFrame, motion);
+  }
+  // Everything the queue can ask for, right now: boot and any test that wants the
+  // region complete without stepping frames.
+  settle(x, z) {
+    let guard = 0;
+    while (this.chunks.queue.length && guard++ < 64) this.chunks.pump(64);
+    return this.stats();
   }
   stats() {
     return {
@@ -39,12 +48,23 @@ export class Streaming {
       queued: this.chunks.queue.length,
       loads: this.loads,
       unloads: this.unloads,
+      // The amortization itself: how much terrain work a single frame was allowed, how
+      // many swaps are in flight, and whether the body was ever left unsupported.
+      held: this.chunks.pendingSwaps,
+      frames: this.chunks.work.frames,
+      samples: this.chunks.work.samples,
+      maxFrameSamples: this.chunks.work.maxSamples,
+      holes: this.chunks.work.holes,
     };
   }
   suspend() {
     for (const key of [...this.chunks.chunks.keys()])
       this.chunks.disposeChunk(key);
     this.chunks.queue.length = 0;
+    // Queued tasks may hold a mesh that is still in the map (disposed above) but their
+    // half-built work and swap accounting have to go with them, or the counters drift
+    // across a place change.
+    this.chunks.pendingSwaps = 0;
     this.chunks.center = { i: 9999, j: 9999 };
   }
   dispose() {

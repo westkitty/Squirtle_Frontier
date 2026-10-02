@@ -13,6 +13,7 @@
     "mutate": "node tools/mutation-check.mjs",
     "asset:convert": "node tools/asset-convert.mjs",
     "perf": "node tools/movement-perf.mjs",
+    "bench:streaming": "node tools/streaming-bench.mjs",
     "browser:watershed": "node tools/watershed-browser.mjs",
     "browser:habitat": "node tools/habitat-browser.mjs",
     "browser:world": "node tools/world-browser.mjs",
