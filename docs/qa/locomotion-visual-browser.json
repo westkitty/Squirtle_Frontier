@@ -1,0 +1,43 @@
+{
+  "environment": "Chromium 140 / ANGLE SwiftShader; frame timing here is not hardware or mobile performance evidence",
+  "shoreline": {
+    "frames": 90,
+    "stateFlips": 0,
+    "maxDensityStep": 0,
+    "maxColorStep": 0,
+    "mixRange": [
+      0,
+      0
+    ]
+  },
+  "deep": {
+    "body": -1.4,
+    "mode": "dive",
+    "underwater": true,
+    "density": 0.13
+  },
+  "surfacing": {
+    "stateFlips": 0,
+    "maxDensityStep": 0.00311,
+    "endDensity": 0.025
+  },
+  "resize": {
+    "requests": 13,
+    "reallocations": 1,
+    "applied": 3,
+    "css": {
+      "inline": "|",
+      "rendered": [
+        1024,
+        640
+      ]
+    },
+    "buffer": [
+      716,
+      448
+    ],
+    "ratio": 0.7,
+    "size": "1024x640@0.700"
+  },
+  "errors": []
+}

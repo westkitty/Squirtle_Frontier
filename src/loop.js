@@ -38,6 +38,7 @@ export class Loop {
     this.discarded = 0;
     this.drops = 0;
     this.alpha = 0;
+    this.lastFrameDiscarded = false;
   }
   frame(now) {
     const raw = this.last === null ? 0 : Math.max(0, (now - this.last) / 1000);
@@ -49,7 +50,10 @@ export class Loop {
     }
     // A stall this long is not a hitch to ride out; it is the tab coming back.
     const elapsed = Math.min(raw, MAX_FRAME_DT);
-    if (raw - elapsed > 1e-9) {
+    // Whether *this* frame threw time away, so anything that measures frame cost can
+    // decline to treat a tab restore as a load spike and react to it.
+    this.lastFrameDiscarded = raw - elapsed > 1e-9;
+    if (this.lastFrameDiscarded) {
       this.discarded += raw - elapsed;
       this.drops++;
     }
@@ -75,6 +79,7 @@ export class Loop {
   }
   reset() {
     this.last = null;
+    this.lastFrameDiscarded = false;
     this.accumulator = 0;
     this.alpha = 0;
   }

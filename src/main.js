@@ -1,4 +1,6 @@
 import { AdaptiveScale } from "./adaptive-quality.js";
+import { createResizePump } from "./render-resize.js";
+import { WaterView } from "./player/water-view-state.js";
 import { NearWildlife } from "./simulation/near-wildlife.js";
 import {
   settlementObstacles,
@@ -55,7 +57,12 @@ import {
   senseWater,
 } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
-import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
+import {
+  HabitatView,
+  labRegion,
+  labHeight,
+  LAB_WATER_LEVEL,
+} from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
 import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
@@ -130,7 +137,11 @@ async function boot() {
           return { ...water, currentX: 0.08 * flow, currentZ: -0.18 * flow };
         },
       },
-      rig = new CreatureCamera(camera, liveRegion);
+      rig = new CreatureCamera(camera, liveRegion),
+      // The camera's read of the water surface, hysteretic and eased - see the module
+      // for why a per-frame boolean cannot survive a shoreline. Declared before
+      // `enterPlace` because a place change has to be able to reset it.
+      waterView = new WaterView();
     // Water in the named inflows is read through the predicate the body swims by, and only
     // re-read when the basin's level or the player's cut changes. Nothing here pretends to
     // move water: it is a measurement of where water already is.
@@ -153,6 +164,9 @@ async function boot() {
       interactionHeld = false;
     const enterPlace = (place, relocate = true) => {
       wildlife.clear();
+      // A new place has its own surface; inheriting the last one's blend would show a
+      // tint that belongs to somewhere the body is no longer.
+      waterView.reset();
       record?.dispose();
       record = null;
       if (place === "record") {
@@ -257,21 +271,34 @@ async function boot() {
     );
     if (import.meta.hot) import.meta.hot.dispose(cleanup);
     const adaptive = new AdaptiveScale({ enabled: Settings.get("adaptive") });
-    const resize = () => {
-      renderer.setPixelRatio(
-        pixelRatioFor(
-          Settings.get("quality"),
-          innerWidth,
-          innerHeight,
-          devicePixelRatio,
-        ) * adaptive.value,
-      );
-      renderer.setSize(innerWidth, innerHeight);
+    // The renderer's whole resize story in one pump: requests are flags, the
+    // reallocation happens at most once per rendered frame, and the canvas is never
+    // given inline pixel sizes - its box belongs to CSS (100vw/100dvh), and rewriting
+    // it while also changing the pixel ratio is what made the picture jump.
+    const pump = createResizePump({
+      renderer,
+      measure: () => ({
+        width: innerWidth,
+        height: innerHeight,
+        pixelRatio:
+          pixelRatioFor(
+            Settings.get("quality"),
+            innerWidth,
+            innerHeight,
+            devicePixelRatio,
+          ) * adaptive.value,
+      }),
+    });
+    const resize = () => pump.request();
+    const applyResize = () => {
+      if (!pump.flush()) return false;
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
+      return true;
     };
     addEventListener("resize", resize, options);
-    resize();
+    addEventListener("orientationchange", resize, options);
+    applyResize();
     document.body.classList.toggle(
       "touch",
       matchMedia("(pointer: coarse)").matches,
@@ -837,6 +864,9 @@ async function boot() {
         }
       },
       () => {
+        // First thing in the frame: a pending size change is applied before anything is
+        // drawn, so the frame the player sees is already at the new budget.
+        applyResize();
         const now = performance.now(),
           cameraDt =
             lastRender === null
@@ -852,33 +882,42 @@ async function boot() {
           reducedMotion: Settings.motionReduced,
         });
         creature.present(renderPose, cameraDt, renderAttention);
-        const underwater =
-          camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
-          (state.place === "record"
-            ? recordRegion
-            : state.place === "lab"
-              ? labRegion
-              : liveRegion
-          ).water(camera.position.x, camera.position.z, state.waterLevel);
-        scene.fog.color.set(
-          underwater
-            ? "#246c69"
-            : state.place !== "frontier"
-              ? "#597b76"
-              : "#9bb9aa",
+        // The surface the eye is measured against is the surface the world has, not a
+        // hardcoded zero: the pond rises and falls with the watershed, and a fog that
+        // ignores that goes underwater on dry land and stays dry in a flooded shaft.
+        const surface =
+          state.place === "lab" ? LAB_WATER_LEVEL : state.waterLevel;
+        const view = waterView.update(
+          cameraDt,
+          camera.position.y - surface,
+          surface !== null &&
+            (state.place === "record"
+              ? recordRegion
+              : state.place === "lab"
+                ? labRegion
+                : liveRegion
+            ).water(camera.position.x, camera.position.z, surface),
+          state.place !== "frontier" ? 0x597b76 : 0x9bb9aa,
+          state.frontier.weather.rain,
         );
-        scene.fog.density = underwater
-          ? 0.13
-          : 0.025 + state.frontier.weather.rain * 0.015;
-        sun.intensity = 2.4 - state.frontier.weather.rain * 0.9;
+        scene.fog.color.setHex(view.color);
+        scene.fog.density = view.density;
+        sun.intensity =
+          2.4 - state.frontier.weather.rain * 0.9 * (1 - view.mix * 0.55);
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
+        // A frame the loop deliberately truncated (a tab restore, a long stall) says
+        // nothing about how heavy the world is, so it is not fed to the sampler at all.
         const previousFrame = loop.frames.at(-1);
         if (
           previousFrame !== undefined &&
+          !loop.lastFrameDiscarded &&
           adaptive.add(previousFrame) !== null
         ) {
           resize();
+          // The reallocation itself costs a frame; that cost must not be read as load
+          // and answered with another step down, which is how a scale controller hums.
+          adaptive.rearm();
           // The scale notice is transient, so it must not overwrite a readout the player
           // is deliberately asking for with the sense key held down.
           if (!senseHeld)
@@ -958,6 +997,15 @@ async function boot() {
       adaptive,
       enterPlace,
       habitat,
+      scene,
+      // Stage 6 measures a *transition*, so the journey reads the camera's own water
+      // state and the resize pump rather than inferring them from pixels.
+      water: () => waterView.snapshot(),
+      resize: () => ({
+        applied: pump.applied,
+        pending: pump.pending,
+        size: pump.size,
+      }),
       // Journeys assert what the Lab actually renders; the frontier view is `habitat`.
       labView: () => lab,
       wildlife,
@@ -971,6 +1019,8 @@ async function boot() {
         frames: [...loop.frames],
         assets: assets.stats(),
         mode: body.mode,
+        fog: { color: scene.fog.color.getHex(), density: scene.fog.density },
+        water: waterView.snapshot(),
         attention: creature?.attention ?? null,
         gaze: creature
           ? { yaw: creature.gazeYaw, pitch: creature.gazePitch }

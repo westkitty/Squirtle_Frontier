@@ -85,14 +85,6 @@
       "width": "3px",
       "style": "solid",
       "color": "rgb(236, 209, 156)"
-    },
-    {
-      "id": "settings-toggle",
-      "inPage": true,
-      "visible": true,
-      "width": "3px",
-      "style": "solid",
-      "color": "rgb(236, 209, 156)"
     }
   ],
   "open-memory": {
@@ -157,7 +149,7 @@
       104
     ]
   },
-  "touchKeyboardMoveMeters": 1.155,
+  "touchKeyboardMoveMeters": 1.009,
   "stickDrag": {
     "stick": {
       "x": 0,
@@ -170,7 +162,7 @@
       "x": 0,
       "z": 0
     },
-    "drifted": 0.007
+    "drifted": 0.004
   },
-  "stickMovedMeters": 1.169
+  "stickMovedMeters": 1.413
 }

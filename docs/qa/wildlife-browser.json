@@ -2,27 +2,27 @@
   "errors": [],
   "cycles": [
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 19,
       "textures": 6
     },
     {
@@ -67,7 +67,7 @@
   "drink": {
     "at": {
       "x": -6.01,
-      "z": -15.8
+      "z": -15.79
     },
     "inWater": true,
     "issue": null,
@@ -79,42 +79,42 @@
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     },
     {
       "issue": "dry",
       "drinkers": 0,
-      "tracks": 27
+      "tracks": 32
     }
   ],
   "dryGrowth": 0,
@@ -122,12 +122,12 @@
     "issue": "dry",
     "drinking": 0,
     "parched": 7,
-    "wetness": 0.105,
+    "wetness": 0.099,
     "note": "Drink tracks in 2 places; nearest 2 m W. Now the shallows are too dry to drink at.",
-    "tracks": 27
+    "tracks": 32
   },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
-  "savedFamiliarity": 0.41000000000000003,
+  "savedFamiliarity": 0.42000000000000004,
   "teardown": {
     "geometries": 0,
     "textures": 0

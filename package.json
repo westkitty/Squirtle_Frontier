@@ -22,6 +22,7 @@
     "browser:a11y": "node tools/accessibility-browser.mjs",
     "browser:dist": "node tools/dist-browser.mjs",
     "browser:multitab": "node tools/multitab-browser.mjs",
+    "browser:visual": "node tools/locomotion-visual-browser.mjs",
     "app:build": "./macos/build-app.sh"
   },
   "dependencies": {

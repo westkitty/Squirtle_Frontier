@@ -1,21 +1,21 @@
 {
-  "levelUntouched": -0.029331,
+  "levelUntouched": -0.025867,
   "senseBeforeFlood": "Touch the water to listen to its current. You are on the North run, a dry channel; 6 m to the shallows, 0.8 m above the water.",
   "blockageCleared": 0,
-  "blockageBeforeClear": 0.7874999999999995,
+  "blockageBeforeClear": 0.7441666666666661,
   "senseAfterFlood": "Touch the water to listen to its current. You are on the North run, water in patches; 6 m to the shallows, 0.6 m above the water.",
   "waterLevel": {
-    "before": -0.029331,
-    "after": 0.181669
+    "before": -0.025867,
+    "after": 0.182939
   },
   "shorelineCells": {
-    "before": 655,
+    "before": 657,
     "after": 707
   },
-  "levelAfterReload": 0.184818,
+  "levelAfterReload": 0.182939,
   "levelFollowsGraph": {
     "raised": 0.132632,
-    "back": 0.184818,
-    "was": 0.677060984412251
+    "back": 0.182939,
+    "was": 0.6706859804368964
   }
 }
