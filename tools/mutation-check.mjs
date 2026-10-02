@@ -247,6 +247,18 @@ const MUTATIONS = [
     from: "        const wave = mode === \"welcome\" ? Math.sin(time * 4.2) * 0.16 : 0;",
     to: "        const wave = 0;",
   },
+  {
+    what: "stream foam rapids fail to activate along running channel when stage >= 2",
+    file: "src/player/world-effects.js",
+    from: "    if (state.frontier.stage >= 2 && this.route.length > 1) {",
+    to: "    if (false && state.frontier.stage >= 2 && this.route.length > 1) {",
+  },
+  {
+    what: "localized stream flow acoustics fail to activate near running channel",
+    file: "src/audio.js",
+    from: "      contextInfo.channelStage >= 2 &&",
+    to: "      contextInfo.channelStage >= 99 &&",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

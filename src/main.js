@@ -49,6 +49,7 @@ import {
 import { WatershedPresentation } from "./player/watershed-presentation.js";
 import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
+import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading"),
@@ -767,6 +768,11 @@ async function boot() {
           water: currentWater,
           isShaking: creature?.isShaking ?? false,
           isSleeping: creature?.isSleeping ?? false,
+          channelStage: state.place === "frontier" ? state.frontier.stage : 0,
+          channelDist:
+            state.place === "frontier" && state.frontier.stage >= 2
+              ? channelDistance(body.x, body.z)
+              : 999,
         });
         saveTime += dt;
         if (saveTime >= 30) {
@@ -903,6 +909,7 @@ async function boot() {
           jet: effects?.jet?.count ?? 0,
           wake: effects?.wake?.count ?? 0,
           splash: effects?.splash?.count ?? 0,
+          foam: effects?.streamFoam?.count ?? 0,
         },
       }),
     };

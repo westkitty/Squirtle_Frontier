@@ -54,6 +54,18 @@ export class WorldEffects {
     this.splash.visible = false;
     this.group.add(this.splash);
 
+    this.foamMat = new THREE.MeshBasicMaterial({
+      color: 0xebf7fa,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false,
+    });
+    this.streamFoam = new THREE.InstancedMesh(this.geo, this.foamMat, 16);
+    this.streamFoam.frustumCulled = false;
+    this.streamFoam.count = 0;
+    this.streamFoam.visible = false;
+    this.group.add(this.streamFoam);
+
     this.route = traceChannel();
     this.channelGeo = new THREE.BufferGeometry();
     this.channelGeo.setAttribute(
@@ -222,6 +234,51 @@ export class WorldEffects {
       this.splash.count = 0;
       this.splash.visible = false;
     }
+
+    // 4. Stream foam rapids: churning white water along active flowing channel
+    if (state.frontier.stage >= 2 && this.route.length > 1) {
+      this.streamFoam.visible = true;
+      this.streamFoam.count = 16;
+      for (let i = 0; i < 16; i++) {
+        const progress = (((i / 16 + state.elapsed * 0.35) % 1) + 1) % 1;
+        const floatIdx = progress * (this.route.length - 1);
+        const idx = Math.floor(floatIdx);
+        const fract = floatIdx - idx;
+        const p0 = this.route[idx];
+        const p1 = this.route[Math.min(idx + 1, this.route.length - 1)];
+        const wobble = Math.sin(state.elapsed * 5.5 + i * 2.1) * 0.035;
+        const dx = p1.x - p0.x,
+          dz = p1.z - p0.z;
+        const len = Math.hypot(dx, dz) || 1;
+        const px = p0.x + dx * fract + (-dz / len) * wobble;
+        const pz = p0.z + dz * fract + (dx / len) * wobble;
+        const py =
+          channelHeight(px, pz, state.frontier.stage) +
+          CHANNEL_DEPTH[state.frontier.stage] * 0.55 +
+          0.022;
+        const s = 0.032 + Math.sin(i * 3.7 + state.elapsed * 4) * 0.01;
+        this.dummy.position.set(px, py, pz);
+        this.dummy.scale.set(s * 1.6, s * 0.5, s * 1.6);
+        this.dummy.rotation.set(0, state.elapsed * 2.8 + i, 0);
+        this.dummy.updateMatrix();
+        this.streamFoam.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.streamFoam.instanceMatrix.needsUpdate = true;
+    } else {
+      this.streamFoam.count = 0;
+      this.streamFoam.visible = false;
+    }
+  }
+
+  stats() {
+    return {
+      rain: this.rain.count,
+      fire: this.fire.count,
+      jet: this.jet.count,
+      wake: this.wake.count,
+      splash: this.splash.count,
+      foam: this.streamFoam.count,
+    };
   }
 
   dispose() {
@@ -231,6 +288,8 @@ export class WorldEffects {
     this.wakeMat.dispose();
     this.splash.dispose();
     this.splashMat.dispose();
+    this.streamFoam.dispose();
+    this.foamMat.dispose();
 
     this.rain.dispose();
     this.rainMat.dispose();

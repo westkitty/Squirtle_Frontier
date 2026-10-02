@@ -15,6 +15,8 @@ export class Audio {
     this.locoFilter = null;
     this.flutterGain = null;
     this.flutterFilter = null;
+    this.streamGain = null;
+    this.streamFilter = null;
   }
   get gain() {
     return this.masterGain;
@@ -107,11 +109,22 @@ export class Audio {
       this.flutterFilter.connect(this.flutterGain);
       this.flutterGain.connect(this.masterGain);
 
+      // 6. Running stream / watercourse flow voice (pressurized bubbling stream)
+      this.streamFilter = this.context.createBiquadFilter();
+      this.streamFilter.type = "bandpass";
+      this.streamFilter.Q.value = 1.8;
+      this.streamFilter.frequency.value = 680;
+      this.streamGain = this.context.createGain();
+      this.streamGain.gain.value = 0;
+      this.streamFilter.connect(this.streamGain);
+      this.streamGain.connect(this.masterGain);
+
       // Connect shared noise source to noise-driven filter paths
       this.noiseSource.connect(this.jetFilter);
       this.noiseSource.connect(this.surfFilter);
       this.noiseSource.connect(this.locoFilter);
       this.noiseSource.connect(this.flutterFilter);
+      this.noiseSource.connect(this.streamFilter);
 
       // Start continuous audio generators
       this.noiseSource.start();
@@ -183,6 +196,21 @@ export class Audio {
     const isShaking = !!contextInfo.isShaking;
     const flutterLevel = isShaking ? 0.16 : 0;
     this.flutterGain.gain.setTargetAtTime(flutterLevel, now, 0.03);
+
+    // 6. Running stream / watercourse flow acoustics
+    let streamLevel = 0;
+    if (
+      contextInfo.channelStage >= 2 &&
+      typeof contextInfo.channelDist === "number" &&
+      contextInfo.channelDist < 8.0
+    ) {
+      const prox = Math.max(0, 1 - contextInfo.channelDist / 8.0);
+      const bubble = 0.85 + Math.sin(now * 4.2) * 0.15;
+      streamLevel = 0.18 * prox * prox * bubble;
+      const freq = 620 + Math.sin(now * 2.8) * 120;
+      this.streamFilter.frequency.setTargetAtTime(freq, now, 0.06);
+    }
+    this.streamGain.gain.setTargetAtTime(streamLevel, now, 0.05);
   }
   dispose() {
     try {
@@ -201,6 +229,8 @@ export class Audio {
     this.locoGain?.disconnect();
     this.flutterFilter?.disconnect();
     this.flutterGain?.disconnect();
+    this.streamFilter?.disconnect();
+    this.streamGain?.disconnect();
     this.masterGain?.disconnect();
     this.context?.close();
     this.context = null;

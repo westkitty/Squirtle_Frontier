@@ -101,6 +101,7 @@ test("audio initializes master bus and sub-voices with single AudioContext", () 
   assert.ok(audio.subGain !== null, "sub-drone voice must exist");
   assert.ok(audio.locoGain !== null, "locomotion voice must exist");
   assert.ok(audio.flutterGain !== null, "flutter voice must exist");
+  assert.ok(audio.streamGain !== null, "stream voice must exist");
 
   // Re-unlocking must NOT recreate or proliferate AudioContext
   const ctx = audio.context;
@@ -206,6 +207,48 @@ test("water exit shake triggers droplet flutter voice", () => {
 
   audio.update(b, { muted: false, volume: 1.0 }, { isShaking: false });
   assert.equal(audio.flutterGain.gain.value, 0, "quiescent state must mute flutter gain");
+
+  audio.dispose();
+});
+
+test("nearness to active watercourse activates localized stream flow acoustics", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+
+  const b = createBody(0, 0, 0);
+
+  // 1. Stage 1 (dry / no active flow): stream sound is silent
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { channelStage: 1, channelDist: 2.0 },
+  );
+  assert.equal(audio.streamGain.gain.value, 0, "dry channel must remain silent");
+
+  // 2. Stage 2 but far away (> 8.0m): stream sound is silent
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { channelStage: 2, channelDist: 12.0 },
+  );
+  assert.equal(audio.streamGain.gain.value, 0, "distant channel must remain silent");
+
+  // 3. Stage 2 and close (< 8.0m): localized stream bubbling acoustics activate
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { channelStage: 2, channelDist: 2.5 },
+  );
+  assert.ok(
+    audio.streamGain.gain.value > 0.05,
+    "nearness to active channel must ramp up stream flow acoustics",
+  );
+  assert.ok(
+    audio.streamFilter.frequency.value >= 500 &&
+      audio.streamFilter.frequency.value <= 800,
+    "stream filter frequency must remain in bubbling range",
+  );
 
   audio.dispose();
 });

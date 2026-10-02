@@ -26,6 +26,7 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.jet.geometry, fx.geo);
   assert.equal(fx.wake.geometry, fx.geo);
   assert.equal(fx.splash.geometry, fx.geo);
+  assert.equal(fx.streamFoam.geometry, fx.geo);
 
   fx.dispose();
   assert.equal(fx.group.parent, null);
@@ -139,6 +140,40 @@ test("Splash particles scatter radially during water-exit shake or fluid impact"
   const dist0 = Math.hypot(pos0.x - body.x, pos0.z - body.z);
   const dist10 = Math.hypot(pos10.x - body.x, pos10.z - body.z);
   assert.ok(dist0 > 0.1 && dist10 > 0.1, "droplets should disperse away from body");
+
+  fx.dispose();
+});
+
+test("Stream foam rapids particles travel down running channel when stage >= 2", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  const body = createBody(0, 0, 0);
+
+  // 1. Stage 1 (dry / early carved groove): no stream foam
+  state.frontier.stage = 1;
+  fx.update(state, body);
+  assert.equal(fx.streamFoam.visible, false);
+  assert.equal(fx.streamFoam.count, 0);
+
+  // 2. Stage 2 (active flowing watercourse): stream foam activates
+  state.frontier.stage = 2;
+  fx.update(state, body);
+  assert.equal(fx.streamFoam.visible, true);
+  assert.equal(fx.streamFoam.count, 16);
+
+  // Verify particles sit along the channel route
+  const mat = new THREE.Matrix4();
+  fx.streamFoam.getMatrixAt(0, mat);
+  const pos0 = new THREE.Vector3().setFromMatrixPosition(mat);
+  assert.ok(
+    Number.isFinite(pos0.x) && Number.isFinite(pos0.y) && Number.isFinite(pos0.z),
+    "foam position must be finite numbers",
+  );
+
+  // Verify stats reports foam count
+  const stats = fx.stats();
+  assert.equal(stats.foam, 16);
 
   fx.dispose();
 });
