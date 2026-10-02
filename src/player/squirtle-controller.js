@@ -1,7 +1,12 @@
 // Body-state authority: no Three.js, imported nodes, material names or animation dependencies.
 import { clamp } from "../rng.js";
+import { recordPose } from "./render-pose.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
+  // The pose the renderer interpolates *from* is the one the body held when this
+  // authoritative interval began, so it is captured here rather than by whoever
+  // happens to remember to snapshot it.
+  recordPose(b);
   const wasGrounded = b.grounded;
   const slidePressed = !!input.slide && !b.slideHeld;
   b.slideHeld = !!input.slide;

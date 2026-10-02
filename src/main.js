@@ -36,6 +36,7 @@ import {
 import { AssetManager } from "./assets/asset-manager.js";
 import { SquirtlePresentation } from "./assets/squirtle-presentation.js";
 import { createBody } from "./player/body-state.js";
+import { interpolatedPose, resetPose } from "./player/render-pose.js";
 import { stepBody } from "./player/squirtle-controller.js";
 import { resolveAttentionTarget } from "./player/creature-attention.js";
 import { CreatureCamera } from "./player/creature-camera.js";
@@ -200,6 +201,7 @@ async function boot() {
       if (!pose || pose.place !== state.place) return false;
       Object.assign(body, createBody(pose.x, pose.z, pose.y));
       body.yaw = pose.yaw;
+      resetPose(body); // a resumed heading is not a turn to interpolate through
       const env =
         state.place === "record"
           ? recordRegion
@@ -547,6 +549,10 @@ async function boot() {
     let hudTime = 0,
       saveTime = 0,
       lastRender = null,
+      // Presentation consumes the interpolated pose, so the pose and the attention
+      // target it was resolved against have to reach the render callback together.
+      renderAttention = null,
+      renderPose = interpolatedPose(body, 1),
       // The step callback owns the input sample; the render callback below needs to know
       // whether the player is reading a sense line without reaching out of scope.
       senseHeld = false;
@@ -611,13 +617,19 @@ async function boot() {
               : liveRegion;
         stepBody(body, { ...controls, ...world }, env, dt);
         if (state.place === "lab") {
-          body.x = Math.max(-7.5, Math.min(7.5, body.x));
-          body.z = Math.max(-7.5, Math.min(7.5, body.z));
+          const cx = Math.max(-7.5, Math.min(7.5, body.x)),
+            cz = Math.max(-7.5, Math.min(7.5, body.z));
+          if (cx !== body.x || cz !== body.z) {
+            body.x = cx;
+            body.z = cz;
+            resetPose(body); // a wall is a discontinuity, not a smooth stop to slide
+          }
         } else if (state.place === "record") {
           const r = Math.hypot(body.x, body.z);
           if (r > 3.4) {
             body.x *= 3.4 / r;
             body.z *= 3.4 / r;
+            resetPose(body);
           }
           const ledger = deepTimeLedger({
             eras: record.eras,
@@ -665,11 +677,12 @@ async function boot() {
         if (state.frontier.tick !== previousTick)
           state.settlement.observe(body, state.place, state.frontier.tick);
         wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
-        const currentWater = (state.place === "frontier"
-          ? liveRegion
-          : state.place === "lab"
-            ? labRegion
-            : recordRegion
+        const currentWater = (
+          state.place === "frontier"
+            ? liveRegion
+            : state.place === "lab"
+              ? labRegion
+              : recordRegion
         ).water(body.x, body.z, state.waterLevel);
         if (state.place === "frontier")
           effects.update(state, body, {
@@ -755,14 +768,13 @@ async function boot() {
           yaw: +body.yaw.toFixed(4),
           place: state.place,
         };
-        const attention = resolveAttentionTarget({
+        renderAttention = resolveAttentionTarget({
           body,
           place: state.place,
           state,
           wildlife,
           settlement: state.settlement,
         });
-        creature.present(body, dt, attention);
         if (state.place === "frontier")
           scenery.update(body, dt, state.waterLevel);
         audio.update(body, Settings.values, {
@@ -791,10 +803,14 @@ async function boot() {
               : Math.min(0.1, (now - lastRender) / 1000);
         lastRender = now;
         if (state.place === "frontier") streaming.update(body.x, body.z);
-        rig.update(body, input.consumeLook(), cameraDt, {
+        // The authoritative body keeps stepping at 60 Hz; the pose shown is the
+        // interpolated one, so a 30 Hz or 120 Hz display neither snaps nor drags.
+        renderPose = interpolatedPose(body, loop.alpha);
+        rig.update(renderPose, input.consumeLook(), cameraDt, {
           ...Settings.values,
           reducedMotion: Settings.motionReduced,
         });
+        creature.present(renderPose, cameraDt, renderAttention);
         const underwater =
           camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
           (state.place === "record"
@@ -896,6 +912,8 @@ async function boot() {
       wildlife,
       dispose: cleanup,
       stats: () => ({
+        loop: loop.stats(),
+        pose: { alpha: loop.alpha, ...renderPose },
         chunks: streaming.stats(),
         memory: { ...renderer.info.memory },
         render: { ...renderer.info.render },
@@ -903,7 +921,9 @@ async function boot() {
         assets: assets.stats(),
         mode: body.mode,
         attention: creature?.attention ?? null,
-        gaze: creature ? { yaw: creature.gazeYaw, pitch: creature.gazePitch } : null,
+        gaze: creature
+          ? { yaw: creature.gazeYaw, pitch: creature.gazePitch }
+          : null,
         sleeping: creature?.isSleeping ?? false,
         sleepProgress: creature?.sleepProgress ?? 0,
         effects: {

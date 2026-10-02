@@ -18,7 +18,7 @@ test("chunk seeds distinguish coordinates and repeat", () => {
 import * as THREE from "three";
 import { WorldState } from "../src/worldstate.js";
 import { Streaming } from "../src/streaming.js";
-import { Loop } from "../src/loop.js";
+import { Loop, MAX_STEPS, MAX_ACCUMULATOR } from "../src/loop.js";
 import { save, load } from "../src/persistence.js";
 import { heightAt } from "../src/worldgen.js";
 test("LF terrain is deterministic and finite across negative/positive coordinates", () => {
@@ -62,10 +62,21 @@ test("fixed-step loop bounds tab-resume work and samples raw timing", () => {
   );
   loop.frame(0);
   loop.frame(10000);
-  assert.ok(ticks >= 5 && ticks <= 6);
+  // Bounded work per frame is the point, so the bound is the named constant rather
+  // than a tick count that happened to fall out of a 100 ms frame clamp - which used
+  // to *delete* the rest of the elapsed time. Now it is simulated up to the cap and
+  // the excess is recorded as discarded.
+  assert.equal(ticks, MAX_STEPS);
   assert.equal(renders, 2);
   assert.equal(loop.frames[0], 10000);
+  assert.ok(
+    loop.discarded > 9 && loop.discarded < 10,
+    `a ten second stall should account ~9.75s of it, saw ${loop.discarded}`,
+  );
+  assert.ok(loop.accumulator <= MAX_ACCUMULATOR, "backlog debt stays bounded");
+  assert.ok(loop.alpha >= 0 && loop.alpha <= 1, "alpha is a fraction of one step");
   loop.reset();
+  assert.equal(loop.alpha, 0, "reset drops the half-finished interval");
   loop.frame(20000);
   assert.equal(renders, 3);
 });
