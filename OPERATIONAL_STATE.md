@@ -508,3 +508,29 @@ R/contextual button near the wooden platform advances the existing regional simu
   - Ten-Loop Autonomous Campaign Closure:
     - All ten sequential improvement loops (Loops 1–10) are fully discovered, implemented, empirically tested, verified against mutations, and permanently closed.
 
+## Post-Campaign macOS Desktop Wrapper & Dock Integration Checkpoint
+
+- Authored and compiled standalone native macOS application wrapper (`Squirtle Frontier.app`):
+  - Native Swift Cocoa + WebKit application (`macos/main.swift`):
+    - Independent native `NSWindow` (1280x800 default, 960x640 min, fullscreen support via `collectionBehavior = [.fullScreenPrimary]`).
+    - Dedicated process and menu bar (`Squirtle Frontier`, `View` with reload/fullscreen, `Window`).
+    - Hardware-accelerated WebGL and WebKit engine with developer tools enabled.
+    - Intelligent dual-mode server connection:
+      - Live Dev: Automatically attaches to active Vite dev server on port `5173` when running.
+      - Standalone: Automatically boots local Python/Node HTTP server on port `4173` serving the embedded production `site` bundle when launched offline/standalone.
+      - Clean process termination on quit (`applicationWillTerminate` terminates child server).
+  - High-Resolution macOS Retina App Icon (`macos/SquirtleFrontier.icns`):
+    - Created multi-resolution Apple iconset (16x16, 32x32, 64x64, 128x128, 256x256, 512x512, 1024x1024 Retina `ic12` format).
+    - Features 3D joyful Squirtle emerging from water splash on vibrant teal ocean gradient with modern macOS squircle antialiased mask.
+  - User Installation & Dock Integration:
+    - Installed into `/Users/andrew/Applications/Squirtle Frontier.app`.
+    - Added to persistent macOS Dock items via `dockutil`.
+    - Registered with macOS LaunchServices.
+  - npm script integration:
+    - Added `"app:build": "./macos/build-app.sh"` to `package.json`.
+  - Empirical verification:
+    - Launched `Squirtle Frontier.app` via `open`.
+    - Verified process running (`pgrep -fl "Squirtle Frontier"`).
+    - Verified native Cocoa window active via AppleScript (`Squirtle Frontier, 1280x737`).
+    - Screen capture verified full 3D WebGL rendering, active Three.js world, HUD controls, and zero errors.
+    - Clean quit verified via `osascript`.
