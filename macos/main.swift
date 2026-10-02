@@ -1,24 +1,49 @@
 import Cocoa
 import WebKit
 
+enum LaunchError: LocalizedError {
+    case missingEmbeddedSite
+
+    var errorDescription: String? {
+        switch self {
+        case .missingEmbeddedSite:
+            return "The installed app does not contain Contents/Resources/site/index.html."
+        }
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
     var window: NSWindow!
     var webView: WKWebView!
-    var serverProcess: Process?
+    var embeddedServer: EmbeddedHTTPServer?
     var targetUrl: URL!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         setupMenus()
-        determineAndStartServer()
+
+        do {
+            targetUrl = try determineLaunchURL()
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Squirtle Frontier could not start"
+            alert.informativeText =
+                "\(error.localizedDescription)\n\n" +
+                "Standalone mode uses the embedded site bundle on 127.0.0.1:4173. " +
+                "If another process owns that port, close it and reopen Squirtle Frontier."
+            alert.runModal()
+            NSApp.terminate(nil)
+            return
+        }
+
         setupWindow()
         loadGame()
     }
 
     func setupMenus() {
         let mainMenu = NSMenu()
-        
-        // App Menu
+
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu(title: "Squirtle Frontier")
         appMenu.addItem(withTitle: "About Squirtle Frontier", action: #selector(showAbout), keyEquivalent: "")
@@ -33,18 +58,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
 
-        // View Menu
         let viewMenuItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
-        let reloadItem = NSMenuItem(title: "Reload", action: #selector(reloadGame), keyEquivalent: "r")
-        viewMenu.addItem(reloadItem)
+        viewMenu.addItem(NSMenuItem(title: "Reload", action: #selector(reloadGame), keyEquivalent: "r"))
         let fullScreenItem = NSMenuItem(title: "Toggle Full Screen", action: #selector(toggleFullScreen), keyEquivalent: "f")
         fullScreenItem.keyEquivalentModifierMask = [.command, .control]
         viewMenu.addItem(fullScreenItem)
         viewMenuItem.submenu = viewMenu
         mainMenu.addItem(viewMenuItem)
 
-        // Window Menu
         let windowMenuItem = NSMenuItem()
         let windowMenu = NSMenu(title: "Window")
         windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
@@ -90,63 +112,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         return reachable
     }
 
-    func findSiteDirectory() -> String? {
-        let fileManager = FileManager.default
+    func findEmbeddedSiteDirectory() -> URL? {
+        guard let resources = Bundle.main.resourceURL else { return nil }
 
-        // 1. Check inside App Bundle Resources/site or Resources/dist
-        if let resURL = Bundle.main.resourceURL {
-            let sitePath = resURL.appendingPathComponent("site").path
-            if fileManager.fileExists(atPath: sitePath) { return sitePath }
-            let distPath = resURL.appendingPathComponent("dist").path
-            if fileManager.fileExists(atPath: distPath) { return distPath }
+        let site = resources.appendingPathComponent("site", isDirectory: true)
+        var isDirectory: ObjCBool = false
+
+        guard FileManager.default.fileExists(atPath: site.path, isDirectory: &isDirectory),
+              isDirectory.boolValue,
+              FileManager.default.fileExists(atPath: site.appendingPathComponent("index.html").path)
+        else {
+            return nil
         }
 
-        // 2. Check local repo dist folder
-        let repoDist = "/Users/andrew/Squirtle_Frontier/dist"
-        if fileManager.fileExists(atPath: repoDist) { return repoDist }
-
-        return nil
+        return site
     }
 
-    func determineAndStartServer() {
-        // Priority 1: Live Vite dev server on 5173
+    func determineLaunchURL() throws -> URL {
+        // Preserve the existing optional live-development attachment.
         if isUrlReachable("http://127.0.0.1:5173/") {
-            targetUrl = URL(string: "http://127.0.0.1:5173/")!
-            return
+            return URL(string: "http://127.0.0.1:5173/")!
         }
 
-        // Priority 2: Existing static server on 4173
-        if isUrlReachable("http://127.0.0.1:4173/") {
-            targetUrl = URL(string: "http://127.0.0.1:4173/")!
-            return
+        guard let site = findEmbeddedSiteDirectory() else {
+            throw LaunchError.missingEmbeddedSite
         }
 
-        // Priority 3: Spawn local Python HTTP server on port 4173
-        guard let siteDir = findSiteDirectory() else {
-            fatalError("Could not find web game directory (dist or site).")
-        }
-
-        let port = "4173"
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
-        process.arguments = ["-m", "http.server", port, "--bind", "127.0.0.1", "--directory", siteDir]
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-
-        do {
-            try process.run()
-            self.serverProcess = process
-            targetUrl = URL(string: "http://127.0.0.1:\(port)/")!
-
-            // Wait for server to come up (up to 3 seconds)
-            for _ in 0..<30 {
-                if isUrlReachable("http://127.0.0.1:\(port)/") { break }
-                Thread.sleep(forTimeInterval: 0.1)
-            }
-        } catch {
-            print("Failed to spawn background python server: \(error)")
-            targetUrl = URL(string: "http://127.0.0.1:4173/")!
-        }
+        // Production always serves this app bundle itself. Never attach to an
+        // unrelated process on 4173: the fixed origin is also the save origin.
+        let server = try EmbeddedHTTPServer(root: site, port: 4173)
+        try server.start()
+        embeddedServer = server
+        return server.origin
     }
 
     func setupWindow() {
@@ -162,12 +159,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         window.minSize = NSSize(width: 960, height: 600)
         window.collectionBehavior = [.fullScreenPrimary]
         window.delegate = self
-
-        // Appearance
         window.titlebarAppearsTransparent = false
         window.isReleasedWhenClosed = false
 
-        // WKWebView Configuration
         let config = WKWebViewConfiguration()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         config.mediaTypesRequiringUserActionForPlayback = []
@@ -176,25 +170,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
         webView.uiDelegate = self
-
         window.contentView?.addSubview(webView)
     }
 
     func loadGame() {
-        let request = URLRequest(url: targetUrl)
-        webView.load(request)
+        webView.load(URLRequest(url: targetUrl))
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        true
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if let proc = serverProcess, proc.isRunning {
-            proc.terminate()
-        }
+        embeddedServer?.stop()
     }
 }
 

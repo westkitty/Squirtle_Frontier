@@ -30,9 +30,13 @@ cp "${SCRIPT_DIR}/SquirtleFrontier.icns" "${APP_BUNDLE}/Contents/Resources/Squir
 echo "Embedding web site bundle..."
 cp -R "${REPO_DIR}/dist" "${APP_BUNDLE}/Contents/Resources/site"
 
-# 5. Compile native Cocoa + WebKit binary
+# 5. Compile native Cocoa + WebKit wrapper and in-process HTTP server
 echo "Compiling native Mach-O executable..."
-swiftc -O -framework Cocoa -framework WebKit \
+swiftc -O \
+  -framework Cocoa \
+  -framework WebKit \
+  -framework Network \
+  "${SCRIPT_DIR}/EmbeddedHTTPServer.swift" \
   "${SCRIPT_DIR}/main.swift" \
   -o "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
@@ -50,7 +54,7 @@ cp -R "${APP_BUNDLE}" "${TARGET_APP}"
 # 8. Register with LaunchServices
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "${TARGET_APP}" || true
 
-# 9. Add icon to macOS Dock using dockutil
+# 9. Add icon to macOS Dock using dockutil when available
 if command -v dockutil >/dev/null 2>&1; then
   echo "Configuring macOS Dock item..."
   dockutil --add "${TARGET_APP}" --label "${APP_NAME}" --replacing "${APP_NAME}" || \

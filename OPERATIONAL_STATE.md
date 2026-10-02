@@ -517,8 +517,10 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Hardware-accelerated WebGL and WebKit engine with developer tools enabled.
     - Intelligent dual-mode server connection:
       - Live Dev: Automatically attaches to active Vite dev server on port `5173` when running.
-      - Standalone: Automatically boots local Python/Node HTTP server on port `4173` serving the embedded production `site` bundle when launched offline/standalone.
-      - Clean process termination on quit (`applicationWillTerminate` terminates child server).
+      - Standalone: Starts an in-process Swift `Network.framework` HTTP server bound to `127.0.0.1:4173`, serving only the embedded production `site` bundle with no Python/Node runtime dependency.
+      - Fixed production origin preserves existing wrapper `localStorage` save identity and normal HTTP semantics for Three.js assets and future service-worker/PWA compatibility.
+      - If another process already owns `4173`, launch fails closed with a native error instead of attaching to arbitrary content.
+      - Clean native listener stop on quit (`applicationWillTerminate` stops the embedded server).
   - High-Resolution macOS Retina App Icon (`macos/SquirtleFrontier.icns`):
     - Created multi-resolution Apple iconset (16x16, 32x32, 64x64, 128x128, 256x256, 512x512, 1024x1024 Retina `ic12` format).
     - Features 3D joyful Squirtle emerging from water splash on vibrant teal ocean gradient with modern macOS squircle antialiased mask.
@@ -534,3 +536,10 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Verified native Cocoa window active via AppleScript (`Squirtle Frontier, 1280x737`).
     - Screen capture verified full 3D WebGL rendering, active Three.js world, HUD controls, and zero errors.
     - Clean quit verified via `osascript`.
+    - Self-contained wrapper replacement verification (2026-10-02):
+      - `macos/EmbeddedHTTPServer.swift` compiles into the app using only Apple `Network.framework`; built binary contains no `/usr/bin/python3` or `http.server` references.
+      - Standalone app process itself owns `127.0.0.1:4173`; HTML, `assets/manifest.json`, and `squirtle.glb` return HTTP 200 with correct MIME types; no Python or Node child server exists.
+      - Installed `/Users/andrew/Applications/Squirtle Frontier.app` executable SHA-256 matches the verified repo-built app executable exactly.
+      - Existing Vite development attachment remains intact: with Vite on `127.0.0.1:5173`, the native app opens without starting `4173`.
+      - Port collision fails closed: when a dummy process occupies `4173`, the wrapper reports `Address already in use` rather than loading that process.
+      - `npm run check` passes architecture checks plus 157/157 unit tests; `npm run browser:dist` passes production movement, persistence, asset-cache, and teardown validation.
