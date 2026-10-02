@@ -114,17 +114,14 @@ const MUTATIONS = [
   {
     what: "the basin colonises with no water, reeds, insects or prey",
     file: "src/simulation/ecosystem.js",
-    from:
-      "    const eligible =\n      this.labWater > 0.5 &&\n      this.labReeds > 0.35 &&\n      this.labInsects > 0.25 &&\n      this.prey > 0.2;",
+    from: "    const eligible =\n      this.labWater > 0.5 &&\n      this.labReeds > 0.35 &&\n      this.labInsects > 0.25 &&\n      this.prey > 0.2;",
     to: "    const eligible = true;",
   },
   {
     what: "a lapse in eligibility keeps the colonisation clock",
     file: "src/simulation/ecosystem.js",
-    from:
-      "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : 0;",
-    to:
-      "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : this.eligibleSeconds;",
+    from: "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : 0;",
+    to: "    this.eligibleSeconds = eligible\n      ? Math.min(3600, this.eligibleSeconds + 1)\n      : this.eligibleSeconds;",
   },
   {
     what: "frogs arrive the moment the basin exists, not after sustained eligibility",
@@ -135,8 +132,7 @@ const MUTATIONS = [
   {
     what: "the caretaker's water sense is a wish, not the cistern",
     file: "src/simulation/settlement.js",
-    from:
-      "    this.waterReliability +=\n      (ecosystem.cistern - this.waterReliability) * (1 - Math.exp(-1 / 120));",
+    from: "    this.waterReliability +=\n      (ecosystem.cistern - this.waterReliability) * (1 - Math.exp(-1 / 120));",
     to: "    this.waterReliability = 1;",
   },
   {
@@ -148,8 +144,7 @@ const MUTATIONS = [
   {
     what: "the herd drinks from fouled or dried shallows",
     file: "src/simulation/near-wildlife.js",
-    from:
-      "    const drinkable =\n      !!this.sites.length && quality > 0.5 && (water?.wetness ?? 1) > 0.25;",
+    from: "    const drinkable =\n      !!this.sites.length && quality > 0.5 && (water?.wetness ?? 1) > 0.25;",
     to: "    const drinkable = !!this.sites.length;",
   },
   {
@@ -167,9 +162,9 @@ const MUTATIONS = [
   {
     what: "water exit fails to trigger an emergent shake-off",
     file: "src/assets/squirtle-presentation.js",
-    from:
-      "    if (this.wasAquatic && !aquatic && b.grounded) {\n      this.shakeTime = 0.6;\n    }",
-    to: "    if (false) {\n      this.shakeTime = 0.6;\n    }",
+    // The exit shake is the swim-sized one; the wading branch below is a separate mutation.
+    from: "if (this.wasAquatic && !aquatic && b.grounded) {",
+    to: "if (false && !aquatic && b.grounded) {",
   },
   {
     what: "attention targets behind Squirtle outside field of view are attended anyway",
@@ -186,18 +181,14 @@ const MUTATIONS = [
   {
     what: "shell slide tracks attention targets instead of retracting head",
     file: "src/assets/squirtle-presentation.js",
-    from:
-      "    if (inShell || this.restProgress > 0.45) {\n      // Complete suppression in shell slide or peaceful slumber\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
-    to:
-      "    if (false) {\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+    from: "    if (inShell || this.restProgress > 0.45) {\n      // Complete suppression in shell slide or peaceful slumber\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
+    to: "    if (false) {\n      this.lookYaw = 0;\n      this.lookPitch = 0;\n      this.attentionTime = 0;\n      this.activeAttention = null;\n    }",
   },
   {
     what: "undisturbed idle stays standing upright instead of settling into slumber crouch",
     file: "src/assets/squirtle-presentation.js",
-    from:
-      "    const isResting =\n      (b.resting || this.idleTime > 5.5) &&\n      b.grounded &&\n      !inShell &&\n      !aquatic &&\n      !isMoving;",
-    to:
-      "    const isResting = false;",
+    from: "    const isResting =\n      (b.resting || this.idleTime > 5.5) &&\n      b.grounded &&\n      !inShell &&\n      !aquatic &&\n      !isMoving;",
+    to: "    const isResting = false;",
   },
   {
     what: "water jet fails to activate hydrodynamic surge on jet voice",
@@ -208,7 +199,7 @@ const MUTATIONS = [
   {
     what: "dive mode fails to activate submerged cavern sub-drone",
     file: "src/audio.js",
-    from: "    const subLevel = body.mode === \"dive\" ? 0.26 : 0;",
+    from: '    const subLevel = body.mode === "dive" ? 0.26 : 0;',
     to: "    const subLevel = 0;",
   },
   {
@@ -220,8 +211,10 @@ const MUTATIONS = [
   {
     what: "aquatic surface wake fails to generate ripples while swimming",
     file: "src/player/world-effects.js",
-    from: "    if (inWater && (speed > 0.25 || body.mode === \"swim\" || body.mode === \"dive\")) {",
-    to: "    if (false) {",
+    // Only the wake gate: `inWater` also feeds the splash below, and a mutation that kills
+    // two rules cannot be attributed to a named test.
+    from: "      inWater &&\n      (speed > 0.25 ||",
+    to: "      false &&\n      (speed > 0.25 ||",
   },
   {
     what: "strangers can drink from the caretaker's bowl without familiarity",
@@ -244,7 +237,7 @@ const MUTATIONS = [
   {
     what: "caretaker welcome fails to animate welcoming arm wave gesture",
     file: "src/player/habitat-view.js",
-    from: "        const wave = mode === \"welcome\" ? Math.sin(time * 4.2) * 0.16 : 0;",
+    from: '        const wave = mode === "welcome" ? Math.sin(time * 4.2) * 0.16 : 0;',
     to: "        const wave = 0;",
   },
   {

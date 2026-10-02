@@ -1,6 +1,32 @@
 import { hash2i, clamp } from "../rng.js";
+import { WORLD } from "../worldgen.js";
 import { RECORD_BANDS } from "./deep-history.js";
 import { REACHES, reachAt } from "./reaches.js";
+
+// What the player has stood on, in five metre squares. The grid spans the valley, so the
+// limits below are derived from the world rather than from the area an early build happened
+// to be playable in: this validation also runs on *write*, and a bound tighter than the
+// ground the body can reach would quietly make distant play unsavable.
+export const MEMORY_CELL = 5;
+export const SURVEY_SPAN = 29; // cells across the memory panel's window
+export const MEMORY_CELL_LIMIT = 4096; // how many cells one save may carry
+const COORD_LIMIT = Math.ceil(WORLD.half / MEMORY_CELL),
+  CELL_KEY = /^-?\d{1,3},-?\d{1,3}$/;
+const surveyCell = (v) => Math.floor(v / MEMORY_CELL),
+  validKey = (key) => {
+    if (!CELL_KEY.test(key)) return false;
+    const [x, z] = key.split(",").map(Number);
+    return (
+      Number.isInteger(x) &&
+      Number.isInteger(z) &&
+      Math.abs(x) <= COORD_LIMIT &&
+      Math.abs(z) <= COORD_LIMIT
+    );
+  };
+// The panel shows a window, not the whole valley: offsets are taken relative to wherever
+// the body is standing, so the map reads the same at the rim as it does at spawn.
+const surveyOffset = (cell, centre) =>
+  (cell - centre + (SURVEY_SPAN - 1) / 2) * MEMORY_CELL;
 export const LANDMARKS = [
   { id: "bank", name: "The first bank", x: -10, z: 18 },
   { id: "debris", name: "The broken tributary", x: -6, z: 12 },
@@ -9,6 +35,7 @@ export const LANDMARKS = [
   { id: "settlement", name: "Reedside water house", x: -15, z: -12 },
   { id: "wetland", name: "The reed shallows", x: -6, z: -15 },
 ];
+export { surveyCell, surveyOffset };
 export class PlaceMemory {
   constructor(seed = 1337) {
     this.seed = seed;
@@ -42,7 +69,7 @@ export class PlaceMemory {
     if (!drinkers?.length) return;
     for (const site of drinkers) {
       if (Math.hypot(site.x - body.x, site.z - body.z) > 10) continue;
-      const key = `${Math.floor(site.x / 5)},${Math.floor(site.z / 5)}`;
+      const key = `${surveyCell(site.x)},${surveyCell(site.z)}`;
       if (!(key in this.drinks) && Object.keys(this.drinks).length >= 200)
         return;
       this.drinks[key] = Math.min(255, (this.drinks[key] ?? 0) + 1);
@@ -51,8 +78,11 @@ export class PlaceMemory {
   // Called only for present player observations. Never from offline simulation.
   observe(body, place, tick, ecosystem) {
     if (place === "frontier") {
-      const key = `${Math.floor(body.x / 5)},${Math.floor(body.z / 5)}`;
-      if (!this.cells[key] && Object.keys(this.cells).length < 841)
+      const key = `${surveyCell(body.x)},${surveyCell(body.z)}`;
+      if (
+        !this.cells[key] &&
+        Object.keys(this.cells).length < MEMORY_CELL_LIMIT
+      )
         this.cells[key] = 1;
       else if (this.cells[key])
         this.cells[key] = Math.min(255, this.cells[key] + 1);
@@ -114,20 +144,14 @@ export class PlaceMemory {
       !s.cells ||
       typeof s.cells !== "object" ||
       Array.isArray(s.cells) ||
-      Object.keys(s.cells).length > 841 ||
+      Object.keys(s.cells).length > MEMORY_CELL_LIMIT ||
       !Array.isArray(s.places) ||
       s.places.length > 6
     )
       throw new Error("Invalid map memory");
     const r = new PlaceMemory(seed);
     for (const [k, v] of Object.entries(s.cells)) {
-      if (
-        !/^-?\d{1,2},-?\d{1,2}$/.test(k) ||
-        k.split(",").some((n) => Number(n) < -14 || Number(n) > 14) ||
-        !Number.isInteger(v) ||
-        v < 1 ||
-        v > 255
-      )
+      if (!validKey(k) || !Number.isInteger(v) || v < 1 || v > 255)
         throw new Error("Invalid survey cell");
       r.cells[k] = v;
     }
@@ -165,13 +189,7 @@ export class PlaceMemory {
       const keys = Object.keys(s.drinks);
       if (keys.length > 200) throw new Error("Too many drink tracks");
       for (const [k, v] of keys.map((key) => [key, s.drinks[key]])) {
-        if (
-          !/^-?\d{1,2},-?\d{1,2}$/.test(k) ||
-          k.split(",").some((n) => Number(n) < -14 || Number(n) > 14) ||
-          !Number.isInteger(v) ||
-          v < 1 ||
-          v > 255
-        )
+        if (!validKey(k) || !Number.isInteger(v) || v < 1 || v > 255)
           throw new Error("Invalid drink track");
         r.drinks[k] = v;
       }

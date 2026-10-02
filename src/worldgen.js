@@ -23,6 +23,14 @@ WORLD.size = WORLD.half * 2;
 WORLD.stateCell = WORLD.size / WORLD.stateRes;
 WORLD.exploreCell = WORLD.size / WORLD.exploreRes;
 WORLD.fireCell = WORLD.size / WORLD.fireRes;
+
+// Where the generated rim starts climbing into the wall that surrounds the map, as a
+// fraction of the world's half-width. The movement limit is *derived from this* rather
+// than typed in separately, so the two can never disagree: a body stops where the ground
+// stops being ground, and everything the terrain offers between spawn and that line is
+// reachable -- landmarks, herds, settlements, watershed and all.
+export const RIM_START = 0.78;
+export const PLAYABLE_BOUND = Math.floor(WORLD.half * RIM_START);
 WORLD.regionCell = WORLD.size / WORLD.regionRes;
 
 // ---------------------------------------------------------------------------
@@ -201,8 +209,8 @@ export function baseHeight(x, z) {
 
   // Ring of border mountains so the world feels bounded but natural.
   const edge = Math.max(Math.abs(x), Math.abs(z)) / WORLD.half;
-  h += smoothstep(0.78, 1.05, edge) * 260;
-  h = lerp(-6, h, clamp(m + smoothstep(0.78, 1.0, edge), 0, 1));
+  h += smoothstep(RIM_START, 1.05, edge) * 260;
+  h = lerp(-6, h, clamp(m + smoothstep(RIM_START, 1.0, edge), 0, 1));
   return h;
 }
 

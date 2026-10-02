@@ -1,58 +1,58 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-10-02T14:26:02.469Z",
+  "date": "2026-10-02T15:10:17.928Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 50,
-      "p95Ms": 233.29999999999927,
+      "medianMs": 66.69999999999982,
+      "p95Ms": 166.60000000000036,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 145,
+        "frame": 146,
         "calls": 40,
         "triangles": 31236,
         "points": 0,
         "lines": 122
       },
-      "heap": 20500000,
+      "heap": 18200000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "quality": "low",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 49.900000000001455,
+      "medianMs": 49.89999999999782,
       "p95Ms": 100,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 270,
+        "frame": 271,
         "calls": 40,
         "triangles": 31236,
         "points": 0,
         "lines": 122
       },
-      "heap": 20500000,
+      "heap": 18200000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "label": "channel-cut (standing in the groove)",
       "samples": 110,
       "medianMs": 83.30000000000291,
-      "p95Ms": 150.09999999999854,
+      "p95Ms": 166.60000000000582,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 680,
+        "frame": 683,
         "calls": 40,
         "triangles": 55481,
         "points": 0,
@@ -62,14 +62,14 @@
     {
       "label": "channel-cut (viewed from the next chunk over)",
       "samples": 110,
-      "medianMs": 50,
+      "medianMs": 66.5,
       "p95Ms": 100,
       "memory": {
         "geometries": 21,
         "textures": 6
       },
       "render": {
-        "frame": 816,
+        "frame": 818,
         "calls": 26,
         "triangles": 32109,
         "points": 0,
@@ -80,10 +80,10 @@
   "adaptiveAb": {
     "pinnedFullDetail": {
       "samples": 140,
-      "medianMs": 66.70000000000073,
+      "medianMs": 83.29999999999927,
       "p95Ms": 150,
       "adaptiveValue": 1,
-      "adaptiveChangesCumulative": 1,
+      "adaptiveChangesCumulative": 2,
       "pixelRatio": 1,
       "buffer": "960x640",
       "css": "960x640",
@@ -92,10 +92,10 @@
     },
     "adaptiveEnabled": {
       "samples": 100,
-      "medianMs": 66.69999999999709,
-      "p95Ms": 166.6999999999971,
+      "medianMs": 66.70000000000437,
+      "p95Ms": 150,
       "adaptiveValue": 0.85,
-      "adaptiveChangesCumulative": 2,
+      "adaptiveChangesCumulative": 3,
       "pixelRatio": 0.85,
       "buffer": "816x544",
       "css": "960x640",
@@ -106,21 +106,21 @@
       "bufferShrank": true,
       "layoutUnchanged": true,
       "scaleReduced": true,
-      "medianDeltaMs": 0,
-      "p95DeltaMs": 16.7,
+      "medianDeltaMs": -16.6,
+      "p95DeltaMs": 0,
       "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
     }
   },
   "channelCut": {
     "samples": 110,
     "medianMs": 83.30000000000291,
-    "p95Ms": 150.09999999999854,
+    "p95Ms": 166.60000000000582,
     "memory": {
       "geometries": 23,
       "textures": 6
     },
     "render": {
-      "frame": 680,
+      "frame": 683,
       "calls": 40,
       "triangles": 55481,
       "points": 0,
@@ -129,14 +129,14 @@
   },
   "channelDistant": {
     "samples": 110,
-    "medianMs": 50,
+    "medianMs": 66.5,
     "p95Ms": 100,
     "memory": {
       "geometries": 21,
       "textures": 6
     },
     "render": {
-      "frame": 816,
+      "frame": 818,
       "calls": 26,
       "triangles": 32109,
       "points": 0,
@@ -154,7 +154,7 @@
       "loads": 16,
       "unloads": 16,
       "held": 0,
-      "frames": 816,
+      "frames": 818,
       "samples": 36112,
       "maxFrameSamples": 6063,
       "holes": 1

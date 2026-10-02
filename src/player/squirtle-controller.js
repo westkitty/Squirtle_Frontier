@@ -3,6 +3,7 @@ import { clamp } from "../rng.js";
 import { recordPose } from "./render-pose.js";
 import {
   AQUATIC,
+  CONTACT,
   MODES,
   SHORE,
   depthBands,
@@ -13,6 +14,7 @@ import {
 } from "./locomotion-states.js";
 import { shortestAngle } from "./render-pose.js";
 import { JET_RULES } from "../beam.js";
+import { PLAYABLE_BOUND } from "../worldgen.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
   // The pose the renderer interpolates *from* is the one the body held when this
@@ -224,35 +226,129 @@ export function stepBody(b, input, env, dt) {
     oz = b.z;
   let nx = b.x + b.vx * dt,
     nz = b.z + b.vz * dt;
-  const next = env.sample(nx, nz);
+  const arriving = Math.hypot(b.vx, b.vz),
+    next = env.sample(nx, nz),
+    // A bounce and a thump both answer an *arrival*. While the body is already held
+    // against something -- a trunk, a bank, the rim -- the inward component is only taken
+    // away, and no new feedback is earned. That is the difference between leaning on a
+    // wall and buzzing along it, and it is what stops a camera recoil from stuttering
+    // while the player keeps walking into ground they cannot climb.
+    wasTouching = b.contactTime > 0;
+  let contacted = false;
   // Body-sized step limit; steep steps block horizontal travel, not vertical jet launches.
-  if (b.grounded && next.height - floor.height > 0.18 && b.jetTime === 0) {
+  if (
+    b.grounded &&
+    next.height - floor.height > CONTACT.stepBlock &&
+    b.jetTime === 0
+  ) {
     nx = b.x;
     nz = b.z;
+    contacted = true;
+    // Ground you cannot climb is a collision like any other, so the thump it earns is a
+    // function of how hard the body arrived, and only of that: a bank you are pressing
+    // against stops being news after the first step.
+    if (!wasTouching && arriving > CONTACT.grazeSpeed)
+      b.impact = Math.max(
+        b.impact,
+        Math.min(
+          0.5,
+          (arriving - CONTACT.grazeSpeed) / (CONTACT.hardSpeed * 2),
+        ),
+      );
     b.vx *= 0.1;
     b.vz *= 0.1;
-    b.impact = 0.15;
   }
-  for (const o of env.obstaclesAt?.(b.x, b.z) || env.obstacles) {
-    const dx = nx - o.x,
-      dz = nz - o.z,
-      d = Math.hypot(dx, dz),
-      radius = o.radius + 0.23;
-    if (d < radius && b.y < env.sample(o.x, o.z).height + o.height) {
-      const normalX = d > 0.001 ? dx / d : 1,
-        normalZ = d > 0.001 ? dz / d : 0;
+  // A caller that hands the step a non-finite destination must not have the body
+  // teleported onto whichever obstacle its arithmetic happened to land near: the
+  // position stays where it was, and the invalid velocity is left for the finite-state
+  // guard at the end of the step to catch.
+  if (!Number.isFinite(nx) || !Number.isFinite(nz)) {
+    nx = b.x;
+    nz = b.z;
+  }
+  // Contacts come from the cell the body is arriving at *and* the one it is leaving:
+  // reading only the old position meant a long step past a tree was resolved a frame
+  // late, which is the difference between a bump and standing inside a trunk.
+  const contacts = contactSet(env, ox, oz, nx, nz);
+  for (let pass = 0; pass < CONTACT.passes; pass++) {
+    let touched = false;
+    for (const o of contacts) {
+      const dx = nx - o.x,
+        dz = nz - o.z,
+        d = Math.hypot(dx, dz),
+        radius = o.radius + CONTACT.bodyRadius;
+      if (d >= radius) continue;
+      // Overlap is three-dimensional: a body resting on the ground is always in the
+      // collider's span, a body that has hopped clear above it is not, and a swimmer that
+      // has gone under a log is not either. The previous one-sided test could only ask
+      // "above?", which is why a submerged body was blocked by things over its head.
+      const base = env.sample(o.x, o.z).height,
+        crown = base + o.height;
+      if (b.y + CONTACT.bodyRadius <= base || b.y - CONTACT.bodyRadius >= crown)
+        continue;
+      touched = true;
+      contacted = true;
+      const normalX = d > 1e-4 ? dx / d : 1,
+        normalZ = d > 1e-4 ? dz / d : 0;
+      // Placed exactly on the surface: not left overlapping, and not thrown clear of it.
       nx = o.x + normalX * radius;
       nz = o.z + normalZ * radius;
       const into = b.vx * normalX + b.vz * normalZ;
       if (into < 0) {
-        b.vx -= into * normalX * 1.35;
-        b.vz -= into * normalZ * 1.35;
+        // The inward component is removed and a bounded fraction of it comes back: the
+        // bounce is what makes a slide into a rock feel like hitting something, and a
+        // restitution under 1 guarantees contact cannot return more than it took. Only an
+        // arrival earns one -- a body already touching, or one arriving too slowly for the
+        // push back to be worth feeling, just has the inward component taken away. That is
+        // what lets a body slide along a bank instead of buzzing off it.
+        const grazing = -into <= CONTACT.grazeSpeed,
+          arrival = !grazing && !wasTouching,
+          restitution = arrival ? CONTACT.restitution : 0;
+        b.vx -= into * normalX * (1 + restitution);
+        b.vz -= into * normalZ * (1 + restitution);
+        // Grazes are felt, head-on arrivals are felt *more*, and neither can exceed a
+        // full-strength impact: the value drives camera recoil and shell wobble, so an
+        // unbounded number is a screen shake waiting to happen.
+        if (arrival)
+          b.impact = Math.max(
+            b.impact,
+            Math.min(
+              1,
+              (-into - CONTACT.grazeSpeed) /
+                (CONTACT.hardSpeed - CONTACT.grazeSpeed),
+            ),
+          );
       }
-      b.impact = 0.2;
     }
+    if (!touched) break;
   }
-  b.x = clamp(nx, -70, 70);
-  b.z = clamp(nz, -70, 70);
+  // The world's own limit, from the terrain's rim rather than a prototype's box. The
+  // outward component is what stops; travel along the boundary keeps working, so
+  // reaching the rim is an edge to walk, not a wall to get stuck against.
+  const bound = PLAYABLE_BOUND;
+  if (nx < -bound || nx > bound || nz < -bound || nz > bound) {
+    const cx = clamp(nx, -bound, bound),
+      cz = clamp(nz, -bound, bound),
+      outward = Math.max(
+        Math.abs(nx) > Math.abs(nz) ? Math.abs(nx) - bound : 0,
+        Math.abs(nz) > Math.abs(nx) ? Math.abs(nz) - bound : 0,
+      );
+    contacted = true;
+    if (cx !== nx && Math.sign(b.vx) === Math.sign(nx)) b.vx = 0;
+    if (cz !== nz && Math.sign(b.vz) === Math.sign(nz)) b.vz = 0;
+    nx = cx;
+    nz = cz;
+    if (!wasTouching)
+      b.impact = Math.max(
+        b.impact,
+        Math.min(0.6, (outward / dt || 0) / CONTACT.hardSpeed),
+      );
+  }
+  // The clock the next step reads to tell an arrival from a continuing press. Capped, so
+  // a body that has been wedged an hour says the same thing as one wedged a minute.
+  b.contactTime = contacted ? Math.min(60, b.contactTime + dt) : 0;
+  b.x = nx;
+  b.z = nz;
   b.y += b.vy * dt;
   if (
     aquatic &&
@@ -286,4 +382,17 @@ export function stepBody(b, input, env, dt) {
     b.vz = 0;
     b.mode = MODES.LAND;
   }
+}
+
+// Obstacles that could matter for this step, without re-deriving the world's collider
+// grid twice: the sets are shared instances from the region's cache, so identity is
+// enough to dedupe the overlap between the leaving cell and the arriving one.
+function contactSet(env, ox, oz, nx, nz) {
+  if (!env.obstaclesAt) return env.obstacles || [];
+  const here = env.obstaclesAt(ox, oz),
+    there = env.obstaclesAt(nx, nz);
+  if (here === there) return here;
+  const merged = new Set(here);
+  for (const o of there) merged.add(o);
+  return merged;
 }

@@ -71,8 +71,18 @@ test("exploration is bounded, malformed map/fire rejects and history is reproduc
   m.observe({ x: -10, z: 18 }, "frontier", 1, {});
   assert.equal(Object.keys(m.cells).length, 1);
   assert.ok(m.places.includes("bank"));
-  assert.throws(() =>
-    PlaceMemory.restore({ ...m.snapshot(), cells: { "99,99": 1 } }, 1337),
+  // A cell beyond the world's own edge is rejected. Cells far from spawn are not: the
+  // survey grid spans the valley, so the validator's bound is the world's, and a save that
+  // remembered ground at 500 m is a save worth having.
+  assert.throws(
+    () =>
+      PlaceMemory.restore({ ...m.snapshot(), cells: { "999,999": 1 } }, 1337),
+    /survey cell/,
+  );
+  assert.deepEqual(
+    PlaceMemory.restore({ ...m.snapshot(), cells: { "99,99": 1 } }, 1337).cells,
+    { "99,99": 1 },
+    "a cell 495 m from spawn should be readable ground, not a corrupt save",
   );
   assert.throws(() =>
     FrontierSystems.restore(

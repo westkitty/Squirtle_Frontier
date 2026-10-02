@@ -134,3 +134,17 @@ export function resolveShoreMode(previous, context) {
     return MODES.DIVE;
   return MODES.SWIM;
 }
+
+// Contact rules for the body, in one place so the simulation, the camera recoil it
+// causes and the tests all read the same numbers.
+export const CONTACT = Object.freeze({
+  bodyRadius: 0.23, // how far the shell stands off an obstruction's centre
+  grazeSpeed: 0.7, // below this closing speed there is nothing to feel
+  hardSpeed: 7, // at this closing speed the impact is full strength
+  // A fraction of an arriving impact comes back as a bounce. It stays under 1 so contact
+  // can never return more speed than it took, and it is skipped entirely while the body
+  // is already touching something, which is what turns a hit into a slide.
+  restitution: 0.35,
+  stepBlock: 0.18, // how tall a step grounded travel refuses
+  passes: 2, // resolution sweeps, so a wedged body can find a way out
+});

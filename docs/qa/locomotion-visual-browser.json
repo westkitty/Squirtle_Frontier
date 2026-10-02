@@ -11,15 +11,15 @@
     ]
   },
   "deep": {
-    "body": -1.102,
+    "body": -1.4,
     "mode": "dive",
     "underwater": true,
     "density": 0.13
   },
   "surfacing": {
     "stateFlips": 0,
-    "maxDensityStep": 0.0034,
-    "betweenFrames": 7,
+    "maxDensityStep": 0.00224,
+    "betweenFrames": 5,
     "endDensity": 0.025
   },
   "resize": {
@@ -40,7 +40,7 @@
     ],
     "ratio": 0.7,
     "size": "1024x640@0.700",
-    "frames": 467
+    "frames": 466
   },
   "streaming": {
     "maxFrameSamples": 2178,

@@ -19,11 +19,15 @@ import {
   recordRows,
   strataHoldReady,
 } from "./simulation/deep-history.js";
-import { LANDMARKS } from "./simulation/place-memory.js";
+import {
+  LANDMARKS,
+  surveyCell,
+  surveyOffset,
+} from "./simulation/place-memory.js";
 import * as THREE from "three";
 import { pixelRatioFor } from "./render-quality.js";
 import { WorldState } from "./worldstate.js";
-import { heightAt } from "./worldgen.js";
+import { heightAt, PLAYABLE_BOUND } from "./worldgen.js";
 import { Streaming } from "./streaming.js";
 import { Input } from "./input.js";
 import { Loop } from "./loop.js";
@@ -96,8 +100,17 @@ async function boot() {
       assets = new AssetManager(),
       input = new Input(renderer.domElement),
       audio = new Audio();
-    const loaded = load(state, localStorage); // Existing baseline saves can be outside the proving ground.
-    if (Math.abs(state.player.x) > 70 || Math.abs(state.player.z) > 70)
+    const loaded = load(state, localStorage);
+    // A save may rest anywhere the simulation could have taken it, which is now the whole
+    // valley rather than a prototype's box around spawn. Only a position the body could not
+    // have reached -- non-finite, or outside the rim that bounds the terrain -- is dropped,
+    // and dropping it is the only way a save returns to spawn.
+    if (
+      !Number.isFinite(state.player.x) ||
+      !Number.isFinite(state.player.z) ||
+      Math.abs(state.player.x) > PLAYABLE_BOUND ||
+      Math.abs(state.player.z) > PLAYABLE_BOUND
+    )
       state.player = { x: -10, z: 18 };
     const body = createBody(
       state.player.x,
@@ -376,9 +389,11 @@ async function boot() {
       document.querySelector("#survey").replaceChildren(
         ...Object.keys(state.memory.cells).map((key) => {
           const [x, z] = key.split(",").map(Number),
+            here = surveyCell(state.player.x),
+            now = surveyCell(state.player.z),
             r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-          r.setAttribute("x", String((x + 14) * 5));
-          r.setAttribute("y", String((z + 14) * 5));
+          r.setAttribute("x", String(surveyOffset(x, here)));
+          r.setAttribute("y", String(surveyOffset(z, now)));
           r.setAttribute("width", "5");
           r.setAttribute("height", "5");
           r.setAttribute("fill", "#96bbaa");

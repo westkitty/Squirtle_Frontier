@@ -1,0 +1,143 @@
+{
+  "environment": "Chromium 140 / ANGLE SwiftShader; frame timing here is software rendering, not hardware or mobile performance",
+  "bound": 897,
+  "contact": {
+    "bodyRadius": 0.23,
+    "grazeSpeed": 0.7,
+    "hardSpeed": 7,
+    "restitution": 0.35,
+    "stepBlock": 0.18,
+    "passes": 2
+  },
+  "scriptedSetup": "blocks 2 and 3 place the body once (position and velocity); every later value is the simulation's own",
+  "run": {
+    "samples": 169,
+    "metresTravelled": 24.4,
+    "largestFrameStep": 0.7,
+    "medianFrameMs": 32,
+    "p95FrameMs": 143,
+    "worstClearanceViolation": 0,
+    "framesWithin2cmOfACollider": 0,
+    "maxImpact": 0.4754
+  },
+  "arrivalTrace": [
+    {
+      "gap": 0.2783,
+      "impact": 0.5255,
+      "speed": 0.752,
+      "hudSpeed": "0.8 m/s"
+    },
+    {
+      "gap": 0.3259,
+      "impact": 0.0588,
+      "speed": 0.001,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    },
+    {
+      "gap": 0.326,
+      "impact": 0,
+      "speed": 0,
+      "hudSpeed": "0.0 m/s"
+    }
+  ],
+  "arrival": {
+    "traceRecorded": true,
+    "tree": {
+      "x": -10,
+      "z": -8,
+      "radius": 1.4,
+      "standOff": 0.23
+    },
+    "peakImpact": 0.525,
+    "minGap": 0.2783,
+    "framesSampled": 60,
+    "peakSpeedDuringContact": 0.752,
+    "speedAfter": 0
+  },
+  "rim": {
+    "bound": 897,
+    "terrainHeightAtBound": 20.6,
+    "terrainHeightTwoHundredBeyond": 201.7,
+    "maxZ": 894.571,
+    "outwardVelocityTail": 0,
+    "jitterMetres": 0,
+    "travelCreditedWhileBlocked": 0,
+    "hudSpeedTail": "0.0 m/s"
+  },
+  "saveAttempt": {
+    "status": "This place is remembered.",
+    "stored": {
+      "x": -180,
+      "z": 240
+    }
+  },
+  "distantSave": {
+    "seeded": {
+      "x": -180,
+      "z": 240,
+      "height": 27.18
+    },
+    "restored": {
+      "x": -180,
+      "z": 240
+    },
+    "restoredBody": {
+      "x": -180,
+      "z": 240
+    },
+    "framesSampled": 73,
+    "metresTravelledAfterRestore": 6.5,
+    "note": "under the previous guard this save was discarded for spawn at (-10, 18)"
+  },
+  "frameCost": {
+    "openMedian": 76.4,
+    "busyMedian": 62.9,
+    "openFrames": 33,
+    "busyFrames": 39,
+    "note": "wall clock in a software rasteriser, reported rather than asserted"
+  },
+  "summary": "169 frames of running with no collider penetration, a 0.53 impact resolved against a real tree, the rim stopping the body at 897 m with 0.000 m credited while blocked, and a save from 240 m restoring where it was written. Human feel remains unverified.",
+  "pageErrors": []
+}

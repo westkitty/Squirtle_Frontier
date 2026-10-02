@@ -21,6 +21,10 @@ export function createBody(x = -10, z = 18, y = 1) {
     jetTime: 0,
     distance: 0,
     impact: 0,
+    // Seconds the shell has been held against something, reset on separation. A collision
+    // response needs to know whether this step *arrived* somewhere or merely stayed there;
+    // this clock is the only record of the difference.
+    contactTime: 0,
     resting: false,
     prevPose: null,
   };

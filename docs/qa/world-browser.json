@@ -14,7 +14,7 @@
       "textures": 6
     },
     {
-      "geometries": 16,
+      "geometries": 19,
       "textures": 6
     },
     {
@@ -52,8 +52,8 @@
   ],
   "bypass": 0.11333333333333334,
   "suppression": {
-    "heat": 0.7749999999999999,
-    "soaked": 0.08333333333333333
+    "heat": 0.7024999999999998,
+    "soaked": 0.13133333333333333
   },
   "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
@@ -111,20 +111,20 @@
       7
     ],
     "band": 8,
-    "y": -21.37
+    "y": -21.32
   },
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
     "loop": {
-      "simTime": 25.033333333333193,
-      "realTime": 25.898900000000026,
-      "steps": 1502,
-      "discarded": 0.8498000000000004,
-      "drops": 6,
-      "alpha": 0.9460000000002686
+      "simTime": 25.216666666666516,
+      "realTime": 25.782200000000046,
+      "steps": 1513,
+      "discarded": 0.5498999999999996,
+      "drops": 5,
+      "alpha": 0.9380000000003578
     },
     "pose": {
-      "alpha": 0.9460000000002686,
+      "alpha": 0.9380000000003578,
       "x": 0,
       "y": 0,
       "z": 5,
@@ -148,7 +148,7 @@
         "yaw": 3.141592653589793,
         "pitch": 0
       },
-      "poseAlpha": 0.9460000000002686,
+      "poseAlpha": 0.9380000000003578,
       "poseInterval": 0.016666666666666666
     },
     "chunks": {
@@ -157,7 +157,7 @@
       "loads": 27,
       "unloads": 27,
       "held": 0,
-      "frames": 133,
+      "frames": 160,
       "samples": 63643,
       "maxFrameSamples": 6063,
       "holes": 2
@@ -167,7 +167,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 594,
+      "frame": 575,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
@@ -198,8 +198,8 @@
       "distance": 5
     },
     "gaze": {
-      "yaw": -0.17597944560012413,
-      "pitch": -0.16084614984257598
+      "yaw": -0.4687824831494421,
+      "pitch": -0.2560493489109717
     },
     "sleeping": false,
     "sleepProgress": 0,

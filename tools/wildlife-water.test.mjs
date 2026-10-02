@@ -234,7 +234,7 @@ test("drink tracks record what was seen here, capped and validated", () => {
   );
   assert.throws(
     () =>
-      PlaceMemory.restore({ ...m.snapshot(), drinks: { "99,99": 1 } }, 1337),
+      PlaceMemory.restore({ ...m.snapshot(), drinks: { "999,999": 1 } }, 1337),
     /drink track/,
   );
   assert.throws(
