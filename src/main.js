@@ -570,6 +570,10 @@ async function boot() {
           });
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z);
+        // One intent, produced by the orientation authority, for both the planar
+        // and the aquatic read: the 3D vector carries the look pitch, and the
+        // controller decides whether to obey it based on the state the body is in.
+        const intent = rig.intent3(controls.x, controls.z, 1);
         senseHeld = !!controls.sense;
         const action = placeAction(state.place, body, {
           settlement: state.settlement,
@@ -625,7 +629,7 @@ async function boot() {
             : state.place === "lab"
               ? labRegion
               : liveRegion;
-        stepBody(body, { ...controls, ...world }, env, dt);
+        stepBody(body, { ...controls, ...world, intent }, env, dt);
         if (state.place === "lab") {
           const cx = Math.max(-7.5, Math.min(7.5, body.x)),
             cz = Math.max(-7.5, Math.min(7.5, body.z));

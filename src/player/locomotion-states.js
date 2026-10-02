@@ -38,6 +38,34 @@ export const SHORE = Object.freeze({
   swimFloat: 0.22,
 });
 
+// Aquatic tuning, in one place because these numbers are the model. Rates are
+// exponential-approach constants: time to 90% of a commanded change is ln(10)/rate,
+// so `turnRate` 7.5 settles in ~0.31 s while the glide constant decides how far a
+// release coasts. The pair is the whole argument that a creature can be responsive
+// and still have inertia: the response to intent is fast, the decay of momentum is
+// slow, and neither is a compromise on the other.
+export const AQUATIC = Object.freeze({
+  speed: 4.8,
+  verticalAuthority: 2.9, // m/s a full vertical intent is worth
+  turnRate: 7.5,
+  commandRate: 9.5, // Dive/Rise are explicit, so they answer harder than a glance
+  glide: 1.7,
+  buoyancy: 6,
+  faceRate: 14,
+  pitchRate: 8,
+  surfaceResist: 0.35, // a nosed-down camera at the surface is discounted, not obeyed
+  recovery: 2.4, // ceiling on the buoyant rise, so surfacing is firm but not a launch
+  // Below the surface band a released body drifts up only just - enough that depth
+  // is never a trap, small enough that it does not steal the Deep Record's hold,
+  // which asks the player to stay in one band on purpose. Ascending under power is
+  // what the Rise key is for.
+  trim: 0.1,
+  bandMargin: 0.15, // how far past `diveBelow` the surface spring still reaches
+  heaveDamping: 2.4, // velocity feedback, so surfacing converges instead of bobbing
+  pitchLimit: 1.2, // presentation bound on the body's tilt
+  minSpeedToFace: 0.25,
+});
+
 export const isWet = (mode) =>
   mode === MODES.WADE || mode === MODES.SWIM || mode === MODES.DIVE;
 export const isAquatic = (mode) => mode === MODES.SWIM || mode === MODES.DIVE;
@@ -102,6 +130,7 @@ export function resolveShoreMode(previous, context) {
   // diver who lets go of the key stays under until the buoyant rise gets it back
   // inside `diveAbove`, instead of flipping states mid-ascent.
   if (diving) return MODES.DIVE;
-  if (previous === MODES.DIVE && submersion > SHORE.diveAbove) return MODES.DIVE;
+  if (previous === MODES.DIVE && submersion > SHORE.diveAbove)
+    return MODES.DIVE;
   return MODES.SWIM;
 }

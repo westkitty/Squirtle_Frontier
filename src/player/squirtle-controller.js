@@ -2,6 +2,7 @@
 import { clamp } from "../rng.js";
 import { recordPose } from "./render-pose.js";
 import {
+  AQUATIC,
   MODES,
   SHORE,
   depthBands,
@@ -10,6 +11,7 @@ import {
   shoreReading,
   withSubmersion,
 } from "./locomotion-states.js";
+import { shortestAngle } from "./render-pose.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
 export function stepBody(b, input, env, dt) {
   // The pose the renderer interpolates *from* is the one the body held when this
@@ -63,7 +65,7 @@ export function stepBody(b, input, env, dt) {
     wading
   )
     b.resting = false;
-  const speed = aquatic ? 4.8 : wading ? 1.7 : input.run ? 3.8 : 2.2;
+  const speed = aquatic ? AQUATIC.speed : wading ? 1.7 : input.run ? 3.8 : 2.2;
   if (moving) {
     const target = Math.atan2(input.x, input.z),
       delta = Math.atan2(Math.sin(target - b.yaw), Math.cos(target - b.yaw));
@@ -82,29 +84,105 @@ export function stepBody(b, input, env, dt) {
     const drag = floor.height < 0.5 ? 0.23 : 0.7;
     b.vx *= Math.exp(-drag * dt);
     b.vz *= Math.exp(-drag * dt);
+  } else if (aquatic && !jetting) {
+    // True 3D swimming. The intent is a world-space vector that the orientation
+    // authority has already resolved against camera yaw *and* pitch, so pointing
+    // the view down is part of the trajectory rather than a separate axis the
+    // player has to reach for.
+    const intent = input.intent ?? { x: input.x, y: 0, z: input.z },
+      key = (input.dive ? -1 : 0) + (input.ascend ? 1 : 0),
+      deep = shore.submersion > SHORE.diveBelow;
+    let vertical = intent.y ?? 0;
+    // At the surface, sinking has to be meant. A camera tipped a little down while
+    // crossing the pond makes the body wallow, because buoyancy answers immediately;
+    // it does not plunge.
+    if (b.mode === MODES.SWIM && vertical < 0 && !deep)
+      vertical *= AQUATIC.surfaceResist;
+    const command = clamp(vertical + key, -1, 1),
+      // Buoyancy is a surface effect, not a global leash. Inside the band around the
+      // float line the body is sprung back to it, which is what makes an accidental
+      // descent wallow instead of plunge and what recovers a released diver. Deeper
+      // than the band, pitch and the Dive key are the authority - otherwise the
+      // spring would out-shout any attempt to actually go somewhere underwater.
+      inBand = shore.submersion < SHORE.diveBelow + AQUATIC.bandMargin,
+      spring = inBand
+        ? clamp(
+            (shore.level - SHORE.swimFloat - b.y) * AQUATIC.buoyancy -
+              b.vy * AQUATIC.heaveDamping,
+            -AQUATIC.recovery,
+            AQUATIC.recovery,
+          )
+        : // Below the band, an *uncommanded* body drifts up on its own positive
+          // trim, so releasing a dive cannot strand the body at depth. A body that is
+          // being steered is left alone: buoyancy must not tax a deliberate descent.
+          Math.abs(command) < 0.02
+          ? AQUATIC.trim
+          : 0,
+      targetY = clamp(
+        command * AQUATIC.verticalAuthority + (key >= 0 ? spring : 0),
+        -AQUATIC.verticalAuthority * 1.6,
+        AQUATIC.verticalAuthority * 1.6,
+      ),      driving = Math.hypot(intent.x, intent.z) > 0.05;
+    if (driving) {
+      b.vx = approach(
+        b.vx,
+        intent.x * AQUATIC.speed + shore.currentX,
+        AQUATIC.turnRate,
+        dt,
+      );
+      b.vz = approach(
+        b.vz,
+        intent.z * AQUATIC.speed + shore.currentZ,
+        AQUATIC.turnRate,
+        dt,
+      );
+    } else {
+      // Inertia is the other half of the feel: a released stroke coasts for metres,
+      // and the current keeps carrying the body while it does.
+      b.vx = approach(b.vx, shore.currentX, AQUATIC.glide, dt);
+      b.vz = approach(b.vz, shore.currentZ, AQUATIC.glide, dt);
+    }
+    b.vy = approach(
+      b.vy,
+      targetY,
+      key !== 0 ? AQUATIC.commandRate : AQUATIC.turnRate,
+      dt,
+    );
+    b.grounded = false;
+    // Facing follows the trajectory rather than the wish, so the body never looks
+    // like it is travelling somewhere its momentum disagrees with. The rate is
+    // faster than the velocity response on purpose: the turn leads, the path joins it.
+    const horizontal = Math.hypot(b.vx, b.vz);
+    if (horizontal > AQUATIC.minSpeedToFace)
+      b.yaw +=
+        shortestAngle(b.yaw, Math.atan2(b.vx, b.vz)) *
+        (1 - Math.exp(-AQUATIC.faceRate * dt));
+    // Pitch is the trajectory, read back off the velocity, and it is bounded: a body
+    // crawling along the bottom must not present as pointing straight down.
+    b.pitch = approach(
+      b.pitch ?? 0,
+      clamp(
+        Math.atan2(b.vy, Math.max(0.35, horizontal)),
+        -AQUATIC.pitchLimit,
+        AQUATIC.pitchLimit,
+      ),
+      AQUATIC.pitchRate,
+      dt,
+    );
   } else {
     const rate =
-      b.jetTime > 0
-        ? 0.3
-        : aquatic
-          ? 3.4
-          : wading
-            ? 6
-            : b.grounded
-              ? moving
-                ? 10
-                : 14
-              : 1.1;
+      b.jetTime > 0 ? 0.3 : wading ? 6 : b.grounded ? (moving ? 10 : 14) : 1.1;
     // Wading drags on the surface tension and the substrate; swimming is carried by
     // the current instead. The partial coupling keeps shallows from feeling like a
     // dry tile while still letting a bank be walked.
-    const current = aquatic ? 1 : wading ? 0.4 : 0;
+    const current = wading ? 0.4 : 0;
     if (wading) {
       b.vx *= Math.exp(-1.9 * dt);
       b.vz *= Math.exp(-1.9 * dt);
     }
     b.vx = approach(b.vx, input.x * speed + shore.currentX * current, rate, dt);
     b.vz = approach(b.vz, input.z * speed + shore.currentZ * current, rate, dt);
+    b.pitch = approach(b.pitch ?? 0, 0, 6, dt);
   }
   if (input.jet && b.jetCooldown <= 0) {
     b.jetCooldown = 1.1;
@@ -127,17 +205,7 @@ export function stepBody(b, input, env, dt) {
     b.vx *= 12 / horizontal;
     b.vz *= 12 / horizontal;
   }
-  if (aquatic && b.jetTime === 0) {
-    const vertical = input.dive
-      ? -2.6
-      : b.mode === MODES.SWIM
-        ? (shore.level - SHORE.swimFloat - b.y) * 8
-        : input.ascend
-          ? 3
-          : 0.08;
-    b.vy = approach(b.vy, vertical, 5, dt);
-    b.grounded = false;
-  } else b.vy -= 12 * dt;
+  if (!(aquatic && !jetting)) b.vy -= 12 * dt;
   const ox = b.x,
     oz = b.z;
   let nx = b.x + b.vx * dt,

@@ -186,4 +186,31 @@ export class CreatureCamera {
       z: x * Math.sin(this.yaw) + z * Math.cos(this.yaw),
     };
   }
+  // The same authority, one dimension richer. Where the look pitch is allowed to
+  // matter - truly swimming or diving - pointing the camera down is part of the
+  // trajectory, and the horizontal drive shrinks as the intent steepens so angling
+  // down trades forward speed for depth instead of adding free total speed.
+  // `weight` is how much of the pitch the controller should obey: 1 in open water,
+  // less near the surface, 0 wherever the body is standing on something.
+  intent3(x, z, weight = 1) {
+    const cp = Math.cos(this.pitch),
+      sp = Math.sin(this.pitch),
+      planar = this.movement(x, z),
+      y = -sp * Math.hypot(x, z) * weight,
+      // Fold the pitch in along the drive direction, not the camera's, so a body
+      // angled across its own travel does not get pushed sideways by the look.
+      drive = Math.min(1, Math.hypot(x, z)),
+      vertical = y * drive,
+      shrink = 1 - Math.min(0.45, Math.abs(vertical) * 0.45),
+      length = Math.max(
+        1,
+        Math.hypot(planar.x * shrink, vertical, planar.z * shrink),
+      );
+    return {
+      x: (planar.x * shrink) / length,
+      y: vertical / length,
+      z: (planar.z * shrink) / length,
+      pitch: this.pitch,
+    };
+  }
 }

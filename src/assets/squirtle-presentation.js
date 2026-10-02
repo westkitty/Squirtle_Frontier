@@ -22,6 +22,7 @@ export class SquirtlePresentation extends PlayableCreature {
     this.wasAquatic = false;
     this.shell = 0;
     this.lookYaw = 0;
+    this.pitch = 0;
     this.lookPitch = 0;
     this.attentionTime = 0;
     this.activeAttention = null;
@@ -136,6 +137,11 @@ export class SquirtlePresentation extends PlayableCreature {
 
     this.root.position.set(b.x, b.y, b.z);
     this.root.rotation.y = b.yaw;
+    // The body pitches with the trajectory it actually has: a descent reads as a
+    // descent rather than a level model sliding downhill. Land, wading and air hold
+    // level, and the ease is presentation-only smoothing of an authoritative value.
+    this.pitch += (Number(aquatic ? -(b.pitch ?? 0) : 0) - this.pitch) * (1 - Math.exp(-9 * dt));
+    this.root.rotation.x = this.pitch;
 
     // Reset bones to base rest pose before applying procedural kinematics
     for (const { node, q, scale } of this.bones.values()) {
