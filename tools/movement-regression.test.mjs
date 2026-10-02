@@ -144,3 +144,78 @@ test("render budgets cap pixels on large/high-density screens without changing C
     }
   assert.equal(pixelRatioFor("low", 960, 640), Math.sqrt(230400 / (960 * 640)));
 });
+
+test("fast shell slide widens camera FOV and extends boom distance dynamically", () => {
+  const env = { ...flat, obstacles: [] };
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    env,
+  );
+  const body = createBody(0, 0, 0);
+  body.mode = "slide";
+  body.vx = 4.0;
+  body.vz = 0;
+
+  // With reducedMotion: false, slide accelerates FOV and distance
+  for (let i = 0; i < 30; i++) {
+    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: false,
+    });
+  }
+  assert.ok(
+    rig.camera.fov > 58,
+    `FOV should expand during fast slide, was ${rig.camera.fov}`,
+  );
+  const dist = rig.target.distanceTo(rig.desired);
+  assert.ok(
+    dist >= 2.6,
+    `boom distance should expand during fast slide, was ${dist}`,
+  );
+
+  // With reducedMotion: true, FOV stays strictly at 55
+  for (let i = 0; i < 30; i++) {
+    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: true,
+    });
+  }
+  assert.equal(rig.camera.fov, 55);
+});
+
+test("tactile impact micro-recoil triggers on hard landing and decays smoothly", () => {
+  const env = { ...flat, obstacles: [] };
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    env,
+  );
+  const body = createBody(0, 0, 0);
+  body.impact = 0.5;
+
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+    sensitivity: 1,
+    invertY: false,
+    reducedMotion: false,
+  });
+  assert.ok(
+    rig.impactRecoil > 0.03,
+    `impactRecoil should trigger on impact, was ${rig.impactRecoil}`,
+  );
+
+  // Decays over settling frames
+  body.impact = 0;
+  for (let i = 0; i < 20; i++) {
+    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: false,
+    });
+  }
+  assert.ok(
+    rig.impactRecoil < 0.005,
+    `impactRecoil should decay cleanly, was ${rig.impactRecoil}`,
+  );
+});
+

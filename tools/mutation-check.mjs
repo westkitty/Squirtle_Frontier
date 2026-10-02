@@ -259,6 +259,18 @@ const MUTATIONS = [
     from: "      contextInfo.channelStage >= 2 &&",
     to: "      contextInfo.channelStage >= 99 &&",
   },
+  {
+    what: "fast shell slide fails to widen camera FOV",
+    file: "src/player/creature-camera.js",
+    from: "      } else if (inSlide) {\n        fov = 55 + Math.min(speed, 5.0) * 1.1;\n      }",
+    to: "      } else if (inSlide) {\n        fov = 55;\n      }",
+  },
+  {
+    what: "hard body impact fails to trigger camera recoil",
+    file: "src/player/creature-camera.js",
+    from: "      if (body.impact > 0.04) {\n        this.impactRecoil = Math.min(0.08, body.impact * 0.12);\n      }",
+    to: "      if (body.impact > 0.04) {\n        this.impactRecoil = 0;\n      }",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of

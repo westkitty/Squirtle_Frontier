@@ -43,6 +43,7 @@ export class CreatureCamera {
     this.yaw = Math.PI;
     this.pitch = 0.26;
     this.initial = true;
+    this.impactRecoil = 0;
     this.target = new THREE.Vector3();
     this.desired = new THREE.Vector3();
     this.probe = new THREE.Vector3();
@@ -96,9 +97,40 @@ export class CreatureCamera {
       -0.35,
       0.85,
     );
-    const distance =
-      2.1 + (body.mode === "slide" && !settings.reducedMotion ? 0.35 : 0);
-    this.target.set(body.x, body.y + 0.32, body.z);
+
+    const speed = Math.hypot(body.vx, body.vz);
+    const inSlide = body.mode === "slide";
+    const inDive = body.mode === "dive" || body.y < -0.45;
+
+    // Tactical micro-recoil on hard impacts (falling or collision)
+    if (!settings.reducedMotion) {
+      if (body.impact > 0.04) {
+        this.impactRecoil = Math.min(0.08, body.impact * 0.12);
+      }
+      this.impactRecoil = THREE.MathUtils.damp(this.impactRecoil, 0, 14, dt);
+    } else {
+      this.impactRecoil = 0;
+    }
+
+    const slideBoost =
+      inSlide && !settings.reducedMotion
+        ? 0.35 + Math.min(speed, 5.0) * 0.07
+        : 0;
+    const distance = 2.1 + slideBoost;
+
+    // Athletic slight look-ahead along travel velocity when sliding/sprinting
+    const lead =
+      !settings.reducedMotion && (inSlide || speed > 2.5)
+        ? Math.min(speed, 5.0) * 0.04
+        : 0;
+    const leadX = speed > 0.1 ? (body.vx / speed) * lead : 0;
+    const leadZ = speed > 0.1 ? (body.vz / speed) * lead : 0;
+
+    this.target.set(
+      body.x + leadX,
+      body.y + 0.32 - this.impactRecoil,
+      body.z + leadZ,
+    );
     this.desired.set(
       this.target.x - Math.sin(this.yaw) * distance * Math.cos(this.pitch),
       this.target.y + Math.sin(this.pitch) * distance + 0.25,
@@ -115,11 +147,24 @@ export class CreatureCamera {
     // Collision authority comes AFTER smoothing. A safe desired point alone isn't enough.
     this.constrain(this.target, this.camera.position, blockers);
     this.camera.lookAt(this.target);
-    const fov = settings.reducedMotion ? 55 : body.y < -0.45 ? 61 : 55;
-    const next = THREE.MathUtils.damp(this.camera.fov, fov, 8, dt);
-    if (Math.abs(this.camera.fov - next) > 0.001) {
-      this.camera.fov = next;
-      this.camera.updateProjectionMatrix();
+
+    let fov = 55;
+    if (settings.reducedMotion) {
+      if (this.camera.fov !== 55) {
+        this.camera.fov = 55;
+        this.camera.updateProjectionMatrix();
+      }
+    } else {
+      if (inDive) {
+        fov = 61;
+      } else if (inSlide) {
+        fov = 55 + Math.min(speed, 5.0) * 1.1;
+      }
+      const next = THREE.MathUtils.damp(this.camera.fov, fov, 8, dt);
+      if (Math.abs(this.camera.fov - next) > 0.001) {
+        this.camera.fov = next;
+        this.camera.updateProjectionMatrix();
+      }
     }
   }
   movement(x, z) {
