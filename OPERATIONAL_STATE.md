@@ -461,6 +461,19 @@ R/contextual button near the wooden platform advances the existing regional simu
   - Mutation suite (`tools/mutation-check.mjs`):
     - Added 2 documented-contract mutations (failing read strata illumination and failing active hold pulse), expanding suite to 41/41 mutations killed by named unit tests in ~135s.
   - Validation: All 154 unit tests (`npm test`), architecture checks (`npm run check`), 41/41 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+## Loop 9: Water Jet ash rinsing hydrodynamics and 6-hour offline fast-forward invariants checkpoint
 
-
-
+- Completed hydrodynamic land management and verified long-horizon offline simulation stability:
+  - Water Jet ash rinsing hydrodynamics (`src/simulation/water-interaction.js`):
+    - Enhanced `applyWorldJet(frontier, body, dt)`: when Squirtle aims and fires Water Jet at burnt ground cells (`hits(p, heightAt(p.x, p.z))`), ash is washed clean (`frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8)`).
+    - Rinsing ash prevents storm runoff from carrying toxic particulate matter downstream into the wetlands and drinking shallows, directly connecting Squirtle's physical abilities with ecosystem health and wildlife welfare.
+    - Preserves aiming spatial gating: unaimed water jets or jets fired away from burnt cells do not clear ash.
+  - Multi-hour offline fast-forward stability verification (`src/persistence.js`):
+    - Verified `advanceOffline(state, 21600)` (up to 6 hours = 21,600 ticks) across all 16 fire cells and channel parameters.
+    - Proved that all cellular scalars (`heat`, `fuel`, `ash`, `soaked`) strictly remain finite and bounded within `[0, 1]`.
+    - Proved that regional history remains cleanly capped at `<= 90` entries and channel erosion never exceeds maximum channel boundaries (`<= 120`).
+  - Dedicated unit tests (`tools/frontier-systems.test.mjs`):
+    - Added 2 new unit tests validating directed Water Jet ash washing vs unaimed rejection, and 6-hour offline simulation invariant boundedness (suite expanded from 154 to 156 checks; all pass).
+  - Mutation suite (`tools/mutation-check.mjs`):
+    - Added 2 documented-contract mutations (ash rinsing failure and offline tick advance failure), expanding the suite to 43/43 mutations killed by named unit tests in ~138s.
+  - Validation: All 156 unit tests (`npm test`), architecture checks (`npm run check`), 43/43 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
