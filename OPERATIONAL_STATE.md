@@ -404,6 +404,28 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Ambient dialogue lines smoothly display in the status bar when Squirtle visits the settlement without interrupting movement or menu navigation.
   - Dedicated unit tests (`tools/wildlife-settlement.test.mjs` & `tools/habitat.test.mjs`):
     - 2 new tests validating 8.0m distance rejection, state-specific voice line matching, animated welcoming wave cadence, and pensive trough inspection posture across elapsed time (suite expanded from 147 to 149 checks; all pass).
+- Validation: All 149 unit tests (`npm test`), architecture checks (`npm run check`), 35/35 mutations (`npm run mutate`), production build (`npm run build`), and browser journey test suites pass with zero resource leaks.
+
+## Loop 6: Dynamic hydrology stream foam rapids and localized channel flow acoustics checkpoint
+
+- Elevated the visual and acoustic realization of the frontier watercourse:
+  - Dynamic stream foam rapids particles (`src/player/world-effects.js`):
+    - Added 16-instance churning stream foam rapids mesh (`this.streamFoam`) to `WorldEffects`, actively conveying rushing white water rapids along the carved channel.
+    - Zero new uploaded geometries: Reuses `this.geo` (`ConeGeometry(1, 1, 5)`), strictly maintaining `geometries <= 24`.
+    - Downstream fluid kinematics: When `state.frontier.stage >= 2`, particles progress downstream along `CHANNEL_ROUTE` (`(i/16 + elapsed * 0.35) % 1`), laterally perturb with turbulent oscillation, and align precisely with the channel water surface (`channelHeight(px, pz, stage) + CHANNEL_DEPTH[stage] * 0.55 + 0.022m`).
+    - Hides and zeroes particle count when dry (`stage < 2`), and cleanly disposes instanced mesh and material in `dispose()`.
+    - Exposes live particle counts via `WorldEffects.stats()`.
+  - Localized watercourse flow acoustics (`src/audio.js`):
+    - Added Voice 6 (Stream Voice) to the procedural audio architecture: bandpass filter (`this.streamFilter`, Q = 1.8, frequency 680 Hz) and volume node (`this.streamGain`) connected to `this.masterGain`.
+    - Driven by the shared noise generator with zero oscillator accumulation or node proliferation.
+    - Spatial proximity attenuation: Activates when within 8.0m of the active watercourse (`channelStage >= 2 && channelDist < 8.0m`), dynamically ramping gain by inverse distance and modulating frequency across 500–740 Hz to produce visceral acoustic water bubbling.
+    - Fades to silence when far from water or when channel is dry. Cleanly disconnects all nodes on disposal.
+  - Main loop integration (`src/main.js`):
+    - Imports `channelDistance` from `./simulation/channel-terrain.js` and provides live channel stage and spatial distance to `audio.update()`.
+    - Exposes live foam particle count in `window.__SF.stats().effects.foam`.
+  - Dedicated unit tests (`tools/world-effects.test.mjs` & `tools/audio.test.mjs`):
+    - 2 new unit tests asserting stream foam stage-activation/bounds/geometry-reuse and stream audio proximity attenuation/frequency range (suite expanded from 149 to 151 checks; all pass).
   - Mutation suite (`tools/mutation-check.mjs`):
-    - Added 2 documented-contract mutations (caretaker dialogue distance rejection, and welcome arm wave failure), expanding the suite to 35/35 mutations killed by named unit tests in ~120s.
-  - Validation: All 149 unit tests (`npm test`), architecture checks (`npm run check`), 35/35 mutations (`npm run mutate`), production build (`npm run build`), and browser journey test suites pass with zero resource leaks.
+    - Added 2 documented-contract mutations (failing stream foam activation and failing stream audio proximity activation), expanding suite to 37/37 mutations killed by named unit tests in ~125s.
+  - Validation: All 151 unit tests (`npm test`), architecture checks (`npm run check`), 37/37 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
