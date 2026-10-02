@@ -425,7 +425,24 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Exposes live foam particle count in `window.__SF.stats().effects.foam`.
   - Dedicated unit tests (`tools/world-effects.test.mjs` & `tools/audio.test.mjs`):
     - 2 new unit tests asserting stream foam stage-activation/bounds/geometry-reuse and stream audio proximity attenuation/frequency range (suite expanded from 149 to 151 checks; all pass).
-  - Mutation suite (`tools/mutation-check.mjs`):
-    - Added 2 documented-contract mutations (failing stream foam activation and failing stream audio proximity activation), expanding suite to 37/37 mutations killed by named unit tests in ~125s.
   - Validation: All 151 unit tests (`npm test`), architecture checks (`npm run check`), 37/37 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
+## Loop 7: Tactile shell slide and dynamic dive camera immersion checkpoint
+
+- Elevated camera immersion and tactile creature movement feedback (`src/player/creature-camera.js`):
+  - High-velocity shell sliding kinematics:
+    - Dynamic boom extension: Fast shell sliding down hillsides extends the camera distance smoothly (`2.1m + 0.35m + min(speed, 5.0) * 0.07m`, reaching up to 2.8m).
+    - Velocity-driven FOV expansion: Accelerating in shell slide mode smoothly expands FOV from 55° up to 60.5° (`55 + min(speed, 5.0) * 1.1`), creating a visceral sensation of acceleration and aerodynamic rush.
+    - Dynamic look-ahead lead vector: Shifts the camera target forward along the movement velocity vector (`min(speed, 5.0) * 0.04m`), giving Squirtle clear framing of the oncoming slope and terrain.
+  - Tactile impact micro-recoil:
+    - Hard landings from heights or high-speed collisions (`body.impact > 0.04`) trigger physical vertical micro-recoil (`impactRecoil = min(0.08, body.impact * 0.12)`), damped smoothly at rate 14 to settle naturally within ~0.15s without motion discomfort.
+  - Accessibility & Reduced Motion contract:
+    - When `settings.reducedMotion` is true: FOV is immediately pinned to 55° (zero easing drift), impact micro-recoil is strictly disabled (0), look-ahead is disabled (0), and boom distance is static.
+    - Underwater diving mode (`mode === "dive"` or `body.y < -0.45`): accurately engages submerged 61° FOV.
+  - Dedicated unit tests (`tools/movement-regression.test.mjs`):
+    - 2 new unit tests asserting dynamic slide FOV expansion / boom distance extension, strict reduced motion clamping, and impact micro-recoil triggering / clean decay (suite expanded from 151 to 153 checks; all pass).
+  - Mutation suite (`tools/mutation-check.mjs`):
+    - Added 2 documented-contract mutations (failing slide FOV expansion and failing impact recoil), expanding suite to 39/39 mutations killed by named unit tests in ~130s.
+  - Validation: All 153 unit tests (`npm test`), architecture checks (`npm run check`), 39/39 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
 
