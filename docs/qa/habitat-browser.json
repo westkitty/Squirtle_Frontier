@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 20,
+        "geometries": 19,
         "textures": 6
       },
       "assets": {
@@ -157,14 +157,14 @@
   "blockageCleared": 0,
   "absence": {
     "wetness": 0.8869196151124955,
-    "labFrogs": 0.7251145389569676,
-    "labWater": 0.9604101869633389
+    "labFrogs": 0.725114508402452,
+    "labWater": 0.9604101869633395
   },
   "frontierReedsAfter": 46,
   "labAfter": {
     "labReeds": 40,
     "labFrogs": 8,
-    "basinOpacity": 0.6809914779012846
+    "basinOpacity": 0.6809914779012849
   },
   "restSeconds": 300,
   "teardown": {
@@ -179,7 +179,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 192,
+      "frame": 166,
       "calls": 13,
       "triangles": 11312,
       "points": 0,
@@ -203,14 +203,15 @@
     },
     "gaze": {
       "yaw": 0,
-      "pitch": -0.04288152002920019
+      "pitch": -0.032669980221032485
     },
     "sleeping": false,
-    "sleepProgress": 0.000006458330583223397,
+    "sleepProgress": 0.0000015700247004729203,
     "effects": {
       "jet": 0,
       "wake": 0,
-      "splash": 0
+      "splash": 0,
+      "foam": 0
     }
   }
 }

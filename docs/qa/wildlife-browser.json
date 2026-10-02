@@ -66,15 +66,15 @@
   ],
   "drink": {
     "at": {
-      "x": -5.14,
-      "z": -14.63
+      "x": -6.01,
+      "z": -15.8
     },
     "inWater": true,
     "issue": null,
     "sites": 12,
-    "drinkers": 3
+    "drinkers": 4
   },
-  "drinkNote": "Drink tracks in 2 places; nearest 3 m NW.",
+  "drinkNote": "Drink tracks in 2 places; nearest 2 m W.",
   "drySamples": [
     {
       "issue": "dry",
@@ -122,12 +122,12 @@
     "issue": "dry",
     "drinking": 0,
     "parched": 7,
-    "wetness": 0.101,
-    "note": "Drink tracks in 2 places; nearest 3 m NW. Now the shallows are too dry to drink at.",
+    "wetness": 0.105,
+    "note": "Drink tracks in 2 places; nearest 2 m W. Now the shallows are too dry to drink at.",
     "tracks": 27
   },
   "houseNote": "The caretaker leaves a filled bowl by the door and lifts a hand. (1 visit).",
-  "savedFamiliarity": 0.405,
+  "savedFamiliarity": 0.41000000000000003,
   "teardown": {
     "geometries": 0,
     "textures": 0

@@ -189,6 +189,11 @@ export class Audio {
         locoLevel = step * 0.028 * Math.min(speed, 1);
         this.locoFilter.frequency.setTargetAtTime(1050, now, 0.06);
       }
+    } else if (body.grounded && speed <= 0.1 && contextInfo.isSleeping) {
+      // Living slumber respiration murmur (slowed 0.77 Hz matching physical crouch kinematics)
+      const breath = Math.max(0, Math.sin(now * 4.84));
+      locoLevel = 0.018 * breath;
+      this.locoFilter.frequency.setTargetAtTime(420, now, 0.08);
     }
     this.locoGain.gain.setTargetAtTime(locoLevel, now, 0.04);
 

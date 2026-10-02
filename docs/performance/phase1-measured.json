@@ -1,25 +1,25 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-10-01T22:21:45.560Z",
+  "date": "2026-10-02T03:26:41.336Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 50.099999999998545,
-      "p95Ms": 133.40000000000146,
+      "medianMs": 66.59999999999854,
+      "p95Ms": 283.2000000000007,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 147,
+        "frame": 148,
         "calls": 40,
         "triangles": 31236,
         "points": 0,
         "lines": 122
       },
-      "heap": 20402490,
+      "heap": 19398938,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
     },
     {
@@ -27,34 +27,34 @@
       "viewport": "960x640",
       "samples": 110,
       "medianMs": 33.30000000000291,
-      "p95Ms": 83.30000000000291,
+      "p95Ms": 66.70000000000437,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 275,
+        "frame": 279,
         "calls": 40,
         "triangles": 31236,
         "points": 0,
         "lines": 122
       },
-      "heap": 21147476,
+      "heap": 21710732,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "label": "channel-cut (standing in the groove)",
       "samples": 110,
-      "medianMs": 66.59999999999127,
-      "p95Ms": 200,
+      "medianMs": 66.69999999999709,
+      "p95Ms": 233.3000000000029,
       "memory": {
         "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 681,
-        "calls": 39,
-        "triangles": 55241,
+        "frame": 691,
+        "calls": 40,
+        "triangles": 55481,
         "points": 0,
         "lines": 122
       }
@@ -62,16 +62,16 @@
     {
       "label": "channel-cut (viewed from the next chunk over)",
       "samples": 110,
-      "medianMs": 83.30000000000291,
-      "p95Ms": 250.10000000000582,
+      "medianMs": 33.39999999999418,
+      "p95Ms": 66.69999999999709,
       "memory": {
         "geometries": 21,
         "textures": 6
       },
       "render": {
-        "frame": 823,
-        "calls": 25,
-        "triangles": 31869,
+        "frame": 843,
+        "calls": 26,
+        "triangles": 32109,
         "points": 0,
         "lines": 122
       }
@@ -81,7 +81,7 @@
     "pinnedFullDetail": {
       "samples": 140,
       "medianMs": 66.69999999999709,
-      "p95Ms": 216.59999999999854,
+      "p95Ms": 100,
       "adaptiveValue": 1,
       "adaptiveChangesCumulative": 2,
       "pixelRatio": 1,
@@ -92,8 +92,8 @@
     },
     "adaptiveEnabled": {
       "samples": 100,
-      "medianMs": 50.099999999998545,
-      "p95Ms": 183.29999999999563,
+      "medianMs": 66.59999999999854,
+      "p95Ms": 166.59999999999854,
       "adaptiveValue": 0.85,
       "adaptiveChangesCumulative": 3,
       "pixelRatio": 0.85,
@@ -106,39 +106,39 @@
       "bufferShrank": true,
       "layoutUnchanged": true,
       "scaleReduced": true,
-      "medianDeltaMs": -16.6,
-      "p95DeltaMs": -33.3,
+      "medianDeltaMs": -0.1,
+      "p95DeltaMs": 66.6,
       "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
     }
   },
   "channelCut": {
     "samples": 110,
-    "medianMs": 66.59999999999127,
-    "p95Ms": 200,
+    "medianMs": 66.69999999999709,
+    "p95Ms": 233.3000000000029,
     "memory": {
       "geometries": 23,
       "textures": 6
     },
     "render": {
-      "frame": 681,
-      "calls": 39,
-      "triangles": 55241,
+      "frame": 691,
+      "calls": 40,
+      "triangles": 55481,
       "points": 0,
       "lines": 122
     }
   },
   "channelDistant": {
     "samples": 110,
-    "medianMs": 83.30000000000291,
-    "p95Ms": 250.10000000000582,
+    "medianMs": 33.39999999999418,
+    "p95Ms": 66.69999999999709,
     "memory": {
       "geometries": 21,
       "textures": 6
     },
     "render": {
-      "frame": 823,
-      "calls": 25,
-      "triangles": 31869,
+      "frame": 843,
+      "calls": 26,
+      "triangles": 32109,
       "points": 0,
       "lines": 122
     }

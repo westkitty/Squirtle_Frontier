@@ -253,6 +253,35 @@ test("nearness to active watercourse activates localized stream flow acoustics",
   audio.dispose();
 });
 
+test("living slumber crouch activates gentle 0.77 Hz respiration acoustics", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+
+  const b = createBody(0, 0, 0);
+  b.mode = "land";
+  b.grounded = true;
+  b.vx = 0;
+  b.vz = 0;
+
+  // 1. Quiescent awake stationary idle (not sleeping): loco gain is 0
+  audio.update(b, { muted: false, volume: 1.0 }, { isSleeping: false });
+  assert.equal(audio.locoGain.gain.value, 0, "awake motionless idle has zero loco gain");
+
+  // 2. Sleeping crouch on land: loco voice shifts to gentle warm 420 Hz respiration murmur
+  audio.context.currentTime = 0.32;
+  audio.update(b, { muted: false, volume: 1.0 }, { isSleeping: true });
+  assert.ok(audio.locoGain.gain.value > 0.01, "slumber respiration must activate breathing murmur gain");
+  assert.equal(audio.locoFilter.frequency.value, 420, "slumber respiration uses warm low 420 Hz filter");
+
+  // 3. Movement or waking up restores normal footstep filter
+  b.vx = 1.5;
+  audio.update(b, { muted: false, volume: 1.0 }, { isSleeping: false });
+  assert.ok(audio.locoFilter.frequency.value > 1000, "waking up and walking restores footstep filter");
+
+  audio.dispose();
+});
+
 test("audio cleanly disposes all nodes and closes context without leaks", () => {
   setupMockAudioContext();
   const audio = new Audio();

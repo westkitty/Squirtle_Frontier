@@ -295,6 +295,12 @@ const MUTATIONS = [
     from: "  for (let i = 0; i < ticks; i++) state.update(1);",
     to: "  for (let i = 0; i < 0; i++) state.update(1);",
   },
+  {
+    what: "living slumber crouch fails to activate respiration murmur",
+    file: "src/audio.js",
+    from: "    } else if (body.grounded && speed <= 0.1 && contextInfo.isSleeping) {",
+    to: "    } else if (false && body.grounded && speed <= 0.1 && contextInfo.isSleeping) {",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of
