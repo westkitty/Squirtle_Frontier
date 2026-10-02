@@ -474,6 +474,37 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Proved that regional history remains cleanly capped at `<= 90` entries and channel erosion never exceeds maximum channel boundaries (`<= 120`).
   - Dedicated unit tests (`tools/frontier-systems.test.mjs`):
     - Added 2 new unit tests validating directed Water Jet ash washing vs unaimed rejection, and 6-hour offline simulation invariant boundedness (suite expanded from 154 to 156 checks; all pass).
-  - Mutation suite (`tools/mutation-check.mjs`):
-    - Added 2 documented-contract mutations (ash rinsing failure and offline tick advance failure), expanding the suite to 43/43 mutations killed by named unit tests in ~138s.
   - Validation: All 156 unit tests (`npm test`), architecture checks (`npm run check`), 43/43 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
+## Loop 10: Living slumber respiration acoustics and campaign system harmony checkpoint
+
+- Completed the multisensory realization of Squirtle and unified the ten-loop campaign:
+  - Living slumber respiration acoustics (`src/audio.js`):
+    - United the visual slumber kinematics of Loop 1 with the multi-voice procedural audio architecture of Loop 2/6.
+    - When Squirtle is sleeping on dry land (`body.grounded && speed <= 0.1 && contextInfo.isSleeping`), the locomotion/friction filter path transitions into a soft, warm respiration murmur:
+      - Respiration frequency: 0.77 Hz (`4.84 rad/s`), matching the physical crouch respiration rate established in Loop 1.
+      - Filter tuning: warm bandpass at 420 Hz with gentle amplitude envelope (`0.018 * max(0, sin(now * 4.84))`).
+      - Organic transition: waking up or movement immediately restores footstep acoustics or silence with zero node accumulation.
+  - Dedicated unit tests (`tools/audio.test.mjs`):
+    - Added unit test asserting motionless awake idle silence, living slumber 420 Hz respiration murmur gain, and clean waking transition (suite expanded to 157 checks; all pass).
+  - Mutation suite (`tools/mutation-check.mjs`):
+    - Added documented-contract mutation verifying slumber respiration acoustics, expanding the test suite to 44/44 mutations killed in ~142s.
+  - Full-Matrix End-to-End Verification across all 11 browser test suites:
+    - `npm test`: 157/157 checks pass cleanly across all test suites.
+    - `npm run check`: architecture check passes.
+    - `npm run mutate`: 44/44 mutations killed.
+    - `npm run build`: production bundle builds with zero errors (`dist/index.html`, `dist/assets/index-*.js`, `dist/assets/index-*.css`).
+    - `npm run browser`: movement, save/reload, 12 chunk return cycles, 30 asset cycles, touch journey pass.
+    - `npm run browser:habitat`: jet-driven repair, 30-minute absence, colonization rendered, 12 Lab/frontier cycles pass.
+    - `npm run browser:world`: input-driven bypass/fire, memory map, Deep Record dive/ascent, 12 room cycles pass.
+    - `npm run browser:wildlife`: stalk/evade, wetland-gated drinking, dry-shallow avoidance, visible settlement bowl, 12 returns pass.
+    - `npm run browser:channel`: stage transition, rendered height authority, reload, 12 return cycles pass.
+    - `npm run browser:watershed`: Current Sense, input-driven repair, flooded north run, graph reload pass.
+    - `npm run browser:a11y`: names, contrast, focus, keyboard panel flow, reduced motion, adaptive toggle, touch targets pass.
+    - `npm run browser:multitab`: 2-tab conflict refusal, non-destructive adoption, pose resume from Lab basin pass.
+    - `npm run browser:recovery`: export, malformed import rejection, pose-aware confirmed import/quarantine, backup recovery pass.
+    - `npm run browser:dist`: built production bundle boots from static hosting with cached asset and direct movement.
+    - `npm run perf`: renderer memory geometry bound strictly `<= 24` (measured: 23 geometries), zero-resource teardown verified (`geometries: 0, textures: 0, chunks active: 0, assets cached: 0`).
+  - Ten-Loop Autonomous Campaign Closure:
+    - All ten sequential improvement loops (Loops 1–10) are fully discovered, implemented, empirically tested, verified against mutations, and permanently closed.
+
