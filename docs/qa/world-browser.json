@@ -18,7 +18,7 @@
       "textures": 6
     },
     {
-      "geometries": 16,
+      "geometries": 19,
       "textures": 6
     },
     {
@@ -52,14 +52,14 @@
   ],
   "bypass": 0.1,
   "suppression": {
-    "heat": 0.6053749999999998,
-    "soaked": 0.19824999999999998
+    "heat": 0.7999999999999999,
+    "soaked": 0.06666666666666667
   },
   "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
   "reachCounts": "drainage-groove,spring-gully",
   "drinkNote": "No drink tracks yet. Animals drink where the shallows run clean.",
-  "waterNote": "Water followed: Spring gully (27 m) · Drainage groove (3 m). 2 of 6 reaches, 1 holding water.",
+  "waterNote": "Water followed: Drainage groove (3 m) · Spring gully (27 m). 2 of 6 reaches, 1 holding water.",
   "reachGeometry": {
     "geometries": 21,
     "followed": 2
@@ -87,11 +87,11 @@
     },
     {
       "label": "basin clock",
-      "value": "12 ticks · ledger empty"
+      "value": "9 ticks · ledger empty"
     },
     {
       "label": "water moved",
-      "value": "1.1 units of wear · 0.01 of sediment in the shallows"
+      "value": "0.8 units of wear · 0.01 of sediment in the shallows"
     },
     {
       "label": "your cut",
@@ -111,46 +111,10 @@
       7
     ],
     "band": 8,
-    "y": -21.5
+    "y": -21.41
   },
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
-    "loop": {
-      "simTime": 26.783333333333093,
-      "realTime": 27.648800000000026,
-      "steps": 1607,
-      "discarded": 0.8500000000000013,
-      "drops": 9,
-      "alpha": 0.9280000000002665
-    },
-    "pose": {
-      "alpha": 0.9280000000002665,
-      "x": 0,
-      "y": 0,
-      "z": 5,
-      "vx": 0,
-      "vy": 0,
-      "vz": 0,
-      "yaw": 3.141592653589793,
-      "pitch": 0,
-      "mode": "land",
-      "grounded": true,
-      "slideHeld": false,
-      "jetCooldown": 0,
-      "jetTime": 0,
-      "distance": 0,
-      "impact": 0,
-      "resting": false,
-      "prevPose": {
-        "x": 0,
-        "y": 0,
-        "z": 5,
-        "yaw": 3.141592653589793,
-        "pitch": 0
-      },
-      "poseAlpha": 0.9280000000002665,
-      "poseInterval": 0.016666666666666666
-    },
     "chunks": {
       "active": 0,
       "queued": 0,
@@ -162,7 +126,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 628,
+      "frame": 702,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
@@ -185,8 +149,8 @@
       "distance": 5
     },
     "gaze": {
-      "yaw": -0.29054892308801955,
-      "pitch": -0.1980977469015888
+      "yaw": -0.32000009385494704,
+      "pitch": -0.20767362322032007
     },
     "sleeping": false,
     "sleepProgress": 0,

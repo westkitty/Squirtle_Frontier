@@ -1,9 +1,9 @@
-import { CHANNEL_BOUNDS } from "./simulation/channel-terrain.js";
+import {CHANNEL_BOUNDS} from "./simulation/channel-terrain.js";
 // Streaming terrain chunks with LOD + the shared "ground memory" texture
 // (burn scars, trails, lushness, development) that every surface samples.
-import * as THREE from "three";
-import { WORLD, heightAt } from "./worldgen.js";
-import { clamp, fbm2, valueNoise2 } from "./rng.js";
+import * as THREE from 'three';
+import { WORLD, heightAt } from './worldgen.js';
+import { clamp, fbm2, valueNoise2 } from './rng.js';
 
 export const shared = {
   uTime: { value: 0 },
@@ -16,12 +16,7 @@ export const shared = {
 };
 
 export function makeGroundTexture(state) {
-  const tex = new THREE.DataTexture(
-    state.ground,
-    WORLD.stateRes,
-    WORLD.stateRes,
-    THREE.RGBAFormat,
-  );
+  const tex = new THREE.DataTexture(state.ground, WORLD.stateRes, WORLD.stateRes, THREE.RGBAFormat);
   tex.needsUpdate = true;
   tex.minFilter = THREE.LinearFilter;
   tex.magFilter = THREE.LinearFilter;
@@ -30,11 +25,11 @@ export function makeGroundTexture(state) {
   return tex;
 }
 
-const GROUND_CHUNK_VERT = /* glsl */ `
+const GROUND_CHUNK_VERT = /* glsl */`
   vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
 `;
 
-const GROUND_FRAG_HEAD = /* glsl */ `
+const GROUND_FRAG_HEAD = /* glsl */`
   uniform sampler2D uGround;
   uniform float uWorldHalf;
   uniform float uWet;
@@ -42,7 +37,7 @@ const GROUND_FRAG_HEAD = /* glsl */ `
   varying vec3 vWPos;
 `;
 
-const GROUND_FRAG_BODY = /* glsl */ `
+const GROUND_FRAG_BODY = /* glsl */`
   vec2 gUv = (vWPos.xz + uWorldHalf) / (uWorldHalf * 2.0);
   vec4 gs = texture2D(uGround, gUv);
   float burn = gs.r, trail = gs.g, lush = gs.b, dev = gs.a;
@@ -63,20 +58,12 @@ export function applyGroundShader(mat) {
     sh.uniforms.uWorldHalf = shared.uWorldHalf;
     sh.uniforms.uWet = shared.uWet;
     sh.uniforms.uSnow = shared.uSnow;
-    sh.vertexShader =
-      "varying vec3 vWPos;\n" +
-      sh.vertexShader.replace(
-        "#include <begin_vertex>",
-        "#include <begin_vertex>\n" + GROUND_CHUNK_VERT,
-      );
-    sh.fragmentShader =
-      GROUND_FRAG_HEAD +
-      sh.fragmentShader.replace(
-        "#include <color_fragment>",
-        "#include <color_fragment>\n" + GROUND_FRAG_BODY,
-      );
+    sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace(
+      '#include <begin_vertex>', '#include <begin_vertex>\n' + GROUND_CHUNK_VERT);
+    sh.fragmentShader = GROUND_FRAG_HEAD + sh.fragmentShader.replace(
+      '#include <color_fragment>', '#include <color_fragment>\n' + GROUND_FRAG_BODY);
   };
-  mat.customProgramCacheKey = () => "groundshader";
+  mat.customProgramCacheKey = () => 'groundshader';
   return mat;
 }
 
@@ -94,15 +81,8 @@ const tmpC = new THREE.Color();
 
 function colorFor(h, slope, m, out) {
   if (h < 0.4) out.copy(cWater).lerp(cSand, clamp((h + 3) / 3.4, 0, 1));
-  else if (h < 2.4)
-    out
-      .copy(cSand)
-      .lerp(m > 0.6 ? cMarsh : cGrass, clamp((h - 0.4) / 2.0, 0, 1));
-  else if (h < 62)
-    out
-      .copy(cGrassDry)
-      .lerp(cGrass, clamp(m * 1.5, 0, 1))
-      .lerp(cForest, clamp((m - 0.45) * 1.6, 0, 1));
+  else if (h < 2.4) out.copy(cSand).lerp(m > 0.6 ? cMarsh : cGrass, clamp((h - 0.4) / 2.0, 0, 1));
+  else if (h < 62) out.copy(cGrassDry).lerp(cGrass, clamp(m * 1.5, 0, 1)).lerp(cForest, clamp((m - 0.45) * 1.6, 0, 1));
   else if (h < 100) out.copy(cGrass).lerp(cHigh, clamp((h - 62) / 38, 0, 1));
   else if (h < 148) out.copy(cHigh).lerp(cRock, clamp((h - 100) / 48, 0, 1));
   else out.copy(cRock).lerp(cSnow, clamp((h - 148) / 30, 0, 1));
@@ -118,23 +98,18 @@ export class ChunkManager {
     this.queue = [];
     this.radius = 3;
     this.vegRadius = 1;
-    this.material = applyGroundShader(
-      new THREE.MeshLambertMaterial({ vertexColors: true }),
-    );
+    this.material = applyGroundShader(new THREE.MeshLambertMaterial({ vertexColors: true }));
     this.material.side = THREE.FrontSide;
-    this.onChunkBuild = null; // set by vegetation system
+    this.onChunkBuild = null;      // set by vegetation system
     this.onChunkRemove = null;
     this.center = { i: 9999, j: 9999 };
   }
 
-  keyOf(i, j) {
-    return i + "," + j;
-  }
+  keyOf(i, j) { return i + ',' + j; }
 
   update(px, pz, budget = 2) {
     const C = WORLD.chunk;
-    const ci = Math.floor(px / C),
-      cj = Math.floor(pz / C);
+    const ci = Math.floor(px / C), cj = Math.floor(pz / C);
     if (ci !== this.center.i || cj !== this.center.j) {
       this.center = { i: ci, j: cj };
       this.rebuildList(ci, cj);
@@ -157,38 +132,23 @@ export class ChunkManager {
     for (let j = -this.radius; j <= this.radius; j++) {
       for (let i = -this.radius; i <= this.radius; i++) {
         const ring = Math.max(Math.abs(i), Math.abs(j));
-        const b = CHANNEL_BOUNDS;
-        const overlaps =
-          (ci + i + 1) * WORLD.chunk >= b.minX &&
-          (ci + i) * WORLD.chunk <= b.maxX &&
-          (cj + j + 1) * WORLD.chunk >= b.minZ &&
-          (cj + j) * WORLD.chunk <= b.maxZ;
+        const b=CHANNEL_BOUNDS;
+        const overlaps=(ci+i+1)*WORLD.chunk>=b.minX && (ci+i)*WORLD.chunk<=b.maxX && (cj+j+1)*WORLD.chunk>=b.minZ && (cj+j)*WORLD.chunk<=b.maxZ;
         // A carved groove is under half a metre wide and fits inside one 24 m chunk, so
         // only the chunk you stand on needs 128 segments. Forcing it on the ring around you
         // quadruples the scene for detail nobody can resolve from 24 m away.
         const cut = overlaps && this.state.frontier?.stage > 0;
-        const lod = cut
-          ? ring === 0
-            ? 128
-            : Math.max(32, ring === 1 ? 64 : 16)
-          : ring <= 1
-            ? 32
-            : ring === 2
-              ? 16
-              : 8;
-        const gi = ci + i,
-          gj = cj + j;
+        const lod = cut ? (ring === 0 ? 128 : Math.max(32, ring === 1 ? 64 : 16)) : ring <= 1 ? 32 : ring === 2 ? 16 : 8;
+        const gi = ci + i, gj = cj + j;
         const k = this.keyOf(gi, gj);
         wanted.add(k);
         const ex = this.chunks.get(k);
-        if (!ex || ex.lod !== lod)
-          list.push({ i: gi, j: gj, lod, ring, d: i * i + j * j });
+        if (!ex || ex.lod !== lod) list.push({ i: gi, j: gj, lod, ring, d: i * i + j * j });
       }
     }
     list.sort((a, b) => a.d - b.d);
     this.queue = list;
-    for (const k of [...this.chunks.keys()])
-      if (!wanted.has(k)) this.disposeChunk(k);
+    for (const k of [...this.chunks.keys()]) if (!wanted.has(k)) this.disposeChunk(k);
     // chunks that stay but change ring (grass only lives in the closest ring)
     for (let j = -this.radius; j <= this.radius; j++) {
       for (let i = -this.radius; i <= this.radius; i++) {
@@ -196,10 +156,7 @@ export class ChunkManager {
         const ex = this.chunks.get(k);
         if (!ex) continue;
         const ring = Math.max(Math.abs(i), Math.abs(j));
-        if (ex.ring !== ring) {
-          ex.ring = ring;
-          if (this.onRingChange) this.onRingChange(k, ex, ring);
-        }
+        if (ex.ring !== ring) { ex.ring = ring; if (this.onRingChange) this.onRingChange(k, ex, ring); }
       }
     }
   }
@@ -215,8 +172,7 @@ export class ChunkManager {
 
   buildChunk(ci, cj, segs, ring) {
     const C = WORLD.chunk;
-    const ox = ci * C,
-      oz = cj * C;
+    const ox = ci * C, oz = cj * C;
     const n = segs + 1;
     const positions = new Float32Array(n * n * 3);
     const colors = new Float32Array(n * n * 3);
@@ -226,45 +182,28 @@ export class ChunkManager {
 
     for (let j = 0; j < n; j++) {
       for (let i = 0; i < n; i++) {
-        const x = ox + i * step,
-          z = oz + j * step;
+        const x = ox + i * step, z = oz + j * step;
         heights[j * n + i] = this.state.sampleHeight?.(x, z) ?? heightAt(x, z);
       }
     }
     for (let j = 0; j < n; j++) {
       for (let i = 0; i < n; i++) {
         const idx = j * n + i;
-        const x = ox + i * step,
-          z = oz + j * step;
+        const x = ox + i * step, z = oz + j * step;
         const h = heights[idx];
-        const hl = heights[j * n + Math.max(0, i - 1)],
-          hr = heights[j * n + Math.min(n - 1, i + 1)];
-        const hd = heights[Math.max(0, j - 1) * n + i],
-          hu = heights[Math.min(n - 1, j + 1) * n + i];
-        const sx = (hl - hr) / (2 * step),
-          sz = (hd - hu) / (2 * step);
-        let nx = sx,
-          ny = 1,
-          nz = sz;
+        const hl = heights[j * n + Math.max(0, i - 1)], hr = heights[j * n + Math.min(n - 1, i + 1)];
+        const hd = heights[Math.max(0, j - 1) * n + i], hu = heights[Math.min(n - 1, j + 1) * n + i];
+        const sx = (hl - hr) / (2 * step), sz = (hd - hu) / (2 * step);
+        let nx = sx, ny = 1, nz = sz;
         const len = Math.hypot(nx, ny, nz);
-        nx /= len;
-        ny /= len;
-        nz /= len;
+        nx /= len; ny /= len; nz /= len;
         const slope = 1 - ny;
-        const m = clamp(
-          fbm2(x * 0.0022 + 100, z * 0.0022 - 60, 3, WORLD.seed + 11) * 0.72 +
-            (1 - clamp((h - 2) / 24, 0, 1)) * 0.3,
-          0,
-          1,
-        );
+        const m = clamp(fbm2(x * 0.0022 + 100, z * 0.0022 - 60, 3, WORLD.seed + 11) * 0.72 +
+          (1 - clamp((h - 2) / 24, 0, 1)) * 0.3, 0, 1);
         colorFor(h, slope, m, tmpC);
         const grain = (valueNoise2(x * 0.09, z * 0.09, 7) - 0.5) * 0.07;
-        positions[idx * 3] = i * step;
-        positions[idx * 3 + 1] = h;
-        positions[idx * 3 + 2] = j * step;
-        normals[idx * 3] = nx;
-        normals[idx * 3 + 1] = ny;
-        normals[idx * 3 + 2] = nz;
+        positions[idx * 3] = i * step; positions[idx * 3 + 1] = h; positions[idx * 3 + 2] = j * step;
+        normals[idx * 3] = nx; normals[idx * 3 + 1] = ny; normals[idx * 3 + 2] = nz;
         colors[idx * 3] = clamp(tmpC.r + grain, 0, 1);
         colors[idx * 3 + 1] = clamp(tmpC.g + grain, 0, 1);
         colors[idx * 3 + 2] = clamp(tmpC.b + grain, 0, 1);
@@ -274,22 +213,15 @@ export class ChunkManager {
     let p = 0;
     for (let j = 0; j < segs; j++) {
       for (let i = 0; i < segs; i++) {
-        const a = j * n + i,
-          b = a + 1,
-          c = a + n,
-          d = c + 1;
-        indices[p++] = a;
-        indices[p++] = c;
-        indices[p++] = b;
-        indices[p++] = b;
-        indices[p++] = c;
-        indices[p++] = d;
+        const a = j * n + i, b = a + 1, c = a + n, d = c + 1;
+        indices[p++] = a; indices[p++] = c; indices[p++] = b;
+        indices[p++] = b; indices[p++] = c; indices[p++] = d;
       }
     }
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geo.setIndex(new THREE.BufferAttribute(indices, 1));
     geo.computeBoundingSphere();
 
@@ -300,18 +232,7 @@ export class ChunkManager {
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
     this.scene.add(mesh);
-    const rec = {
-      mesh,
-      lod: segs,
-      ring,
-      i: ci,
-      j: cj,
-      ox,
-      oz,
-      heights,
-      segs,
-      step,
-    };
+    const rec = { mesh, lod: segs, ring, i: ci, j: cj, ox, oz, heights, segs, step };
     this.chunks.set(this.keyOf(ci, cj), rec);
     if (this.onChunkBuild) this.onChunkBuild(this.keyOf(ci, cj), rec, ring);
   }
@@ -319,39 +240,25 @@ export class ChunkManager {
 
 // --------------------------------------------------------------------------
 export function makeWater(scene) {
-  const geo = new THREE.PlaneGeometry(
-    WORLD.size * 1.6,
-    WORLD.size * 1.6,
-    48,
-    48,
-  );
+  const geo = new THREE.PlaneGeometry(WORLD.size * 1.6, WORLD.size * 1.6, 48, 48);
   geo.rotateX(-Math.PI / 2);
   const mat = new THREE.MeshLambertMaterial({
-    color: 0x2f5a63,
-    transparent: true,
-    opacity: 0.82,
-    depthWrite: true,
+    color: 0x2f5a63, transparent: true, opacity: 0.82, depthWrite: true,
   });
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = shared.uTime;
-    sh.vertexShader =
-      "uniform float uTime;\nvarying vec3 vWP;\n" +
-      sh.vertexShader.replace(
-        "#include <begin_vertex>",
-        `#include <begin_vertex>
+    sh.vertexShader = 'uniform float uTime;\nvarying vec3 vWP;\n' + sh.vertexShader.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
        vec3 wp = (modelMatrix * vec4(transformed,1.0)).xyz;
        transformed.y += sin(wp.x * 0.06 + uTime * 1.1) * 0.22 + sin(wp.z * 0.045 - uTime * 0.8) * 0.20;
-       vWP = wp;`,
-      );
-    sh.fragmentShader =
-      "varying vec3 vWP;\nuniform float uTime;\n" +
-      sh.fragmentShader.replace(
-        "#include <color_fragment>",
-        `#include <color_fragment>
+       vWP = wp;`);
+    sh.fragmentShader = 'varying vec3 vWP;\nuniform float uTime;\n' + sh.fragmentShader.replace(
+      '#include <color_fragment>',
+      `#include <color_fragment>
        float ripple = sin(vWP.x*0.55 + uTime*1.7) * sin(vWP.z*0.5 - uTime*1.3);
        diffuseColor.rgb += ripple * 0.035;
-       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62,0.80,0.83), smoothstep(0.75,1.0,ripple)*0.35);`,
-      );
+       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62,0.80,0.83), smoothstep(0.75,1.0,ripple)*0.35);`);
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.y = WORLD.water - 0.05;
