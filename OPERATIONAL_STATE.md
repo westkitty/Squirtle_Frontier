@@ -441,8 +441,26 @@ R/contextual button near the wooden platform advances the existing regional simu
     - Underwater diving mode (`mode === "dive"` or `body.y < -0.45`): accurately engages submerged 61° FOV.
   - Dedicated unit tests (`tools/movement-regression.test.mjs`):
     - 2 new unit tests asserting dynamic slide FOV expansion / boom distance extension, strict reduced motion clamping, and impact micro-recoil triggering / clean decay (suite expanded from 151 to 153 checks; all pass).
-  - Mutation suite (`tools/mutation-check.mjs`):
-    - Added 2 documented-contract mutations (failing slide FOV expansion and failing impact recoil), expanding suite to 39/39 mutations killed by named unit tests in ~130s.
   - Validation: All 153 unit tests (`npm test`), architecture checks (`npm run check`), 39/39 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
+## Loop 8: Deep Record in-world strata resonance and read illumination checkpoint
+
+- Brought the Deep Record historical shaft to life with in-world physical resonance and memory illumination (`src/player/deep-record.js`):
+  - In-world strata memory illumination:
+    - Added `DeepRecord.update(body, memory, strataHold, time = 0)`.
+    - Historical strata logged in `PlaceMemory.strata` illuminate with a luminous ancient mineral patina (`emissive.setRGB(0.04, 0.11, 0.10)`) and polished stone texture (`roughness: 0.72` vs `1.0`), providing clear visual evidence of explored and remembered strata on the cylinder walls.
+    - Unread strata remain dark and rough (`emissive = 0, roughness = 1.0`).
+  - Active reading harmonic resonance pulse:
+    - When Squirtle hovers within an unread stratum band (`strataHold.held > 0`), the stratum layer pulses harmonically with an active sine wave (`pulse = Math.sin((held / 0.9) * PI) * 0.35`) in ancient cyan/amber tones, giving satisfying visual feedback on the walls as the reading progresses toward the 0.9s threshold.
+  - Zero new geometries and clean lifecycle:
+    - Reuses the existing cylinder and floor geometries without allocating additional WebGL resources, strictly preserving `geometries <= 24` and zero-leak teardown (`geometries: 0, textures: 0`).
+  - Main loop integration (`src/main.js`):
+    - Calls `record.update(body, state.memory, strataHold, state.elapsed)` on every frame inside the Deep Record.
+  - Dedicated unit tests (`tools/deep-time.test.mjs`):
+    - Added unit test asserting initial dark state, active reading harmonic resonance pulse, and logged strata luminous patina retention (suite expanded from 153 to 154 checks; all pass).
+  - Mutation suite (`tools/mutation-check.mjs`):
+    - Added 2 documented-contract mutations (failing read strata illumination and failing active hold pulse), expanding suite to 41/41 mutations killed by named unit tests in ~135s.
+  - Validation: All 154 unit tests (`npm test`), architecture checks (`npm run check`), 41/41 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass with zero resource leaks.
+
 
 
