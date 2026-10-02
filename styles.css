@@ -511,3 +511,21 @@ body.reduced-motion #aim {
   transition: none;
   animation: none;
 }
+
+/* Diagnostics are opt-in, non-live and constrained to the Settings panel. */
+#telemetry {
+  margin: 1rem 0;
+}
+#telemetry summary {
+  cursor: pointer;
+}
+#telemetry summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+#telemetry-values {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}

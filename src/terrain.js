@@ -201,7 +201,7 @@ export class ChunkManager {
         key = this.keyOf(task.i, task.j);
       const current = this.chunks.get(key);
       if (!task.rec) {
-        if (current && current.lod === task.lod) {
+        if (current && !current.dirty && current.lod === task.lod) {
           this.queue.shift();
           continue;
         }
@@ -225,6 +225,7 @@ export class ChunkManager {
       this.finishChunk(task, current);
       landed++;
     }
+    this.work.lastSamples = spent;
     this.work.samples += spent;
     if (spent > this.work.maxSamples) this.work.maxSamples = spent;
     if (this.pendingSwaps) this.work.held += 1;
@@ -359,11 +360,10 @@ export class ChunkManager {
     mesh.updateMatrix();
     this.scene.add(mesh);
     // The replacement exists now, so the held mesh goes with it, and only then.
-    if (task.holds) {
-      this.pendingSwaps--;
-      if (this.chunks.get(rec.key) === task.holds) this.disposeChunk(rec.key);
-      else if (this.onChunkRemove) this.onChunkRemove(rec.key, task.holds);
-    }
+    if (task.holds) this.pendingSwaps--;
+    // A carried partial task may have lost its hold marker during ring planning.
+    // The map still owns the outgoing geometry; always release it before replacing it.
+    if (this.chunks.has(rec.key)) this.disposeChunk(rec.key);
     const built = {
       mesh,
       lod: segs,
@@ -422,7 +422,7 @@ export class ChunkManager {
           k = this.keyOf(gi, gj);
         wanted.add(k);
         const ex = this.chunks.get(k);
-        if (!ex || ex.lod !== lod) {
+        if (!ex || ex.dirty || ex.lod !== lod) {
           const keep =
             carried &&
             carried.rec &&

@@ -1,0 +1,182 @@
+{
+  "environment": "Linux sandbox; Chromium SwiftShader for browser runs, not physical-device or macOS evidence",
+  "results": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "seconds": 9.0,
+      "tail": " 240 - herd decisions are deterministic per seed and independent of frame order\n  ---\n  duration_ms: 15.893611\n  type: 'test'\n  ...\n# Subtest: drink tracks record what was seen here, capped and validated\nok 241 - drink tracks record what was seen here, capped and validated\n  ---\n  duration_ms: 2.408288\n  type: 'test'\n  ...\n# Subtest: drink tracks ride along in a version 6 save\nok 242 - drink tracks ride along in a version 6 save\n  ---\n  duration_ms: 1.814607\n  type: 'test'\n  ...\n# Subtest: WorldEffects reuses single ConeGeometry across all particle systems for zero-allocation rendering\nok 243 - WorldEffects reuses single ConeGeometry across all particle systems for zero-allocation rendering\n  ---\n  duration_ms: 3.375532\n  type: 'test'\n  ...\n# Subtest: Water Jet stream activates pressurized particle stream reaching 2.8m along forward yaw\nok 244 - Water Jet stream activates pressurized particle stream reaching 2.8m along forward yaw\n  ---\n  duration_ms: 3.018988\n  type: 'test'\n  ...\n# Subtest: Aquatic surface wake generates concentric ripples only when swimming or moving in water\nok 245 - Aquatic surface wake generates concentric ripples only when swimming or moving in water\n  ---\n  duration_ms: 1.272893\n  type: 'test'\n  ...\n# Subtest: Splash particles scatter radially during water-exit shake or fluid impact\nok 246 - Splash particles scatter radially during water-exit shake or fluid impact\n  ---\n  duration_ms: 1.548107\n  type: 'test'\n  ...\n# Subtest: Stream foam rapids particles travel down running channel when stage >= 2\nok 247 - Stream foam rapids particles travel down running channel when stage >= 2\n  ---\n  duration_ms: 1.312796\n  type: 'test'\n  ...\n# Subtest: WorldEffects teardown cleanly disposes all resources without throwing\nok 248 - WorldEffects teardown cleanly disposes all resources without throwing\n  ---\n  duration_ms: 0.65545\n  type: 'test'\n  ...\n1..248\n# tests 248\n# suites 0\n# pass 248\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7648.306498\n"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "seconds": 2.3,
+      "tail": "\n> build\n> vite build\n\nvite v6.4.3 building for production...\ntransforming...\n\u2713 54 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   8.36 kB \u2502 gzip:   2.90 kB\ndist/assets/index-BPfNuMRh.css    6.35 kB \u2502 gzip:   2.17 kB\ndist/assets/index-DbucUUr7.js   691.21 kB \u2502 gzip: 191.76 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\u2713 built in 1.97s\n"
+    },
+    {
+      "command": "npm run assets",
+      "exitCode": 0,
+      "seconds": 0.3,
+      "tail": "\n> assets\n> node tools/asset-validate.mjs\n\nGLB validated: 981708 bytes; 1 documented warnings\n"
+    },
+    {
+      "command": "npm run bench:streaming",
+      "exitCode": 0,
+      "seconds": 0.4,
+      "tail": "\n> bench:streaming\n> node tools/streaming-bench.mjs\n\n\nmatched walk: 210 m, 9 chunk boundaries, same terrain shipped\nopen country     worst frame   2178 ->   2178 samples (median 0 -> 0), 33 chunk builds, holes 0 -> 0, 0.171 -> 0.102 ms/frame\ncarved channel   worst frame  17730 ->   6120 samples (median 0 -> 0), 38 chunk builds, holes 0 -> 0, 0.148 -> 0.163 ms/frame\nwall clock is reported, not asserted (software rasterizer in a container, not device evidence)\ndocs/performance/streaming-bench.json written.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser",
+      "exitCode": 0,
+      "seconds": 42.6,
+      "tail": "\n> browser\n> node tools/movement-browser.mjs\n\nMovement, save/reload, 12 chunk return cycles, 30 asset cycles and touch journey passed. Human enjoyment remains unverified.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:watershed",
+      "exitCode": 0,
+      "seconds": 28.5,
+      "tail": "\n> browser:watershed\n> node tools/watershed-browser.mjs\n\nCurrent Sense, input-driven repair, the flooded north run and graph reload passed; setup position was teleported.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:habitat",
+      "exitCode": 0,
+      "seconds": 21.7,
+      "tail": "\n> browser:habitat\n> node tools/habitat-browser.mjs\n\nJet-driven repair, UI save, thirty-minute absence, colonization rendered on both sides, mirrored sense line, rest guard, 12 Lab/frontier cycles and zero-resource teardown passed; vantage and door placements are teleports, and the absence is a rewound saved clock standing in for a wait.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:world",
+      "exitCode": 0,
+      "seconds": 27.7,
+      "tail": "\n> browser:world\n> node tools/world-browser.mjs\n\nInput-driven bypass/fire, memory map, Deep Record dive/ascent, 12 room cycles and teardown passed.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:recovery",
+      "exitCode": 0,
+      "seconds": 6.5,
+      "tail": "\n> browser:recovery\n> node tools/recovery-browser.mjs\n\nExport, malformed import rejection, pose-aware confirmed import/quarantine and explicit backup recovery passed.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:channel",
+      "exitCode": 0,
+      "seconds": 19.1,
+      "tail": "\n> browser:channel\n> node tools/channel-browser.mjs\n\nStage transition, rendered height authority, reload and 12 return cycles passed.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:wildlife",
+      "exitCode": 0,
+      "seconds": 55.6,
+      "tail": "\n> browser:wildlife\n> node tools/wildlife-browser.mjs\n\nWildlife stalk/evade, wetland-gated drinking, dry-shallow avoidance, visible settlement bowl, persisted familiarity and 12 lifecycle returns passed.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:a11y",
+      "exitCode": 0,
+      "seconds": 32.2,
+      "tail": "\n> browser:a11y\n> node tools/accessibility-browser.mjs\n\nNames, contrast, focus, keyboard panel flow, reduced motion, adaptive toggle, touch targets and stick drag validated. Human screen-reader session remains unverified.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:multitab",
+      "exitCode": 0,
+      "seconds": 20.0,
+      "tail": "\n> browser:multitab\n> node tools/multitab-browser.mjs\n\nTwo-tab conflict refusal, non-destructive adoption, pose resume from the Lab basin and bank return passed.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:visual",
+      "exitCode": 0,
+      "seconds": 49.9,
+      "tail": "\n> browser:visual\n> node tools/locomotion-visual-browser.mjs\n\n\nShoreline calm (0 state flips, 0 max density step), one crossing down and up, 1 reallocation(s) for 12 resize events, and no inline canvas sizing passed. Human perception of flicker remains unverified.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:collision",
+      "exitCode": 0,
+      "seconds": 33.1,
+      "tail": "\n> browser:collision\n> node tools/locomotion-collision-browser.mjs\n\n176 frames of running with no collider penetration, a 0.44 impact resolved against a real tree, the rim stopping the body at 897 m with 0.000 m credited while blocked, and a save from 240 m restoring where it was written. Human feel remains unverified.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:locomotion",
+      "exitCode": 0,
+      "seconds": 61.0,
+      "tail": "\n> browser:locomotion\n> node tools/locomotion-journey.mjs\n\nPASS: continuous input-driven locomotion; objective state, continuity, terrain-work and feedback checks only.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run perf",
+      "exitCode": 0,
+      "seconds": 58.2,
+      "tail": "      \"points\": 0,\n        \"lines\": 122\n      }\n    }\n  ],\n  \"adaptiveAb\": {\n    \"pinnedFullDetail\": {\n      \"samples\": 140,\n      \"medianMs\": 83.29999999999927,\n      \"p95Ms\": 183.20000000000073,\n      \"adaptiveValue\": 1,\n      \"adaptiveChangesCumulative\": 2,\n      \"pixelRatio\": 1,\n      \"buffer\": \"960x640\",\n      \"css\": \"960x640\",\n      \"triangles\": 31236,\n      \"geometryBytes\": 23\n    },\n    \"adaptiveEnabled\": {\n      \"samples\": 100,\n      \"medianMs\": 66.60000000000218,\n      \"p95Ms\": 183.3000000000029,\n      \"adaptiveValue\": 0.85,\n      \"adaptiveChangesCumulative\": 3,\n      \"pixelRatio\": 0.85,\n      \"buffer\": \"816x544\",\n      \"css\": \"960x640\",\n      \"triangles\": 31236,\n      \"geometryBytes\": 23\n    },\n    \"findings\": {\n      \"bufferShrank\": true,\n      \"layoutUnchanged\": true,\n      \"scaleReduced\": true,\n      \"medianDeltaMs\": -16.7,\n      \"p95DeltaMs\": 0.1,\n      \"note\": \"Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured.\"\n    }\n  },\n  \"channelCut\": {\n    \"samples\": 110,\n    \"medianMs\": 83.29999999999563,\n    \"p95Ms\": 150,\n    \"memory\": {\n      \"geometries\": 23,\n      \"textures\": 6\n    },\n    \"render\": {\n      \"frame\": 683,\n      \"calls\": 40,\n      \"triangles\": 55481,\n      \"points\": 0,\n      \"lines\": 122\n    }\n  },\n  \"channelDistant\": {\n    \"samples\": 110,\n    \"medianMs\": 50,\n    \"p95Ms\": 100,\n    \"memory\": {\n      \"geometries\": 21,\n      \"textures\": 6\n    },\n    \"render\": {\n      \"frame\": 818,\n      \"calls\": 26,\n      \"triangles\": 32109,\n      \"points\": 0,\n      \"lines\": 122\n    }\n  },\n  \"teardown\": {\n    \"memory\": {\n      \"geometries\": 0,\n      \"textures\": 0\n    },\n    \"chunks\": {\n      \"active\": 0,\n      \"queued\": 0,\n      \"loads\": 16,\n      \"unloads\": 16,\n      \"held\": 0,\n      \"frames\": 823,\n      \"samples\": 36112,\n      \"maxFrameSamples\": 6063,\n      \"holes\": 0\n    },\n    \"assets\": {\n      \"cached\": 0,\n      \"referencedIds\": 0,\n      \"references\": 0,\n      \"records\": 0\n    }\n  }\n}\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:dist",
+      "exitCode": 0,
+      "seconds": 6.3,
+      "tail": "\n> browser:dist\n> node tools/dist-browser.mjs\n\nBuilt bundle boots from static hosting with direct movement, persistence, cached asset and zero-resource teardown.\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:baseline",
+      "exitCode": 1,
+      "seconds": 41.1,
+      "tail": "\n> browser:baseline\n> node tools/browser-baseline.mjs\n\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\npage.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('#cycle')\n\n    at /home/user/Squirtle_Frontier/tools/browser-baseline.mjs:21:14 {\n  log: [ \"  - waiting for locator('#cycle')\" ],\n  name: 'TimeoutError'\n}\n\nNode.js v22.22.3\n"
+    },
+    {
+      "command": "npm run app:build",
+      "exitCode": 127,
+      "seconds": 0.1,
+      "tail": "\n> app:build\n> ./macos/build-app.sh\n\nsh: 1: ./macos/build-app.sh: not found\n"
+    },
+    {
+      "command": "npm run mutate",
+      "exitCode": 0,
+      "seconds": 365.8,
+      "tail": "      caretaker dialogue rejects bodies within normal speaking range\n                       settlementDialogue provides context-sensitive ambient voice for all caretaker response modes\nkilled              caretaker welcome fails to animate welcoming arm wave gesture\n                       HabitatView animates caretaker with living welcoming gestures and pensive check-water posture\nkilled              stream foam rapids fail to activate along running channel when stage >= 2\n                       Stream foam rapids particles travel down running channel when stage >= 2\nkilled              localized stream flow acoustics fail to activate near running channel\n                       nearness to active watercourse activates localized stream flow acoustics\nkilled              fast shell slide fails to widen camera FOV\n                       render-only effects cannot steer the body\nkilled              hard body impact fails to trigger camera recoil\n                       render-only effects cannot steer the body\nkilled              read strata fail to illuminate with mineral patina\n                       logged strata illuminate with historical patina and active hold pulses harmonic resonance\nkilled              active strata hold fails to pulse resonance\n                       logged strata illuminate with historical patina and active hold pulses harmonic resonance\nkilled              water jet fails to rinse ash from fire site\n                       Water Jet aimed at burnt ground rinses ash and prevents storm contamination\nkilled              offline fast-forward fails to advance regional tick\n                       stage transition body settles to reconstructed ground; save/load reconstructs groove\nkilled              living slumber crouch fails to activate respiration murmur\n                       living slumber crouch activates gentle 0.77 Hz respiration acoustics\n44/44 injected defects caught by a named test. the suite currently owns every rule this list can break.\n"
+    }
+  ],
+  "earlierFailures": [
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:world",
+      "exitCode": 1,
+      "seconds": 5.4,
+      "tail": "\n> browser:world\n> node tools/world-browser.mjs\n\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: The input did not match the regular expression /You are on the Spring gully/. Input:\n\n'Follow the shore. The stone doorway leads to the Listening Basin.'\n\n    at file:///home/user/Squirtle_Frontier/tools/world-browser.mjs:90:10 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: 'Follow the shore. The stone doorway leads to the Listening Basin.',\n  expected: /You are on the Spring gully/,\n  operator: 'match',\n  diff: 'simple'\n}\n\nNode.js v22.22.3\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:channel",
+      "exitCode": 1,
+      "seconds": 2.9,
+      "tail": "\n> browser:channel\n> node tools/channel-browser.mjs\n\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(evidence.afterStage.error < 1e-5)\n\n    at file:///home/user/Squirtle_Frontier/tools/channel-browser.mjs:50:10 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v22.22.3\n"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:collision",
+      "exitCode": 1,
+      "seconds": 32.7,
+      "tail": "\n> browser:collision\n> node tools/locomotion-collision-browser.mjs\n\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: running through the treeline moved the frame time from 37.3 ms to 68.1 ms\n    at file:///home/user/Squirtle_Frontier/tools/locomotion-collision-browser.mjs:434:10 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v22.22.3\n"
+    }
+  ],
+  "notes": {
+    "browser:world": "Repaired: boot hint now ambient; Current Sense preempts incidental cues, not save confirmations.",
+    "browser:channel": "Repaired readiness predicate: retained old meshes count as active during an amortized swap; wait for queued=0 before exact vertex equality. Geometry assertion unchanged.",
+    "browser:collision": "Initial software-renderer relative timing assertion failed (37.3 vs 68.1 ms); unchanged retry passed. Timing comparison is not a matched collision-cost benchmark and is not device performance evidence.",
+    "browser:baseline": "Pre-existing obsolete harness: tools/browser-baseline.mjs:21 requests #cycle; git show 7445578:index.html contains no such control.",
+    "app:build": "Environment blocked: tracked macos/build-app.sh has #!/bin/zsh (also at base 7445578); neither zsh nor Apple Swift frameworks are installed in Linux. Native sources unchanged; no native verification claimed.",
+    "lateIntegration": "Continuous collision route added a real overlapping-proxy case: retain last clear position if two bounded separation passes leave unresolved overlap; explicit retreat regression added. A temporary Set.every implementation error was caught by unit tests and fixed using iteration before final matrix.",
+    "bootWarnings": "Final distinction: a loaded warning/message retains request priority; only the fresh-start hint is ambient. Revalidated check, build, recovery, world and continuous journey."
+  },
+  "postMatrixChecks": [
+    {
+      "command": "npm run check",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:recovery",
+      "result": "PASS"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:world",
+      "result": "PASS"
+    },
+    {
+      "command": "BROWSER_BUNDLED=1 npm run browser:locomotion",
+      "result": "PASS"
+    }
+  ]
+}

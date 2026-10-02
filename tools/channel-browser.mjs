@@ -26,7 +26,8 @@ try {
   await p.waitForFunction(
     () =>
       window.__SF.state.frontier.stage === 4 &&
-      window.__SF.streaming.stats().active === 9,
+      window.__SF.streaming.stats().active === 9 &&
+      window.__SF.streaming.stats().queued === 0,
   );
   const inspect = () => {
     const g = window.__SF,

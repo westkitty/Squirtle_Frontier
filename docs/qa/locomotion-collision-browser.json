@@ -11,25 +11,25 @@
   },
   "scriptedSetup": "blocks 2 and 3 place the body once (position and velocity); every later value is the simulation's own",
   "run": {
-    "samples": 169,
+    "samples": 176,
     "metresTravelled": 24.4,
-    "largestFrameStep": 0.7,
-    "medianFrameMs": 32,
-    "p95FrameMs": 143,
+    "largestFrameStep": 0.72,
+    "medianFrameMs": 28.6,
+    "p95FrameMs": 154,
     "worstClearanceViolation": 0,
     "framesWithin2cmOfACollider": 0,
-    "maxImpact": 0.4754
+    "maxImpact": 0.4921
   },
   "arrivalTrace": [
     {
-      "gap": 0.2783,
-      "impact": 0.5255,
-      "speed": 0.752,
-      "hudSpeed": "0.8 m/s"
+      "gap": 0.3112,
+      "impact": 0.4422,
+      "speed": 0.234,
+      "hudSpeed": "0.2 m/s"
     },
     {
-      "gap": 0.3259,
-      "impact": 0.0588,
+      "gap": 0.326,
+      "impact": 0.0255,
       "speed": 0.001,
       "hudSpeed": "0.0 m/s"
     },
@@ -90,10 +90,10 @@
       "radius": 1.4,
       "standOff": 0.23
     },
-    "peakImpact": 0.525,
-    "minGap": 0.2783,
+    "peakImpact": 0.442,
+    "minGap": 0.3112,
     "framesSampled": 60,
-    "peakSpeedDuringContact": 0.752,
+    "peakSpeedDuringContact": 0.234,
     "speedAfter": 0
   },
   "rim": {
@@ -127,17 +127,17 @@
       "x": -180,
       "z": 240
     },
-    "framesSampled": 73,
+    "framesSampled": 74,
     "metresTravelledAfterRestore": 6.5,
     "note": "under the previous guard this save was discarded for spawn at (-10, 18)"
   },
   "frameCost": {
-    "openMedian": 76.4,
-    "busyMedian": 62.9,
-    "openFrames": 33,
+    "openMedian": 74.3,
+    "busyMedian": 65,
+    "openFrames": 34,
     "busyFrames": 39,
     "note": "wall clock in a software rasteriser, reported rather than asserted"
   },
-  "summary": "169 frames of running with no collider penetration, a 0.53 impact resolved against a real tree, the rim stopping the body at 897 m with 0.000 m credited while blocked, and a save from 240 m restoring where it was written. Human feel remains unverified.",
+  "summary": "176 frames of running with no collider penetration, a 0.44 impact resolved against a real tree, the rim stopping the body at 897 m with 0.000 m credited while blocked, and a save from 240 m restoring where it was written. Human feel remains unverified.",
   "pageErrors": []
 }

@@ -25,7 +25,8 @@
     "browser:multitab": "node tools/multitab-browser.mjs",
     "browser:visual": "node tools/locomotion-visual-browser.mjs",
     "browser:collision": "node tools/locomotion-collision-browser.mjs",
-    "app:build": "./macos/build-app.sh"
+    "app:build": "./macos/build-app.sh",
+    "browser:locomotion": "node tools/locomotion-journey.mjs"
   },
   "dependencies": {
     "three": "0.160.1"

@@ -21,6 +21,11 @@ export function stepBody(b, input, env, dt) {
   // authoritative interval began, so it is captured here rather than by whoever
   // happens to remember to snapshot it.
   recordPose(b);
+  input = {
+    ...input,
+    x: Number.isFinite(input.x) ? input.x : 0,
+    z: Number.isFinite(input.z) ? input.z : 0,
+  };
   const wasGrounded = b.grounded;
   const slidePressed = !!input.slide && !b.slideHeld;
   b.slideHeld = !!input.slide;
@@ -234,7 +239,8 @@ export function stepBody(b, input, env, dt) {
     // wall and buzzing along it, and it is what stops a camera recoil from stuttering
     // while the player keeps walking into ground they cannot climb.
     wasTouching = b.contactTime > 0;
-  let contacted = false;
+  let contacted = false,
+    blockedBy = null;
   // Body-sized step limit; steep steps block horizontal travel, not vertical jet launches.
   if (
     b.grounded &&
@@ -244,6 +250,7 @@ export function stepBody(b, input, env, dt) {
     nx = b.x;
     nz = b.z;
     contacted = true;
+    blockedBy = "slope";
     // Ground you cannot climb is a collision like any other, so the thump it earns is a
     // function of how hard the body arrived, and only of that: a bank you are pressing
     // against stops being news after the first step.
@@ -260,9 +267,9 @@ export function stepBody(b, input, env, dt) {
   }
   // A caller that hands the step a non-finite destination must not have the body
   // teleported onto whichever obstacle its arithmetic happened to land near: the
-  // position stays where it was, and the invalid velocity is left for the finite-state
-  // guard at the end of the step to catch.
+  // position stays where it was and horizontal velocity is cleared.
   if (!Number.isFinite(nx) || !Number.isFinite(nz)) {
+    b.vx = b.vz = 0;
     nx = b.x;
     nz = b.z;
   }
@@ -304,6 +311,7 @@ export function stepBody(b, input, env, dt) {
         const grazing = -into <= CONTACT.grazeSpeed,
           arrival = !grazing && !wasTouching,
           restitution = arrival ? CONTACT.restitution : 0;
+        blockedBy = "solid";
         b.vx -= into * normalX * (1 + restitution);
         b.vz -= into * normalZ * (1 + restitution);
         // Grazes are felt, head-on arrivals are felt *more*, and neither can exceed a
@@ -322,6 +330,28 @@ export function stepBody(b, input, env, dt) {
     }
     if (!touched) break;
   }
+  // Two overlapping proxies can undo each other's separation in the bounded
+  // solver. Never replace a previously clear position with an unresolved one.
+  // Reject that translation (not future input); walking back out remains possible.
+  const clearAt = (x, z) => {
+    for (const o of contacts) {
+      if (Math.hypot(x - o.x, z - o.z) >= o.radius + CONTACT.bodyRadius - 1e-6)
+        continue;
+      const base = env.sample(o.x, o.z).height;
+      if (
+        b.y + CONTACT.bodyRadius > base &&
+        b.y - CONTACT.bodyRadius < base + o.height
+      )
+        return false;
+    }
+    return true;
+  };
+  if (contacted && !clearAt(nx, nz) && clearAt(ox, oz)) {
+    nx = ox;
+    nz = oz;
+    b.vx = b.vz = 0;
+    blockedBy = "solid";
+  }
   // The world's own limit, from the terrain's rim rather than a prototype's box. The
   // outward component is what stops; travel along the boundary keeps working, so
   // reaching the rim is an edge to walk, not a wall to get stuck against.
@@ -334,6 +364,7 @@ export function stepBody(b, input, env, dt) {
         Math.abs(nz) > Math.abs(nx) ? Math.abs(nz) - bound : 0,
       );
     contacted = true;
+    blockedBy = "rim";
     if (cx !== nx && Math.sign(b.vx) === Math.sign(nx)) b.vx = 0;
     if (cz !== nz && Math.sign(b.vz) === Math.sign(nz)) b.vz = 0;
     nx = cx;
@@ -344,6 +375,9 @@ export function stepBody(b, input, env, dt) {
         Math.min(0.6, (outward / dt || 0) / CONTACT.hardSpeed),
       );
   }
+  // Which refusal this step ran into, for the feedback layer to read. Reset every step:
+  // it describes what just happened, not what has been true for a while.
+  b.blocked = blockedBy;
   // The clock the next step reads to tell an arrival from a continuing press. Capped, so
   // a body that has been wedged an hour says the same thing as one wedged a minute.
   b.contactTime = contacted ? Math.min(60, b.contactTime + dt) : 0;
@@ -374,6 +408,9 @@ export function stepBody(b, input, env, dt) {
     b.vy = 0;
     b.grounded = true;
   } else b.grounded = false;
+  const settledWater = env.water(b.x, b.z);
+  b.depth = settledWater ? settledWater.level - ground : -1;
+  b.submersion = settledWater ? settledWater.level - b.y : -1;
   b.distance += Math.hypot(b.x - ox, b.z - oz);
   if (!Number.isFinite(b.y) || b.y < -30) {
     b.y = ground;

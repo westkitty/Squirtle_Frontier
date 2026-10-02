@@ -1,3 +1,4 @@
+import { heightAt } from "./worldgen.js";
 import { Settlement } from "./simulation/settlement.js";
 import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
@@ -18,7 +19,10 @@ const validPose = (p) =>
   (within(p) &&
     Number.isFinite(p.y) &&
     p.y >= -24 &&
-    p.y <= 60 &&
+    // Frontier hills exceed the prototype's 60 m ceiling. Keep room saves
+    // bounded as before, while accepting ground plus launch clearance outdoors.
+    p.y <=
+      (p.place === "frontier" ? Math.max(60, heightAt(p.x, p.z) + 20) : 60) &&
     Number.isFinite(p.yaw));
 function decode(text, seed) {
   const s = JSON.parse(text);

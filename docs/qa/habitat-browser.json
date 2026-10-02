@@ -157,27 +157,27 @@
   "blockageCleared": 0,
   "absence": {
     "wetness": 0.879969906405982,
-    "labFrogs": 0.7254971967239475,
-    "labWater": 0.9577588397806328
+    "labFrogs": 0.7254972107921552,
+    "labWater": 0.9577588397806327
   },
   "frontierReedsAfter": 46,
   "labAfter": {
     "labReeds": 40,
     "labFrogs": 8,
-    "basinOpacity": 0.6798180919805218
+    "basinOpacity": 0.6798180919805217
   },
   "restSeconds": 300,
   "teardown": {
     "loop": {
-      "simTime": 6.366666666666649,
-      "realTime": 6.383100000000008,
-      "steps": 382,
+      "simTime": 8.333333333333327,
+      "realTime": 8.349599999999997,
+      "steps": 500,
       "discarded": 0,
       "drops": 0,
-      "alpha": 0.9860000000000311
+      "alpha": 0.9760000000001338
     },
     "pose": {
-      "alpha": 0.9860000000000311,
+      "alpha": 0.9760000000001338,
       "x": 0,
       "y": 0,
       "z": 5,
@@ -193,6 +193,10 @@
       "jetTime": 0,
       "distance": 0,
       "impact": 0,
+      "blocked": null,
+      "depth": -1,
+      "submersion": -1,
+      "contactTime": 0,
       "resting": false,
       "prevPose": {
         "x": 0,
@@ -201,23 +205,28 @@
         "yaw": 3.141592653589793,
         "pitch": 0
       },
-      "poseAlpha": 0.9860000000000311,
+      "poseAlpha": 0.9760000000001338,
       "poseInterval": 0.016666666666666666
     },
     "chunks": {
       "active": 0,
       "queued": 0,
       "loads": 117,
-      "unloads": 117
+      "unloads": 117,
+      "held": 0,
+      "frames": 90,
+      "samples": 127413,
+      "maxFrameSamples": 2178,
+      "holes": 0
     },
     "memory": {
       "geometries": 0,
       "textures": 0
     },
     "render": {
-      "frame": 218,
-      "calls": 10,
-      "triangles": 11276,
+      "frame": 159,
+      "calls": 13,
+      "triangles": 11312,
       "points": 0,
       "lines": 0
     },
@@ -236,21 +245,13 @@
       "underwater": false,
       "mix": 0
     },
-    "attention": {
-      "id": "lab-basin",
-      "type": "water",
-      "x": 0,
-      "y": -0.2,
-      "z": 0,
-      "priority": 5,
-      "distance": 5
-    },
+    "attention": null,
     "gaze": {
       "yaw": 0,
-      "pitch": -0.00885584896802845
+      "pitch": 0
     },
-    "sleeping": false,
-    "sleepProgress": 0.222486200504878,
+    "sleeping": true,
+    "sleepProgress": 0.9976621110910431,
     "effects": {
       "jet": 0,
       "wake": 0,

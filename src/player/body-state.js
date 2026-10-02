@@ -21,6 +21,12 @@ export function createBody(x = -10, z = 18, y = 1) {
     jetTime: 0,
     distance: 0,
     impact: 0,
+    // Which of the world's refusals stopped this step, for the step to be reported on:
+    // steep ground, solid ground, or the edge of the map. Presentation reads it; nothing
+    // in the simulation branches on it.
+    blocked: null,
+    depth: -1,
+    submersion: -1,
     // Seconds the shell has been held against something, reset on separation. A collision
     // response needs to know whether this step *arrived* somewhere or merely stayed there;
     // this clock is the only record of the difference.

@@ -39,7 +39,7 @@
     {
       "error": 1.1916847686421761e-7,
       "memory": {
-        "geometries": 19,
+        "geometries": 18,
         "textures": 6
       }
     },
@@ -95,10 +95,10 @@
   },
   "performance": {
     "environment": "960x640 SwiftShader, stage 4; NOT hardware/mobile FPS",
-    "medianMs": 66.69999999999982,
+    "medianMs": 83.29999999999927,
     "p95Ms": 166.69999999999982,
     "render": {
-      "frame": 132,
+      "frame": 136,
       "calls": 40,
       "triangles": 55481,
       "points": 0,

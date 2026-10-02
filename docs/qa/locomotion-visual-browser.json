@@ -18,8 +18,8 @@
   },
   "surfacing": {
     "stateFlips": 0,
-    "maxDensityStep": 0.00224,
-    "betweenFrames": 5,
+    "maxDensityStep": 0.00152,
+    "betweenFrames": 12,
     "endDensity": 0.025
   },
   "resize": {
@@ -40,7 +40,7 @@
     ],
     "ratio": 0.7,
     "size": "1024x640@0.700",
-    "frames": 466
+    "frames": 465
   },
   "streaming": {
     "maxFrameSamples": 2178,

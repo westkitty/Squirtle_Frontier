@@ -24,8 +24,10 @@ export class Streaming {
         (rec.j + 1) * WORLD.chunk >= b.minZ &&
         rec.j * WORLD.chunk <= b.maxZ
       )
-        this.chunks.disposeChunk(key);
+        rec.dirty = true;
     }
+    this.chunks.queue.length = 0;
+    this.chunks.pendingSwaps = 0;
     this.chunks.center = { i: 9999, j: 9999 };
   }
   // `motion` is the body's velocity, used only to order work - it never decides what
@@ -37,9 +39,9 @@ export class Streaming {
   }
   // Everything the queue can ask for, right now: boot and any test that wants the
   // region complete without stepping frames.
-  settle(x, z) {
+  settle() {
     let guard = 0;
-    while (this.chunks.queue.length && guard++ < 64) this.chunks.pump(64);
+    while (this.chunks.queue.length && guard++ < 4000) this.chunks.pump(64);
     return this.stats();
   }
   stats() {

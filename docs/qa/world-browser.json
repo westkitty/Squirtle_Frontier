@@ -52,8 +52,8 @@
   ],
   "bypass": 0.11333333333333334,
   "suppression": {
-    "heat": 0.7024999999999998,
-    "soaked": 0.13133333333333333
+    "heat": 0.7249999999999999,
+    "soaked": 0.11666666666666665
   },
   "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
@@ -65,8 +65,8 @@
     "followed": 2
   },
   "record": {
-    "y": -12.4,
-    "caption": "About 895 years ago. A long dry season lowered the reeds. Wind laid sand over the mud."
+    "y": -12.399804161504308,
+    "caption": "Places remembered closed."
   },
   "recordRows": [
     {
@@ -116,15 +116,15 @@
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
     "loop": {
-      "simTime": 25.216666666666516,
-      "realTime": 25.782200000000046,
-      "steps": 1513,
-      "discarded": 0.5498999999999996,
+      "simTime": 25.04999999999986,
+      "realTime": 25.832299999999982,
+      "steps": 1503,
+      "discarded": 0.7667000000000003,
       "drops": 5,
-      "alpha": 0.9380000000003578
+      "alpha": 0.9360000000004096
     },
     "pose": {
-      "alpha": 0.9380000000003578,
+      "alpha": 0.9360000000004096,
       "x": 0,
       "y": 0,
       "z": 5,
@@ -140,6 +140,10 @@
       "jetTime": 0,
       "distance": 0,
       "impact": 0,
+      "blocked": null,
+      "depth": -1,
+      "submersion": -1,
+      "contactTime": 0,
       "resting": false,
       "prevPose": {
         "x": 0,
@@ -148,7 +152,7 @@
         "yaw": 3.141592653589793,
         "pitch": 0
       },
-      "poseAlpha": 0.9380000000003578,
+      "poseAlpha": 0.9360000000004096,
       "poseInterval": 0.016666666666666666
     },
     "chunks": {
@@ -157,17 +161,17 @@
       "loads": 27,
       "unloads": 27,
       "held": 0,
-      "frames": 160,
+      "frames": 167,
       "samples": 63643,
       "maxFrameSamples": 6063,
-      "holes": 2
+      "holes": 1
     },
     "memory": {
       "geometries": 0,
       "textures": 0
     },
     "render": {
-      "frame": 575,
+      "frame": 589,
       "calls": 11,
       "triangles": 9488,
       "points": 0,
@@ -198,8 +202,8 @@
       "distance": 5
     },
     "gaze": {
-      "yaw": -0.4687824831494421,
-      "pitch": -0.2560493489109717
+      "yaw": -0.4083930451828895,
+      "pitch": -0.23641407554605703
     },
     "sleeping": false,
     "sleepProgress": 0,

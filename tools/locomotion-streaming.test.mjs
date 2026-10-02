@@ -300,3 +300,30 @@ test("the streaming façade reports the amortization and can settle on demand", 
     "streaming has to leave the scene clean",
   );
 });
+
+test("terrain revision keeps supported ground until the replacement is ready", () => {
+  const state = terrain(),
+    scene = new THREE.Scene(),
+    chunks = new ChunkManager(scene, state);
+  chunks.radius = 1;
+  const streaming = Object.create(Streaming.prototype);
+  Object.assign(streaming, { state, chunks, terrainStage: 0 });
+  chunks.update(-8, 10);
+  while (chunks.queue.length) chunks.pump();
+  const key = "-1,0",
+    original = chunks.chunks.get(key).mesh;
+  state.frontier.stage = 2;
+  streaming.update(-8, 10);
+  assert.equal(chunks.chunks.get(key).mesh, original);
+  assert.ok(chunks.queue.length > 0);
+  while (chunks.queue.length) {
+    chunks.pump();
+    assert.ok(chunks.chunks.has(key), "terrain refresh left missing support");
+  }
+  assert.notEqual(chunks.chunks.get(key).mesh, original);
+  assert.equal(scene.children.length, 9);
+  assert.equal(chunks.work.holes, 0);
+  assert.equal(chunks.pendingSwaps, 0);
+  for (const k of [...chunks.chunks.keys()]) chunks.disposeChunk(k);
+  chunks.material.dispose();
+});

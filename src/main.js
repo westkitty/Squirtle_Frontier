@@ -1,3 +1,8 @@
+import { StatusArbiter, CHANNELS } from "./status-arbiter.js";
+import {
+  createFeedback,
+  telemetryLines,
+} from "./player/locomotion-feedback.js";
 import { AdaptiveScale } from "./adaptive-quality.js";
 import { createResizePump } from "./render-resize.js";
 import { WaterView } from "./player/water-view-state.js";
@@ -70,9 +75,41 @@ import {
 import { placeAction } from "./simulation/place-interaction.js";
 import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
-const status = document.querySelector("#status"),
+const statusNode = document.querySelector("#status"),
+  announcements = new StatusArbiter({ ambient: statusNode.textContent }),
+  feedback = createFeedback(),
+  // Existing discrete UI actions all use the request channel. Continuous world
+  // descriptions use narrative below and cannot displace those confirmations.
+  status = {
+    set textContent(text) {
+      announcements.say(text, CHANNELS.request);
+      flushStatus();
+    },
+    get textContent() {
+      return announcements.text;
+    },
+  },
+  senseStatus = {
+    set textContent(text) {
+      announcements.note(text);
+      announcements.say(text, CHANNELS.system, 0.2);
+      if (announcements.channel === CHANNELS.system)
+        announcements.remaining = 0.2;
+      flushStatus();
+    },
+  },
+  narrative = {
+    set textContent(text) {
+      announcements.note(text);
+      flushStatus();
+    },
+  },
   loading = document.querySelector("#loading"),
   recordReadout = document.querySelector("#record-readout");
+function flushStatus() {
+  if (statusNode.textContent !== announcements.text)
+    statusNode.textContent = announcements.text;
+}
 // Module scope, because cleanup can run from a pagehide during boot: a `let` declared
 // later in the boot body would still be in its temporal dead zone when it is reached.
 let cleanup = () => {},
@@ -611,6 +648,9 @@ async function boot() {
       senseHeld = false;
     const loop = new Loop(
       (dt, step, count) => {
+        announcements.tick(dt);
+        feedback.tick(dt);
+        announcements.note(feedback.ambient(body));
         // Look first, then movement direction: steering is resolved at the point
         // where it takes effect, and a frame that ran several fixed steps hands
         // each step its share of the drag instead of leaving the later steps on an
@@ -698,6 +738,10 @@ async function boot() {
           env,
           dt,
         );
+        const cue = feedback.read(body);
+        if (cue && !senseHeld && state.place !== "record")
+          announcements.say(cue.text, cue.channel, cue.ttl);
+        flushStatus();
         if (state.place === "lab") {
           const cx = Math.max(-7.5, Math.min(7.5, body.x)),
             cz = Math.max(-7.5, Math.min(7.5, body.z));
@@ -731,7 +775,7 @@ async function boot() {
             strataLoggedAt = state.elapsed;
             strataHold = { band: -1, held: 0 };
           }
-          status.textContent =
+          narrative.textContent =
             record.describe(body.y) +
             (state.elapsed - strataLoggedAt < 2.5
               ? " This band is logged."
@@ -808,7 +852,7 @@ async function boot() {
           0.38,
         );
         if (controls.sense && state.place === "lab")
-          status.textContent =
+          senseStatus.textContent =
             state.ecosystem.labWater > 0.5
               ? "Fresh water carries reed seeds into the basin."
               : "The basin waits for water from the wetland.";
@@ -818,7 +862,7 @@ async function boot() {
             above = reach
               ? state.sampleHeight(body.x, body.z) - state.waterLevel
               : 0;
-          status.textContent = `${
+          senseStatus.textContent = `${
             signal?.message || "Touch the water to listen to its current."
           }${
             reach
@@ -839,7 +883,7 @@ async function boot() {
           }`;
         } else if (state.place === "frontier") {
           const dialogue = settlementDialogue(state.settlement, body);
-          if (dialogue) status.textContent = dialogue;
+          if (dialogue) narrative.textContent = dialogue;
         }
         state.player.x = body.x;
         state.player.z = body.z;
@@ -888,7 +932,7 @@ async function boot() {
               ? 1 / 60
               : Math.min(0.1, (now - lastRender) / 1000);
         lastRender = now;
-        if (state.place === "frontier") streaming.update(body.x, body.z);
+        if (state.place === "frontier") streaming.update(body.x, body.z, body);
         // The authoritative body keeps stepping at 60 Hz; the pose shown is the
         // interpolated one, so a 30 Hz or 120 Hz display neither snaps nor drags.
         renderPose = interpolatedPose(body, loop.alpha);
@@ -933,15 +977,33 @@ async function boot() {
           // The reallocation itself costs a frame; that cost must not be read as load
           // and answered with another step down, which is how a scale controller hums.
           adaptive.rearm();
-          // The scale notice is transient, so it must not overwrite a readout the player
-          // is deliberately asking for with the sense key held down.
-          if (!senseHeld)
-            status.textContent = `Render scale ${Math.round(
-              adaptive.value * 100,
-            )}%.`;
+          // Render diagnostics belong in Settings, never in the live status region.
         }
         hudTime++;
         if (hudTime % 3 === 0) {
+          const telemetry = document.querySelector("#telemetry");
+          if (telemetry.open && !document.querySelector("#settings").hidden) {
+            const frames = [...loop.frames].sort((a, b) => a - b);
+            const rows = telemetryLines({
+              mode: body.mode,
+              speed: Math.hypot(body.vx, body.vz),
+              submersion: body.submersion,
+              blocked: body.blocked,
+              contactTime: body.contactTime,
+              jet01: 1 - body.jetCooldown / JET_RULES.cooldown,
+              scale: adaptive.value,
+              quality: Settings.get("quality"),
+              medianMs: frames[Math.floor(frames.length / 2)],
+              p95Ms: frames[Math.floor(frames.length * 0.95)],
+              chunks: streaming.stats(),
+              frameSamples: streaming.chunks.work.lastSamples,
+              calls: renderer.info.render.calls,
+              triangles: renderer.info.render.triangles,
+            });
+            document.querySelector("#telemetry-values").textContent = rows
+              .map(([label, value]) => `${label}: ${value}`)
+              .join("\n");
+          }
           document.querySelector("#weather").textContent =
             state.place === "frontier"
               ? state.frontier.weather.type
@@ -999,6 +1061,8 @@ async function boot() {
       options,
     );
     window.__SF = {
+      status: () => announcements.snapshot(),
+      aim: () => (jetAim ? { ...jetAim, origin: { ...jetAim.origin } } : null),
       state,
       body,
       streaming,
@@ -1050,9 +1114,13 @@ async function boot() {
         },
       }),
     };
+    if (state.place === "frontier") {
+      streaming.update(body.x, body.z, body);
+      streaming.settle(); // cold fill before the first visible frame, not while walking
+    }
     renderer.setAnimationLoop((now) => loop.frame(now));
     loading.hidden = true;
-    status.textContent =
+    (loaded.message ? status : narrative).textContent =
       loaded.message ||
       (loaded.ok
         ? loaded.seconds > 0

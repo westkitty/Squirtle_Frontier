@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 26
+revision: 27
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -543,3 +543,186 @@ R/contextual button near the wooden platform advances the existing regional simu
       - Existing Vite development attachment remains intact: with Vite on `127.0.0.1:5173`, the native app opens without starting `4173`.
       - Port collision fails closed: when a dummy process occupies `4173`, the wrapper reports `Address already in use` rather than loading that process.
       - `npm run check` passes architecture checks plus 157/157 unit tests; `npm run browser:dist` passes production movement, persistence, asset-cache, and teardown validation.
+
+
+## Locomotion Zero — nine-stage repair campaign (2026-10-02)
+
+### Scope and delivery
+
+The player remains Squirtle. This campaign changes clock/input ownership, shoreline and
+swimming, aim agreement, resize/water presentation, streaming, collision/bounds, and
+feedback. It does not claim the full game is complete. Existing persistence/recovery,
+watershed/ecology, wildlife, settlement, Lab, Deep Record, offline progression,
+keyboard/mouse, touch-input paths, reduced motion, accessibility and asset disposal remain
+covered by their regression journeys. Native macOS sources were not changed.
+
+All campaign pushes went to **`arena/01a0fc5c-squirtle-frontier`**, not `main`:
+this Arena session is bound to that branch. Pushed history was preserved. Two small
+housekeeping commits restored unrelated formatting (`5951a69`) and removed a temporary
+probe (`5377f9e`). Stage 9 is the commit containing this evidence section, with the exact
+message below; its SHA is also reported in the campaign completion message.
+
+| Stage | Commit | Exact message |
+| --- | --- | --- |
+| 1 | `790b73b` | Repair locomotion clock and add fixed-step render interpolation |
+| 2 | `01dae59` | Unify camera-relative input authority and remove steering latency |
+| 3 | `b0b9d39` | Add wading state and rebuild shoreline transitions |
+| 4 | `a1e2557` | Rebuild aquatic steering around responsive 3D swim intent |
+| 5 | `6031f25` | Align Water Jet mechanics presentation and camera aim |
+| 6 | `6be56d3` | Remove adaptive resize flashes and stabilize underwater transitions |
+| 7 | `769b935` | Amortize terrain streaming and remove chunk-boundary locomotion hitches |
+| 8 | `7e3c7a7` | Repair collision response and remove prototype movement boundary |
+| 9 | this commit | Complete Locomotion Zero integration and gameplay feedback pass |
+
+### Before → after evidence
+
+- **Clock:** a 100 ms frame clamp discarded part of a 150 ms hitch; the fixed-step loop
+  now retains repayable debt, caps work at 12 steps/frame, accounts for deliberate discarded
+  time, and exposes interpolation alpha. The clock suite covers 30/60/120 Hz, irregular
+  frames, a 150 ms hitch, pause/resume and bounded catch-up. Rendering reads an interpolated
+  pose, never a second physics authority.
+- **Input:** camera look previously reached steering after its simulation step. Pending
+  look is now consumed exactly once across that frame's fixed steps, before planar/3D
+  intent is derived. The final live journey observed movement on the **first fixed step**
+  following stick input. This is simulation response, not input-to-photon latency.
+- **Shoreline:** a binary wet/dry decision is replaced with land/wade/swim/dive transitions.
+  Water depth comes from the active surface and local terrain. Wading thresholds are
+  0.06 m enter / 0.03 m exit; floating thresholds are 0.34 m enter / 0.24 m exit. The Lab
+  basin supports actual shallow/deep traversal. The continuous journey enters water,
+  dives, surfaces and walks back onto the bank without any body repositioning.
+- **Aquatic control:** damped planar drive is replaced by camera-relative 3D intent,
+  explicit ascent/dive, bounded pitch and velocity-heading facing. Dedicated tests cover
+  reversal, diagonal normalization, current drift and vertical movement. The continuous
+  journey independently reaches dive and returns to swim/land through the input layer.
+- **Water Jet:** the travel heading no longer independently selects hits. Mechanics,
+  target indication and stream presentation share the beam rules and camera aim. Range
+  remains 2.8 m, cooldown 1.1 s, burst 0.36 s. The jet suite tests turning while stationary,
+  moving while aiming, VFX agreement, target agreement and touch aim. Live camera/beam
+  orientation error in the final journey was **0 radians** at sampled frames.
+- **Visual stability:** immediate repeated resize writes became a coalesced resize pump
+  with no inline canvas sizing; water-view classification has hysteresis and eased fog.
+  Final visual journey: **13 resize requests → 1 reallocation**, 90 shoreline samples
+  with **0 state flips**, and **0 page errors**. It records intermediate fog values on
+  ascent, not just endpoints. This is absence of reproduced numerical cuts in these
+  traces, not human verification of no flashing on every display.
+- **Streaming:** the matched benchmark traverses 210 m / 9 boundaries and ships identical
+  terrain. Open country worst-frame height samples **2178 → 2178**, 33 builds on each
+  policy; carved channel **17730 → 6120**, 38 builds on each policy. Total work drift is
+  **0%**, support holes **0 → 0**. A 6000-sample budget allows a final row of up to 129
+  samples; it is not a hard 6000-instruction limit. The count cap is 2 chunks/frame.
+  Wall-clock results are reported separately and do not establish hardware speedup.
+- **Collision/world bounds:** constant impact strength became bounded arrival-speed
+  feedback, with grazing suppression and an actual contact clock. Continued pressure
+  does not re-trigger the same impact. The prototype ±70 clamp became **±897 m**, derived
+  from `WORLD.half * RIM_START`, with outward velocity removed at the limit. The continuous
+  route reaches z≈85 m and returns; the distant-save journey reloads **(-180, 240)** rather
+  than resetting to spawn. Memory validation and the survey window now cover distant
+  cells. A high-ground save at **(700, 600), y≈84.98 m** also round-trips; it was rejected
+  by the old 60 m altitude ceiling. Room save limits remain unchanged.
+- **Feedback:** competing direct live-region writes are now arbitrated: discrete player
+  requests outrank Current Sense, which outranks incidental locomotion cues. Repeats are
+  suppressed; stale cues are discarded rather than queued. Steep ground, solids, the rim,
+  jet readiness and depth changes produce contextual messages. Render scale and frame/
+  streaming diagnostics live in an opt-in, non-live Settings disclosure, not the status
+  line. The ordinary mode/speed/jet controls remain available.
+
+### Integration findings repaired in Stage 9
+
+1. A terrain revision still disposed channel meshes before amortized replacements existed.
+   Dirty revisions now retain old ground until swap completion; a regression checks support
+   on every pump. A carried partial build also releases its map-owned outgoing geometry.
+   Cold boot settles the initial queue before the first visible frame.
+2. The channel browser test used active chunk count as a completion signal. Retained old
+   meshes make that ambiguous: it now also requires an empty queue before applying the
+   **unchanged** exact rendered-height assertion. Old ground is allowed during the swap,
+   never mistaken for completed carved geometry.
+3. The opening hint incorrectly occupied the request channel and blocked Current Sense.
+   It is now ambient; held Sense preempts incidental cues while save confirmations remain
+   protected.
+4. Two overlapping real rock/tree proxies could undo each other's separation. The bounded
+   solver now rejects a translation that leaves a previously clear body overlapping them.
+   A new real-proxy test checks every step and verifies retreat. The continuous route
+   makes contact and retreats through ordinary input as well.
+5. Wider traversal exposed the save's prototype altitude ceiling. Frontier pose validation
+   now accepts local ground plus bounded launch clearance, while still rejecting impossible
+   heights. No save version bump or destructive migration was introduced.
+
+### Final continuous journey
+
+`BROWSER_BUNDLED=1 npm run browser:locomotion` uses the existing camera-relative stick and
+button-action input state. It does **not** assign body/pose/velocity, call `enterPlace`,
+change the simulation clock, or fabricate a save. A read-only wrapper observes the normal
+fixed-step callback to measure response; it does not add extra updates. Scripted stick
+input is not a physical touchscreen test. Separate older world/collision journeys explicitly
+seed positions for isolated checks and are not claimed as continuous travel.
+
+Recorded in `docs/qa/locomotion-journey.json`:
+
+- **171.15 m**, **1166 rendered samples**, **5 distinct chunks**.
+- States observed: land, wade, swim, dive, slide; **1 jet burst**.
+- **20 solid-contact frames**, peak impact 0.235; maximum proxy
+  penetration 8.9e-16 m (floating-point noise).
+- **0 missing-ground frames**, **0 unexplained excess displacement** beyond the horizontal
+  speed cap integrated over actual simulated time. Largest sampled frame displacement
+  1.230 m; this is not one fixed-step displacement.
+- Initial input response: **1 fixed step**; maximum sampled mechanical aim/orientation
+  disagreement: **0 radians**.
+- Software-renderer frame median **40.7 ms**, p95 **119.5 ms**.
+  These are container frame times, **not device FPS or a hardware performance claim**.
+- Teardown: **0 geometries, 0 textures, 0 active/queued/held chunks, 0 asset references**;
+  the journey's 33 chunk loads are paired with 33 unloads.
+- Final screenshot is generated at `artifacts/locomotion-zero.png` (ignored artifact);
+  numerical evidence and the reproducible journey are tracked.
+
+### Final validation matrix
+
+Exact commands and final exit codes (full run summaries, earlier failures and repairs in
+`docs/qa/locomotion-validation.json`):
+
+| Command | Result |
+| --- | --- |
+| `npm run check` | PASS — architecture + 248/248 unit tests |
+| `npm run build` | PASS |
+| `npm run assets` | PASS — GLB validates; one documented validator warning |
+| `npm run bench:streaming` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:watershed` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:habitat` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:world` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:recovery` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:channel` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:wildlife` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:a11y` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:multitab` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:visual` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:collision` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:locomotion` | PASS |
+| `BROWSER_BUNDLED=1 npm run perf` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:dist` | PASS |
+| `BROWSER_BUNDLED=1 npm run browser:baseline` | FAIL — pre-existing obsolete #cycle control in harness |
+| `npm run app:build` | BLOCKED (exit 127) — Linux has no /bin/zsh or Apple toolchain |
+| `npm run mutate` | PASS — 44/44 injected defects caught by named tests |
+
+### Genuine limits / follow-up verification
+
+- `browser:baseline` waits for `#cycle` at line 21. Both that harness reference and the
+  absence of `id="cycle"` in HTML are present in base commit `7445578`; the failure predates
+  the campaign. Current gameplay and production journeys pass; the obsolete harness was
+  not weakened or presented as green.
+- The native build file exists and is unchanged, with `#!/bin/zsh` at both base and HEAD.
+  The sandbox's shell reports “not found” because that interpreter is unavailable. Actual
+  macOS compilation, launch, audio and wrapper lifecycle need an Apple environment.
+- The Stage 8 collision browser's relative frame-time assertion failed once at 37.3 vs
+  68.1 ms, then passed unchanged on subsequent runs. It compares walking and running
+  under software rendering and is **not a matched collision-cost benchmark**. That earlier
+  failure is retained in the matrix evidence. Do not infer a hardware improvement from it.
+- Terrain height sampling is amortized; final geometry/color construction and GPU upload
+  still complete synchronously. This campaign bounds sampled terrain work and verifies
+  disposal, not worst-case GPU time on all hardware.
+- Collision resolution is bounded and protects previously clear poses against unresolved
+  multi-proxy overlap; it is not a general arbitrary-dt swept-volume solver. Deterministic
+  60 Hz stepping remains the supported gameplay path.
+- Human locomotion feel/enjoyment, audible audio quality, perception of flashing,
+  physical mobile/touch-device behavior and device FPS are **unverified**. Automated input,
+  response timing, state continuity, aim agreement, sampled visual stability, persistence
+  and resource correctness are the verified claims.
