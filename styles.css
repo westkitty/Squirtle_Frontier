@@ -213,10 +213,22 @@ kbd {
   border: 1px solid var(--line);
   border-radius: 3px;
 }
-#status {
+/* The caption band and the shaft instrument share one column that grows upward from a
+   fixed gap above the footer legend. Nothing here is positioned against a second magic
+   number, so no caption length and no viewport can make them overlap. */
+#field-notes {
   position: absolute;
-  bottom: 64px;
-  left: 0;
+  z-index: 3;
+  left: 34px;
+  right: 34px;
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: none;
+}
+#status {
   max-width: 65ch;
   font-size: 11px;
   color: #e8e7cf;
@@ -327,9 +339,15 @@ kbd {
   .eyebrow {
     font-size: 8px;
   }
+  /* The stick and the ability cluster own the bottom corners down here, so the caption
+     band sits above them rather than threading the gap between them. */
+  #field-notes {
+    left: 20px;
+    right: 20px;
+    bottom: 274px;
+  }
   #status {
-    bottom: 60px;
-    max-width: 90vw;
+    max-width: 100%;
   }
   #stick {
     left: 20px;
@@ -370,6 +388,9 @@ kbd {
   #stick,
   .actions {
     bottom: 70px;
+  }
+  #field-notes {
+    bottom: 238px;
   }
   aside {
     top: 64px;
@@ -429,9 +450,6 @@ canvas:focus-visible {
 #record-readout {
   /* The HUD's dl is a two-column legend; a shaft log reads top to bottom. */
   display: block;
-  position: absolute;
-  left: 0;
-  bottom: 116px;
   margin: 0;
   padding: 8px 14px 10px 12px;
   max-width: min(40ch, 78vw);
@@ -441,6 +459,12 @@ canvas:focus-visible {
   line-height: 1.5;
   color: #f7f4de;
   pointer-events: none;
+}
+/* `display: block` above outranks the user agent's [hidden] rule, so the element the
+   script hides has to be hidden here as well. Without this the frontier carried a stray
+   "STILLWATER MEASUREMENT / 01" plate over the caption for the whole session. */
+#record-readout[hidden] {
+  display: none;
 }
 #record-readout .readout-title {
   display: block;
@@ -466,9 +490,10 @@ canvas:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 720px) {
+  /* A shaft log is long and a phone is short: the log gets a tighter type size and the
+     width it actually has, rather than being clipped by a magic bottom offset. */
   #record-readout {
-    bottom: 140px;
-    max-width: calc(100vw - 24px);
+    max-width: 100%;
     font-size: 10px;
   }
 }
