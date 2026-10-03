@@ -87,11 +87,14 @@ export class CreatureCamera {
     to.y = Math.max(to.y, this.env.sample(to.x, to.z).height + CLEARANCE);
   }
   update(body, input, dt, settings) {
-    this.yaw -= input.lookX * 0.004 * settings.sensitivity;
+    const lookYaw =
+        input.lookX * 0.004 + (input.lookRateX || 0) * 2.25 * dt,
+      lookPitch =
+        input.lookY * 0.003 + (input.lookRateY || 0) * 1.8 * dt;
+    this.yaw -= lookYaw * settings.sensitivity;
     this.pitch = THREE.MathUtils.clamp(
       this.pitch +
-        input.lookY *
-          0.003 *
+        lookPitch *
           settings.sensitivity *
           (settings.invertY ? -1 : 1),
       -0.35,
@@ -101,6 +104,7 @@ export class CreatureCamera {
     const speed = Math.hypot(body.vx, body.vz);
     const inSlide = body.mode === "slide";
     const inDive = body.mode === "dive" || body.y < -0.45;
+    const inJet = body.jetTime > 0;
 
     // Tactical micro-recoil on hard impacts (falling or collision)
     if (!settings.reducedMotion) {
@@ -157,8 +161,12 @@ export class CreatureCamera {
     } else {
       if (inDive) {
         fov = 61;
+      } else if (inJet) {
+        fov = 59 + Math.min(speed, 8) * 0.2;
       } else if (inSlide) {
         fov = 55 + Math.min(speed, 5.0) * 1.1;
+      } else if (speed > 3) {
+        fov = 55 + Math.min(2.4, (speed - 3) * 0.9);
       }
       const next = THREE.MathUtils.damp(this.camera.fov, fov, 8, dt);
       if (Math.abs(this.camera.fov - next) > 0.001) {

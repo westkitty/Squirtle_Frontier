@@ -219,3 +219,53 @@ test("tactile impact micro-recoil triggers on hard landing and decays smoothly",
   );
 });
 
+
+test("swimming coasts instead of snapping to a stop when analog input is released", () => {
+  const water = {
+    sample: () => ({ height: 0, dx: 0, dz: 0 }),
+    water: () => ({ level: 1, currentX: 0, currentZ: 0 }),
+    obstacles: [],
+  };
+  const body = createBody(0, 0, 0.7);
+  Object.assign(body, { grounded: false, mode: "swim", vx: 3, vz: 0 });
+  for (let i = 0; i < 30; i++)
+    stepBody(body, controls({}), water, 1 / 60);
+  assert.ok(
+    Math.hypot(body.vx, body.vz) > 1.2,
+    "released swim input should retain a readable glide",
+  );
+});
+
+test("camera accepts rate-based controller look and widens for fast travel and Water Jet", () => {
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    flat,
+  );
+  const body = createBody(0, 0, 0);
+  const startYaw = rig.yaw;
+  rig.update(
+    body,
+    { lookX: 0, lookY: 0, lookRateX: 1, lookRateY: 0 },
+    1 / 60,
+    { sensitivity: 1, invertY: false, reducedMotion: false },
+  );
+  assert.ok(rig.yaw < startYaw, "right stick should rotate the camera by time");
+
+  body.vx = 4.5;
+  for (let i = 0; i < 30; i++)
+    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: false,
+    });
+  assert.ok(rig.camera.fov > 55, "fast travel should open the field of view");
+
+  body.jetTime = 0.2;
+  for (let i = 0; i < 15; i++)
+    rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: false,
+    });
+  assert.ok(rig.camera.fov >= 58, "Water Jet should read as a stronger speed event");
+});

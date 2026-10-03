@@ -55,7 +55,9 @@ export function stepBody(b, input, env, dt) {
       b.jetTime > 0
         ? 0.3
         : aquatic
-          ? 3.4
+          ? moving
+            ? 3.4
+            : 1.5
           : b.grounded
             ? moving
               ? 10
