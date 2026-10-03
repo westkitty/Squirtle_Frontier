@@ -36,6 +36,12 @@
         </button>
       </nav>
       <aside id="memory" hidden tabindex="-1" aria-labelledby="memory-title">
+        <button
+          class="panel-close"
+          type="button"
+          data-close-panel="memory"
+          aria-label="Close Places remembered"
+        >×</button>
         <h2 id="memory-title">Places remembered</h2>
         <svg
           id="survey"
@@ -51,6 +57,12 @@
         <p id="house-note"></p>
       </aside>
       <aside id="help" hidden tabindex="-1" aria-labelledby="help-title">
+        <button
+          class="panel-close"
+          type="button"
+          data-close-panel="help"
+          aria-label="Close Controls"
+        >×</button>
         <h2 id="help-title">Follow your own current</h2>
         <p>
           Dive to the centre of the Lab basin to enter the Deep Record. Stand
@@ -92,6 +104,10 @@
           Touch: left stick to move, drag the world to look, hold the labeled
           ability buttons.
         </p>
+        <p>
+          Controller: left stick moves, right stick looks. A = Jet, B = Shell,
+          X = Sense, Y = interact, LB/RB = dive/rise, RT or L3 = run.
+        </p>
         <p class="small">
           Early watershed study. Nearby debris restricts downstream flow; Water
           Jet can clear it.
@@ -103,6 +119,12 @@
         tabindex="-1"
         aria-labelledby="settings-title"
       >
+        <button
+          class="panel-close"
+          type="button"
+          data-close-panel="settings"
+          aria-label="Close Settings"
+        >×</button>
         <h2 id="settings-title">Make yourself at home</h2>
         <label
           >Look sensitivity
@@ -114,6 +136,7 @@
             step=".1" /></label
         ><label
           ><input id="invert" type="checkbox" /> Invert vertical look</label
+        ><label><input id="hints" type="checkbox" /> Contextual guidance</label
         ><label
           >Camera motion
           <select id="motion">
@@ -138,6 +161,12 @@
         <p class="small">
           Adaptive resolution only changes rendered pixels when frames run long;
           the world, your body and the simulation keep their exact rules.
+        </p>
+        <p id="controller-state" class="small" aria-live="polite">
+          Controller: none detected.
+        </p>
+        <p id="save-state" class="small" aria-live="polite">
+          No local save written this session.
         </p>
         <button id="save">Remember this place</button
         ><button id="reset">Return to the bank</button>

@@ -225,6 +225,70 @@ try {
       /closed\./,
     );
   }
+  // Menus are a hard gameplay-input boundary, not merely a visual overlay.
+  await page.keyboard.down("KeyW");
+  await page.waitForTimeout(160);
+  await page.click("#settings-toggle");
+  const panelHold = await page.evaluate(async () => {
+    const speedBefore = Math.hypot(window.__SF.body.vx, window.__SF.body.vz);
+    await new Promise((r) => setTimeout(r, 300));
+    return {
+      suppressed: window.__SF.input.suppressed,
+      sampled: window.__SF.input.sample(),
+      speedBefore,
+      speedAfter: Math.hypot(window.__SF.body.vx, window.__SF.body.vz),
+    };
+  });
+  await page.keyboard.up("KeyW");
+  assert.equal(panelHold.suppressed, true);
+  assert.deepEqual(
+    { x: panelHold.sampled.x, z: panelHold.sampled.z },
+    { x: 0, z: 0 },
+  );
+  assert.ok(
+    panelHold.speedAfter <= panelHold.speedBefore + 0.01,
+    JSON.stringify(panelHold),
+  );
+
+  await page.click('[data-close-panel="settings"]');
+  await page.waitForFunction(() => document.activeElement.tagName === "CANVAS");
+  assert.equal(await page.evaluate(() => window.__SF.input.suppressed), false);
+
+  await page.click("#settings-toggle");
+  await page.click("#hints");
+  assert.equal(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("squirtle_frontier_settings_v1")).hints,
+    ),
+    false,
+  );
+  await page.click("#hints");
+  await page.click("#save");
+  await page.waitForFunction(() =>
+    document.querySelector("#save-state").textContent.includes("Saved locally"),
+  );
+  assert.match(await page.textContent("#controller-state"), /^Controller:/);
+  await page.click('[data-close-panel="settings"]');
+
+  await page.evaluate(() => {
+    document
+      .querySelector("canvas")
+      .dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
+  });
+  await page.waitForFunction(
+    () =>
+      !document.querySelector("#loading").hidden &&
+      document.querySelector("#loading").textContent.includes("Graphics paused"),
+  );
+  await page.evaluate(() =>
+    document
+      .querySelector("canvas")
+      .dispatchEvent(new Event("webglcontextrestored")),
+  );
+  await page.waitForFunction(() => document.querySelector("#loading").hidden);
+  assert.match(await page.textContent("#status"), /Graphics restored/);
+
   // 6. Reduced motion honoured from the OS preference, then overridable in-game.
   const reduced = await browser.newPage({
     viewport: { width: 960, height: 640 },

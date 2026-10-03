@@ -497,3 +497,15 @@ canvas:focus-visible {
     font-size: 10px;
   }
 }
+
+.panel-close {
+  float: right;
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: -9px -9px 10px 12px;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+}

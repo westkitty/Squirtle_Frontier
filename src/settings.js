@@ -2,6 +2,13 @@
 // does not throw away how the player likes to play.
 const KEY = "squirtle_frontier_settings_v1";
 
+export const HINT_KEYS = Object.freeze([
+  "swim",
+  "sense",
+  "record",
+  "gamepad",
+]);
+
 const DEFAULTS = {
   adaptive: true, // shrink render pixels when frames run long
   muted: false,
@@ -41,9 +48,9 @@ export const Settings = {
     // clamp anything a hand-edited/corrupt store could have broken
     const v = this.values;
     v.seenHints = Object.fromEntries(
-      ["night", "tree", "fire", "village", "banner", "landmark"]
-        .filter((key) => v.seenHints && v.seenHints[key] === true)
-        .map((key) => [key, true]),
+      HINT_KEYS.filter((key) => v.seenHints && v.seenHints[key] === true).map(
+        (key) => [key, true],
+      ),
     );
     if (!["high", "medium", "low"].includes(v.quality)) v.quality = "high";
     // An explicit value clamps into range; only a missing or non-numeric one

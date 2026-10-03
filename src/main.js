@@ -45,6 +45,7 @@ import {
   applyWaterJet,
   applyWorldJet,
   senseWater,
+  DEBRIS_SITE,
 } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
 import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
@@ -363,34 +364,53 @@ async function boot() {
     };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
     document.addEventListener("keydown", () => audio.unlock(), options);
-    for (const name of ["help", "settings", "memory"])
+    const panelNames = ["help", "settings", "memory"];
+    const closePanel = (name, { announce = true, focusWorld = true } = {}) => {
+      const panel = document.querySelector(`#${name}`),
+        toggle = document.querySelector(`#${name}-toggle`),
+        wasOpen = !panel.hidden;
+      panel.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      if (!wasOpen) return false;
+      if (announce)
+        status.textContent = `${panel.querySelector("h2").textContent} closed.`;
+      if (
+        !panelNames.some(
+          (other) => !document.querySelector(`#${other}`).hidden,
+        )
+      )
+        input.setSuppressed(false);
+      if (focusWorld) renderer.domElement.focus({ preventScroll: true });
+      return true;
+    };
+    const openPanel = (name) => {
+      for (const other of panelNames)
+        if (other !== name)
+          closePanel(other, { announce: false, focusWorld: false });
+      const panel = document.querySelector(`#${name}`);
+      panel.hidden = false;
+      document
+        .querySelector(`#${name}-toggle`)
+        .setAttribute("aria-expanded", "true");
+      status.textContent = `${panel.querySelector("h2").textContent} open. Press Escape to return to the world.`;
+      input.setSuppressed(true);
+      panel.focus({ preventScroll: true });
+      if (name === "memory") refreshMemoryPanel();
+    };
+    for (const name of panelNames)
       document.querySelector(`#${name}-toggle`).addEventListener(
         "click",
         () => {
           const panel = document.querySelector(`#${name}`);
-          panel.hidden = !panel.hidden;
-          status.textContent = panel.hidden
-            ? `${panel.querySelector("h2").textContent} closed.`
-            : `${panel.querySelector("h2").textContent} open. Press Escape to return to the world.`;
-          for (const other of ["help", "settings", "memory"]) {
-            if (other === name) continue;
-            document.querySelector(`#${other}`).hidden = true;
-            document
-              .querySelector(`#${other}-toggle`)
-              .setAttribute("aria-expanded", "false");
-          }
-          document
-            .querySelector(`#${name}-toggle`)
-            .setAttribute("aria-expanded", String(!panel.hidden));
-          // Focusing the opened panel announces its heading even when it holds
-          // no controls; closing hands the world back to the canvas.
-          if (!panel.hidden) {
-            panel.focus({ preventScroll: true });
-            if (name === "memory") refreshMemoryPanel();
-          } else if (panel.contains(document.activeElement))
-            renderer.domElement.focus({ preventScroll: true });
-          input.clear();
+          if (panel.hidden) openPanel(name);
+          else closePanel(name);
         },
+        options,
+      );
+    for (const button of document.querySelectorAll("[data-close-panel]"))
+      button.addEventListener(
+        "click",
+        () => closePanel(button.dataset.closePanel),
         options,
       );
     document.addEventListener(
@@ -398,18 +418,13 @@ async function boot() {
       (e) => {
         if (e.code !== "Escape") return;
         let closed = null;
-        for (const name of ["help", "settings", "memory"]) {
+        for (const name of panelNames) {
           const panel = document.querySelector(`#${name}`);
-          if (!panel.hidden) {
-            panel.hidden = true;
-            closed = panel.querySelector("h2").textContent;
-          }
-          document
-            .querySelector(`#${name}-toggle`)
-            .setAttribute("aria-expanded", "false");
+          if (!panel.hidden) closed = panel.querySelector("h2").textContent;
+          closePanel(name, { announce: false, focusWorld: false });
         }
         if (closed) status.textContent = `${closed} closed.`;
-        input.clear();
+        input.setSuppressed(false);
         renderer.domElement.focus();
       },
       options,
@@ -421,6 +436,7 @@ async function boot() {
       ["volume", "volume", "number"],
       ["quality", "quality", "string"],
       ["adaptive", "adaptive", "boolean"],
+      ["hints", "hints", "boolean"],
     ]) {
       const element = document.querySelector(`#${id}`);
       if (type === "boolean") element.checked = Settings.get(key);
@@ -443,6 +459,10 @@ async function boot() {
               ? "Adaptive resolution on."
               : "Adaptive resolution off; full detail restored.";
           }
+          if (key === "hints")
+            status.textContent = element.checked
+              ? "Contextual guidance on."
+              : "Contextual guidance off.";
           if (key === "quality" || key === "adaptive") resize();
         },
         options,
@@ -477,10 +497,26 @@ async function boot() {
       },
       options,
     );
+    const saveState = document.querySelector("#save-state"),
+      controllerState = document.querySelector("#controller-state");
+    const noteSave = (result, label = "Saved locally") => {
+      saveState.textContent = result.ok
+        ? `${label} · just now`
+        : `Save paused · ${result.message}`;
+      return result;
+    };
+    saveState.textContent = loaded.ok
+      ? loaded.fresh
+        ? "No stored world yet."
+        : loaded.recovered
+          ? "Recovered backup · saving paused."
+          : "Stored world loaded."
+      : "Stored world unavailable · saving paused.";
     document.querySelector("#save").addEventListener(
       "click",
       () => {
         commitSave(state, localStorage).then((r) => {
+          noteSave(r);
           status.textContent = r.ok
             ? "This place is remembered."
             : `${r.message} A blocked tab can adopt the newer stored world below.`;
@@ -561,7 +597,20 @@ async function boot() {
       statusFlash = null,
       // The step callback owns the input sample; the render callback below needs to know
       // whether the player is reading a sense line without reaching out of scope.
-      senseHeld = false;
+      senseHeld = false,
+      controllerSignature = "";
+    const showHint = (key, text) => {
+      if (
+        !Settings.get("hints") ||
+        Settings.values.seenHints[key] ||
+        statusFlash
+      )
+        return false;
+      Settings.values.seenHints[key] = true;
+      Settings.save();
+      statusFlash = flashStatus(status, text, statusFlash, 6);
+      return true;
+    };
     const loop = new Loop(
       (dt) => {
         const controls = input.sample(),
@@ -766,6 +815,25 @@ async function boot() {
           const dialogue = settlementDialogue(state.settlement, body);
           if (dialogue) status.textContent = dialogue;
         }
+        if (body.mode === "swim" || body.mode === "dive")
+          showHint(
+            "swim",
+            "Water changes your body: Q dives, E rises, and Space sends Water Jet.",
+          );
+        if (
+          state.place === "frontier" &&
+          state.watershed.nodes[1].blockage > 0.1 &&
+          Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 11
+        )
+          showHint(
+            "sense",
+            "The current feels wrong here. Hold F / Sense while touching water to read it.",
+          );
+        if (state.place === "record")
+          showHint(
+            "record",
+            "The Deep Record logs patience: hold still inside one band of strata.",
+          );
         state.player.x = body.x;
         state.player.z = body.z;
         // Full pose: a saved x/z pair would drop the body through a basin floor.
@@ -803,6 +871,7 @@ async function boot() {
         if (saveTime >= 30) {
           saveTime = 0;
           commitSave(state, localStorage).then((r) => {
+            noteSave(r, "Autosaved");
             if (!r.ok) status.textContent = r.message;
           });
         }
@@ -892,8 +961,52 @@ async function boot() {
           document.querySelector("#speed").textContent =
             `${Math.hypot(body.vx, body.vz).toFixed(1)} m/s`;
           document.querySelector("#jet").value = 1 - body.jetCooldown / 1.1;
+          if (hudTime % 15 === 0) {
+            const controller = input.gamepadStatus(),
+              nextController = controller.connected
+                ? `Controller: ${controller.name}`
+                : "Controller: none detected.";
+            if (nextController !== controllerSignature) {
+              controllerSignature = nextController;
+              controllerState.textContent = nextController;
+            }
+            if (controller.connected)
+              showHint(
+                "gamepad",
+                "Controller ready: left stick moves, right stick looks; A jets and B shells.",
+              );
+          }
         }
       },
+    );
+    let contextPaused = false;
+    renderer.domElement.addEventListener(
+      "webglcontextlost",
+      (event) => {
+        event.preventDefault();
+        contextPaused = true;
+        renderer.setAnimationLoop(null);
+        loading.hidden = false;
+        loading.textContent =
+          "Graphics paused. Waiting for the browser to restore the WebGL context…";
+        status.textContent =
+          "Rendering paused; the world state remains in memory.";
+      },
+      options,
+    );
+    renderer.domElement.addEventListener(
+      "webglcontextrestored",
+      () => {
+        contextPaused = false;
+        loop.reset();
+        resize();
+        loading.hidden = true;
+        loading.textContent = "Finding the shore…";
+        if (!document.hidden)
+          renderer.setAnimationLoop((now) => loop.frame(now));
+        status.textContent = "Graphics restored.";
+      },
+      options,
     );
     let hiddenAt = null;
     document.addEventListener(
@@ -911,7 +1024,7 @@ async function boot() {
         }
         loop.reset();
         renderer.setAnimationLoop(
-          document.hidden ? null : (now) => loop.frame(now),
+          document.hidden || contextPaused ? null : (now) => loop.frame(now),
         );
         if (document.hidden) audio.context?.suspend();
       },

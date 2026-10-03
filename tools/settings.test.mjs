@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Settings } from "../src/settings.js";
+import { HINT_KEYS, Settings } from "../src/settings.js";
 import { AdaptiveScale } from "../src/adaptive-quality.js";
 import { pixelRatioFor } from "../src/render-quality.js";
 const store = (raw) => {
@@ -90,4 +90,17 @@ test("render presets bound pixels, and adaptation can only reduce them further",
     Math.round(Math.sqrt(2073600 / (3840 * 2160)) * 1000) / 1000,
     "the pixel ceiling wins over the device ratio on large displays",
   );
+});
+
+test("guidance preference keeps only supported one-shot hint receipts", () => {
+  store(
+    JSON.stringify({
+      hints: false,
+      seenHints: { swim: true, gamepad: true, obsolete: true },
+    }),
+  );
+  const v = Settings.load();
+  assert.equal(v.hints, false);
+  assert.deepEqual(v.seenHints, { swim: true, gamepad: true });
+  assert.deepEqual(HINT_KEYS, ["swim", "sense", "record", "gamepad"]);
 });
