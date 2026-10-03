@@ -104,3 +104,30 @@ test("guidance preference keeps only supported one-shot hint receipts", () => {
   assert.deepEqual(v.seenHints, { swim: true, gamepad: true });
   assert.deepEqual(HINT_KEYS, ["swim", "sense", "record", "gamepad"]);
 });
+
+test("accessibility presentation preferences clamp to supported values", () => {
+  store(
+    JSON.stringify({
+      contrast: "neon",
+      textScale: 8,
+      effects: "cinematic",
+    }),
+  );
+  const v = Settings.load();
+  assert.equal(v.contrast, "auto");
+  assert.equal(v.textScale, 1);
+  assert.equal(v.effects, "full");
+
+  store(
+    JSON.stringify({
+      contrast: "high",
+      textScale: 1.3,
+      effects: "minimal",
+    }),
+  );
+  const supported = Settings.load();
+  assert.equal(supported.contrast, "high");
+  assert.equal(supported.textScale, 1.3);
+  assert.equal(supported.effects, "minimal");
+  assert.equal(Settings.highContrast, true);
+});

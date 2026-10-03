@@ -14,6 +14,9 @@ const DEFAULTS = {
   muted: false,
   volume: 0.7, // master audio level, 0 – 1
   quality: "high", // high | medium | low
+  effects: "full", // full | reduced | minimal, presentation only
+  contrast: "auto", // auto | high | normal
+  textScale: 1, // 1 | 1.15 | 1.3
   reducedMotion: null, // null = follow the operating system
   sensitivity: 1, // look speed multiplier, 0.4 – 2
   invertY: false,
@@ -22,6 +25,17 @@ const DEFAULTS = {
   lastTab: "map",
   mapView: null, // where the player last had the survey map
 };
+
+function systemHighContrast() {
+  try {
+    return !!(
+      globalThis.matchMedia &&
+      matchMedia("(prefers-contrast: more)").matches
+    );
+  } catch (e) {
+    return false;
+  }
+}
 
 function systemReducedMotion() {
   try {
@@ -53,6 +67,12 @@ export const Settings = {
       ),
     );
     if (!["high", "medium", "low"].includes(v.quality)) v.quality = "high";
+    if (!["full", "reduced", "minimal"].includes(v.effects))
+      v.effects = "full";
+    if (!["auto", "high", "normal"].includes(v.contrast))
+      v.contrast = "auto";
+    if (![1, 1.15, 1.3].includes(Number(v.textScale))) v.textScale = 1;
+    else v.textScale = Number(v.textScale);
     // An explicit value clamps into range; only a missing or non-numeric one
     // falls back, so a deliberate slider at 0 survives.
     const number = (value, fallback, min, max) => {
@@ -100,6 +120,14 @@ export const Settings = {
     return this.values[key];
   },
 
+  get highContrast() {
+    return this.values.contrast === "high"
+      ? true
+      : this.values.contrast === "normal"
+        ? false
+        : systemHighContrast();
+  },
+
   // Effective motion preference: explicit choice wins, otherwise the OS setting.
   get motionReduced() {
     return this.values.reducedMotion === null
@@ -111,6 +139,15 @@ export const Settings = {
   applyDocument() {
     try {
       document.body.classList.toggle("reduced-motion", this.motionReduced);
+      document.body.classList.toggle("high-contrast", this.highContrast);
+      document.body.classList.toggle(
+        "contrast-normal",
+        this.values.contrast === "normal",
+      );
+      document.documentElement.style.setProperty(
+        "--ui-scale",
+        String(this.values.textScale),
+      );
     } catch (e) {
       /* no document (tests) */
     }

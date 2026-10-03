@@ -33,6 +33,7 @@ export function standardGamepadState(gamepad) {
       sense: false,
       dive: false,
       ascend: false,
+      recenter: false,
     };
   const axes = gamepad.axes || [],
     buttons = gamepad.buttons || [],
@@ -52,6 +53,7 @@ export function standardGamepadState(gamepad) {
     dive: pressed(buttons[4]),
     ascend: pressed(buttons[5]),
     run: pressed(buttons[7]) || pressed(buttons[10]),
+    recenter: pressed(buttons[11]),
   };
 }
 
@@ -81,6 +83,7 @@ export class Input {
     this.pointers = new Map();
     this.canvas = canvas;
     this.suppressed = false;
+    this.modality = "keyboard";
     this.controller = { connected: false, name: "" };
     canvas.tabIndex = 0;
     const options = { signal: this.abort.signal };
@@ -88,6 +91,7 @@ export class Input {
       "keydown",
       (e) => {
         if (e.repeat || this.suppressed) return;
+        this.modality = "keyboard";
         // Synthetic or window-targeted events have no closest(); a real UI
         // control keeps keyboard input to itself.
         if (e.target?.closest?.("input,select,button,textarea")) return;
@@ -114,6 +118,7 @@ export class Input {
       "gamepaddisconnected",
       () => {
         this.controller = { connected: false, name: "" };
+        if (this.modality === "gamepad") this.modality = "keyboard";
       },
       options,
     );
@@ -131,6 +136,7 @@ export class Input {
         (e) => {
           e.preventDefault();
           if (this.suppressed) return;
+          this.modality = e.pointerType === "touch" ? "touch" : "pointer";
           if (type === "look") canvas.focus({ preventScroll: true });
           try {
             element.setPointerCapture(e.pointerId);
@@ -188,6 +194,22 @@ export class Input {
         ),
         state = standardGamepadState(pad);
       this.controller = { connected: state.connected, name: state.name };
+      if (
+        state.connected &&
+        (
+          Math.hypot(state.move.x, state.move.z) > 0.05 ||
+          Math.hypot(state.look.x, state.look.y) > 0.05 ||
+          state.run ||
+          state.slide ||
+          state.jet ||
+          state.interact ||
+          state.sense ||
+          state.dive ||
+          state.ascend ||
+          state.recenter
+        )
+      )
+        this.modality = "gamepad";
       return state;
     } catch {
       this.controller = { connected: false, name: "" };
@@ -197,7 +219,11 @@ export class Input {
 
   gamepadStatus() {
     this.readGamepad();
-    return { ...this.controller };
+    return { ...this.controller, modality: this.modality };
+  }
+
+  inputMode() {
+    return this.modality;
   }
 
   moveStick(e, element) {
@@ -223,6 +249,7 @@ export class Input {
         sense: false,
         dive: false,
         ascend: false,
+        recenter: false,
       };
     const pad = this.readGamepad();
     let x =
@@ -246,6 +273,7 @@ export class Input {
       sense: this.keys.has("KeyF") || this.actions.sense || pad.sense,
       dive: this.keys.has("KeyQ") || this.actions.dive || pad.dive,
       ascend: this.keys.has("KeyE") || this.actions.ascend || pad.ascend,
+      recenter: this.keys.has("KeyV") || pad.recenter,
     };
   }
 

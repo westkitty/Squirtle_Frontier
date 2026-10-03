@@ -143,6 +143,9 @@ try {
 
   // Full pose across a reload: dive inside the Lab basin, save, reload, resume.
   await driver.bringToFront();
+  if (!(await driver.locator("#settings").getAttribute("hidden")))
+    await driver.click('[data-close-panel="settings"]');
+  await driver.waitForFunction(() => window.__SF.input.suppressed === false);
   await driver.evaluate(() => window.__SF.enterPlace("lab"));
   await driver.waitForTimeout(400);
   // Explicit fixture: stand in the basin water so the dive keys apply. Walking

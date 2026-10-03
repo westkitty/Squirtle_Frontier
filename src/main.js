@@ -150,7 +150,8 @@ async function boot() {
     };
     let record = null;
     let lab = null,
-      interactionHeld = false;
+      interactionHeld = false,
+      recenterHeld = false;
     const enterPlace = (place, relocate = true) => {
       wildlife.clear();
       record?.dispose();
@@ -437,6 +438,9 @@ async function boot() {
       ["quality", "quality", "string"],
       ["adaptive", "adaptive", "boolean"],
       ["hints", "hints", "boolean"],
+      ["contrast", "contrast", "string"],
+      ["text-scale", "textScale", "number"],
+      ["effects", "effects", "string"],
     ]) {
       const element = document.querySelector(`#${id}`);
       if (type === "boolean") element.checked = Settings.get(key);
@@ -463,6 +467,20 @@ async function boot() {
             status.textContent = element.checked
               ? "Contextual guidance on."
               : "Contextual guidance off.";
+          if (key === "contrast")
+            status.textContent =
+              element.value === "auto"
+                ? `Contrast follows the system (${Settings.highContrast ? "high" : "standard"}).`
+                : element.value === "high"
+                  ? "High contrast on."
+                  : "Standard contrast on.";
+          if (key === "textScale")
+            status.textContent =
+              Number(element.value) > 1
+                ? `Text size ${Math.round(Number(element.value) * 100)}%.`
+                : "Standard text size.";
+          if (key === "effects")
+            status.textContent = `Visual effects: ${element.value}.`;
           if (key === "quality" || key === "adaptive") resize();
         },
         options,
@@ -494,6 +512,13 @@ async function boot() {
       "change",
       () => {
         if (Settings.get("reducedMotion") === null) Settings.applyDocument();
+      },
+      options,
+    );
+    matchMedia("(prefers-contrast: more)").addEventListener(
+      "change",
+      () => {
+        if (Settings.get("contrast") === "auto") Settings.applyDocument();
       },
       options,
     );
@@ -614,23 +639,33 @@ async function boot() {
     const loop = new Loop(
       (dt) => {
         const controls = input.sample(),
-          world = rig.movement(controls.x, controls.z);
+          world = rig.movement(controls.x, controls.z),
+          inputMode = input.inputMode();
         senseHeld = !!controls.sense;
         const action = placeAction(state.place, body, {
           settlement: state.settlement,
           ecosystem: state.ecosystem,
         });
-        document.querySelector("#interact").hidden = !action;
-        document.querySelector("#interact").textContent =
-          {
-            enter: "Enter basin · R",
-            leave: "Leave basin · R",
-            rest: "Rest five minutes · R",
-            record: "Enter the Deep Record · R",
-            "record-exit": "Return to the basin · R",
-            "drink-bowl": "Drink fresh water · R",
-            "play-frogs": "Splash with frogs · R",
+        const interact = document.querySelector("#interact"),
+          interactControl =
+            inputMode === "gamepad"
+              ? "Y"
+              : inputMode === "touch"
+                ? "Tap"
+                : "R",
+          actionLabel = {
+            enter: "Enter basin",
+            leave: "Leave basin",
+            rest: "Rest five minutes",
+            record: "Enter the Deep Record",
+            "record-exit": "Return to the basin",
+            "drink-bowl": "Drink fresh water",
+            "play-frogs": "Splash with frogs",
           }[action] || "";
+        interact.hidden = !action;
+        interact.textContent = actionLabel
+          ? `${actionLabel} · ${interactControl}`
+          : "";
         if (controls.interact && !interactionHeld && action) {
           if (action === "rest") {
             advanceOffline(state, 300);
@@ -664,6 +699,19 @@ async function boot() {
             );
         }
         interactionHeld = !!controls.interact;
+        if (controls.recenter && !recenterHeld) {
+          rig.yaw = body.yaw;
+          rig.pitch = 0.26;
+          rig.initial = true;
+          if (!statusFlash)
+            statusFlash = flashStatus(
+              status,
+              "Camera recentered behind Squirtle.",
+              statusFlash,
+              2.5,
+            );
+        }
+        recenterHeld = !!controls.recenter;
         const env =
           state.place === "record"
             ? recordRegion
@@ -961,14 +1009,30 @@ async function boot() {
           document.querySelector("#speed").textContent =
             `${Math.hypot(body.vx, body.vz).toFixed(1)} m/s`;
           document.querySelector("#jet").value = 1 - body.jetCooldown / 1.1;
+          document.querySelector("#jet-key").textContent =
+            input.inputMode() === "gamepad"
+              ? "A"
+              : input.inputMode() === "touch"
+                ? "JET"
+                : "SPACE";
           if (hudTime % 15 === 0) {
             const controller = input.gamepadStatus(),
               nextController = controller.connected
                 ? `Controller: ${controller.name}`
                 : "Controller: none detected.";
             if (nextController !== controllerSignature) {
+              const wasConnected =
+                controllerSignature &&
+                controllerSignature !== "Controller: none detected.";
               controllerSignature = nextController;
               controllerState.textContent = nextController;
+              if (wasConnected && !controller.connected && !statusFlash)
+                statusFlash = flashStatus(
+                  status,
+                  "Controller disconnected. Keyboard and touch controls remain available.",
+                  statusFlash,
+                  4,
+                );
             }
             if (controller.connected)
               showHint(

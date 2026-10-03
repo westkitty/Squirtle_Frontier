@@ -23,6 +23,7 @@ test("standard gamepad mapping covers movement, look and creature actions", () =
   b[2] = { pressed: true, value: 1 };
   b[4] = { pressed: true, value: 1 };
   b[7] = { pressed: false, value: 0.8 };
+  b[11] = { pressed: true, value: 1 };
   const state = standardGamepadState({
     connected: true,
     id: "Test Pad",
@@ -37,6 +38,7 @@ test("standard gamepad mapping covers movement, look and creature actions", () =
   assert.equal(state.sense, true);
   assert.equal(state.dive, true);
   assert.equal(state.run, true);
+  assert.equal(state.recenter, true);
   assert.equal(state.slide, false);
 });
 
