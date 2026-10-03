@@ -51,15 +51,21 @@ mkdir -p "${USER_APPS_DIR}"
 rm -rf "${TARGET_APP}"
 cp -R "${APP_BUNDLE}" "${TARGET_APP}"
 
-# 8. Register with LaunchServices
+# 8. Register with LaunchServices and mark the installed bundle/icon current.
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "${TARGET_APP}" || true
+touch "${TARGET_APP}"
+touch "${TARGET_APP}/Contents/Resources/SquirtleFrontier.icns"
 
-# 9. Add icon to macOS Dock using dockutil when available
+# 9. Point the persistent Dock item at the freshly installed wrapper.
 if command -v dockutil >/dev/null 2>&1; then
   echo "Configuring macOS Dock item..."
   dockutil --add "${TARGET_APP}" --label "${APP_NAME}" --replacing "${APP_NAME}" || \
   dockutil --add "${TARGET_APP}" --label "${APP_NAME}"
 fi
+
+# 10. Restart only the Dock process so macOS discards any cached icon for the old bundle.
+# Dock is managed by macOS and relaunches automatically; the game itself is unaffected.
+killall Dock >/dev/null 2>&1 || true
 
 echo "=== Squirtle Frontier Desktop App Successfully Installed ==="
 echo "Application: ${TARGET_APP}"
