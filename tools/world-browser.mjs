@@ -340,6 +340,15 @@ try {
     `The record is read in 1 of 8 bands, down to band ${evidence.recordLogged.band}.`,
     "the panel has to report the same single reading the shaft logged",
   );
+  // Menus intentionally suppress creature controls. Close Memory before resuming the
+  // physical ascent so this journey exercises the real user path rather than relying on
+  // the pre-uplift behavior where movement leaked through panels.
+  await page.click('[data-close-panel="memory"]');
+  await page.waitForFunction(
+    () =>
+      document.activeElement.tagName === "CANVAS" &&
+      window.__SF.input.suppressed === false,
+  );
   await page.keyboard.down("KeyE");
   await page.waitForFunction(() => window.__SF.body.y > -1, null, {
     timeout: 30000,
