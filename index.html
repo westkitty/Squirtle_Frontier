@@ -165,9 +165,16 @@
         Enter basin · R
       </button>
       <div id="loading" role="status">Finding the shore…</div>
-      <dl id="record-readout" aria-label="Shaft measurement" hidden>
-        <dt class="eyebrow readout-title">STILLWATER MEASUREMENT / 01</dt>
-      </dl>
+      <!-- One bottom-anchored column, so the shaft instrument and the caption can grow
+           without either of them landing on the other. Both used to be absolutely
+           positioned at hand-picked offsets, and a two-line caption overlapped the
+           readout exactly when the readout mattered. -->
+      <div id="field-notes">
+        <dl id="record-readout" aria-label="Shaft measurement" hidden>
+          <dt class="eyebrow readout-title">STILLWATER MEASUREMENT / 01</dt>
+        </dl>
+        <output id="status" role="status">Explore at your own pace.</output>
+      </div>
       <footer>
         <div class="location">
           <span class="eyebrow">MOVEMENT STUDY / 01</span>
@@ -187,7 +194,6 @@
           ></meter
           ><kbd>SPACE</kbd>
         </div>
-        <output id="status" role="status">Explore at your own pace.</output>
       </footer>
       <div id="touch" aria-label="Touch movement controls">
         <div id="stick" role="group" aria-label="Movement stick"><i></i></div>
