@@ -165,7 +165,7 @@ test('the rendered basin surface is the measurement, and it is rebuilt when the 
     chunks: { onChunkBuild: null, onChunkRemove: null },
   });
   const atRest = scenery.water.geometry;
-  const shore = (g, s) => g.attributes.position.array[1 + s * 3 + 2];
+  const shore = (g, s) => g.attributes.position.array[(1 + s) * 3 + 2];
   assert.equal(scenery.buildWater(WATER_BASE), false, 'the same level is not a rebuild');
   assert.equal(scenery.water.geometry, atRest, 'an unmoved basin must reuse its outline');
   const before = shore(atRest, 0);
