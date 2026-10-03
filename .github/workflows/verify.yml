@@ -64,19 +64,35 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://127.0.0.1:5173/ >/dev/null
-          npm run browser
-          npm run browser:habitat
-          npm run browser:world
-          npm run browser:recovery
-          npm run browser:channel
-          npm run browser:wildlife
-          npm run browser:a11y
-          npm run browser:multitab
-          npm run browser:watershed
-          npm run perf
-          node tools/shoreline-capture.mjs
+          FAIL=0
+          run_check() {
+            NAME="$1"
+            shift
+            echo "::group::$NAME"
+            if "$@"; then
+              echo "$NAME passed"
+            else
+              echo "::error::$NAME failed"
+              FAIL=1
+            fi
+            echo "::endgroup::"
+          }
+          run_check "Core movement" npm run browser
+          run_check "Habitat" npm run browser:habitat
+          run_check "World" npm run browser:world
+          run_check "Recovery" npm run browser:recovery
+          run_check "Channel" npm run browser:channel
+          run_check "Wildlife" npm run browser:wildlife
+          run_check "Accessibility" npm run browser:a11y
+          run_check "Gamepad" npm run browser:gamepad
+          run_check "Multitab" npm run browser:multitab
+          run_check "Watershed" npm run browser:watershed
+          run_check "Performance" npm run perf
+          run_check "Shoreline capture" node tools/shoreline-capture.mjs
+          exit "$FAIL"
 
       - name: Built-bundle browser journey
+        if: always()
         run: npm run browser:dist
 
       - name: Upload validation evidence

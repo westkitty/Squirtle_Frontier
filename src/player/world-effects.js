@@ -9,6 +9,7 @@ export class WorldEffects {
     this.geo = new THREE.ConeGeometry(1, 1, 5);
     this.mat = new THREE.MeshBasicMaterial({ color: 0xfca953 });
     this.fire = new THREE.InstancedMesh(this.geo, this.mat, 16);
+    this.fire.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.group.add(this.fire);
     this.fire.frustumCulled = false;
     this.rainMat = new THREE.MeshBasicMaterial({
@@ -17,6 +18,7 @@ export class WorldEffects {
       opacity: 0.4,
     });
     this.rain = new THREE.InstancedMesh(this.geo, this.rainMat, 96);
+    this.rain.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.rain.frustumCulled = false;
     this.group.add(this.rain);
 
@@ -26,6 +28,7 @@ export class WorldEffects {
       opacity: 0.85,
     });
     this.jet = new THREE.InstancedMesh(this.geo, this.jetMat, 24);
+    this.jet.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.jet.frustumCulled = false;
     this.jet.count = 0;
     this.jet.visible = false;
@@ -38,6 +41,7 @@ export class WorldEffects {
       side: THREE.DoubleSide,
     });
     this.wake = new THREE.InstancedMesh(this.geo, this.wakeMat, 16);
+    this.wake.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.wake.frustumCulled = false;
     this.wake.count = 0;
     this.wake.visible = false;
@@ -49,6 +53,7 @@ export class WorldEffects {
       opacity: 0.75,
     });
     this.splash = new THREE.InstancedMesh(this.geo, this.splashMat, 20);
+    this.splash.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.splash.frustumCulled = false;
     this.splash.count = 0;
     this.splash.visible = false;
@@ -61,6 +66,7 @@ export class WorldEffects {
       depthWrite: false,
     });
     this.streamFoam = new THREE.InstancedMesh(this.geo, this.foamMat, 16);
+    this.streamFoam.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.streamFoam.frustumCulled = false;
     this.streamFoam.count = 0;
     this.streamFoam.visible = false;
@@ -86,12 +92,15 @@ export class WorldEffects {
     this.dummy = new THREE.Object3D();
   }
   update(state, body, options = {}) {
-    const renderScale = Math.max(
-      0.45,
-      Math.min(1, Number(options.renderScale) || 1),
+    const effectScale = Math.max(
+      0.2,
+      Math.min(
+        1,
+        Number(options.effectScale ?? options.renderScale) || 1,
+      ),
     );
     this.rain.count = Math.floor(
-      state.frontier.weather.rain * 96 * renderScale,
+      state.frontier.weather.rain * 96 * effectScale,
     );
     for (let i = 0; i < this.rain.count; i++) {
       const x = body.x + Math.sin(i * 3.3) * 8,
@@ -168,14 +177,14 @@ export class WorldEffects {
     // 1. Water Jet stream: pressurized aquatic propulsion forward from snout
     if (body.jetTime > 0) {
       this.jet.visible = true;
-      this.jet.count = 24;
+      this.jet.count = Math.max(8, Math.round(24 * effectScale));
       const snoutX = body.x + Math.sin(body.yaw) * 0.28,
         snoutY = body.y + 0.22,
         snoutZ = body.z + Math.cos(body.yaw) * 0.28,
         dirX = Math.sin(body.yaw),
         dirZ = Math.cos(body.yaw);
-      for (let i = 0; i < 24; i++) {
-        const dist = (i / 23) * 2.8,
+      for (let i = 0; i < this.jet.count; i++) {
+        const dist = (i / Math.max(1, this.jet.count - 1)) * 2.8,
           spread = dist * 0.1,
           turbX = Math.sin(i * 3.7 + state.elapsed * 25) * spread,
           turbZ = Math.cos(i * 2.9 + state.elapsed * 25) * spread,
@@ -206,10 +215,11 @@ export class WorldEffects {
     const speed = Math.hypot(body.vx, body.vz);
     if (inWater && speed > 0.25 && body.jetTime <= 0) {
       this.wake.visible = true;
-      this.wake.count = Math.max(
+      const wakeBase = Math.max(
         4,
         Math.min(16, Math.round(4 + Math.min(speed, 4) * 3)),
       );
+      this.wake.count = Math.max(3, Math.round(wakeBase * effectScale));
       const surfY = water.level + 0.015,
         spread = 0.7 + Math.min(speed, 4) * 0.18;
       for (let i = 0; i < this.wake.count; i++) {
@@ -239,7 +249,8 @@ export class WorldEffects {
       const strength = isShaking
         ? 1
         : Math.max(0.3, Math.min(1, body.impact / 0.2));
-      this.splash.count = Math.max(6, Math.round(20 * strength));
+      const splashBase = Math.max(6, Math.round(20 * strength));
+      this.splash.count = Math.max(4, Math.round(splashBase * effectScale));
       for (let i = 0; i < this.splash.count; i++) {
         const theta =
             (i / this.splash.count) * Math.PI * 2 + state.elapsed * 12,
@@ -270,8 +281,10 @@ export class WorldEffects {
         0,
         Math.min(1, Number(options.channelFlow ?? 1)),
       );
-      this.streamFoam.count =
+      const foamBase =
         channelFlow > 0.04 ? Math.max(4, Math.round(16 * channelFlow)) : 0;
+      this.streamFoam.count =
+        foamBase > 0 ? Math.max(3, Math.round(foamBase * effectScale)) : 0;
       this.streamFoam.visible = this.streamFoam.count > 0;
       for (let i = 0; i < this.streamFoam.count; i++) {
         const progress =

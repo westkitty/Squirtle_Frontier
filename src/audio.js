@@ -130,8 +130,19 @@ export class Audio {
       this.noiseSource.start();
       this.subOsc.start();
     }
-    this.context.resume().catch(() => {});
+    void this.resume();
   }
+
+  async resume() {
+    if (!this.context) return false;
+    try {
+      await this.context.resume();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   update(body, settings, contextInfo = {}) {
     if (!this.context) return;
     const now = this.context.currentTime;

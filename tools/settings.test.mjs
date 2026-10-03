@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { HINT_KEYS, Settings } from "../src/settings.js";
 import { AdaptiveScale } from "../src/adaptive-quality.js";
-import { pixelRatioFor } from "../src/render-quality.js";
+import { effectScaleFor, pixelRatioFor } from "../src/render-quality.js";
 const store = (raw) => {
   const values = new Map([["squirtle_frontier_settings_v1", raw]]);
   globalThis.localStorage = {
@@ -130,4 +130,15 @@ test("accessibility presentation preferences clamp to supported values", () => {
   assert.equal(supported.textScale, 1.3);
   assert.equal(supported.effects, "minimal");
   assert.equal(Settings.highContrast, true);
+});
+
+test("effect density composes quality, preference and adaptive pressure without touching simulation", () => {
+  assert.equal(effectScaleFor("high", "full", 1), 1);
+  assert.ok(effectScaleFor("medium", "full", 1) < 1);
+  assert.ok(
+    effectScaleFor("low", "minimal", 0.5) <
+      effectScaleFor("high", "reduced", 1),
+  );
+  assert.ok(effectScaleFor("low", "minimal", 0.45) >= 0.2);
+  assert.equal(effectScaleFor("broken", "broken", Number.NaN), 1);
 });

@@ -61,6 +61,7 @@ function setupMockAudioContext() {
       this.currentTime = 1.0;
       this.destination = new MockNode("destination");
       this.closed = false;
+      this.resumes = 0;
     }
     createGain() {
       return new MockGainNode();
@@ -79,7 +80,9 @@ function setupMockAudioContext() {
     createOscillator() {
       return new MockSourceNode("oscillator");
     }
-    async resume() {}
+    async resume() {
+      this.resumes++;
+    }
     async close() {
       this.closed = true;
     }
@@ -292,4 +295,20 @@ test("audio cleanly disposes all nodes and closes context without leaks", () => 
   assert.equal(audio.context, null, "context must be nullified");
   assert.equal(audio.masterGain, null, "master gain must be nullified");
   assert.equal(ctx.closed, true, "context must be explicitly closed");
+});
+
+test("an unlocked audio graph resumes after a tab returns without rebuilding nodes", async () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const ctx = audio.context,
+    source = audio.noiseSource,
+    before = ctx.resumes;
+  assert.equal(await audio.resume(), true);
+  assert.equal(ctx.resumes, before + 1);
+  assert.equal(audio.context, ctx);
+  assert.equal(audio.noiseSource, source, "resume must reuse the existing graph");
+
+  audio.dispose();
+  assert.equal(await audio.resume(), false, "disposed audio has nothing to resume");
 });

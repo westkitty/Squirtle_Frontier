@@ -495,6 +495,44 @@ try {
     evidence.stickMovedMeters > 0.2,
     `stick movement ${evidence.stickMovedMeters}`,
   );
+
+  // A phone rotated sideways still needs full-size controls and clear UI lanes.
+  await touch.setViewportSize({ width: 844, height: 390 });
+  await touch.waitForTimeout(150);
+  evidence.landscape = await touch.evaluate(() => {
+    const rect = (selector) =>
+        document.querySelector(selector).getBoundingClientRect(),
+      overlaps = (a, b) =>
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top,
+      stick = rect("#stick"),
+      actions = rect(".actions"),
+      footer = rect("footer"),
+      notes = rect("#field-notes"),
+      buttons = [...document.querySelectorAll(".actions button")].map((b) =>
+        b.getBoundingClientRect(),
+      );
+    return {
+      overflow: document.documentElement.scrollWidth > innerWidth,
+      stick: [Math.round(stick.width), Math.round(stick.height)],
+      smallestAction: Math.min(
+        ...buttons.flatMap((b) => [b.width, b.height]),
+      ),
+      controlsClearFooter:
+        !overlaps(stick, footer) && !overlaps(actions, footer),
+      notesClearControls:
+        !overlaps(notes, stick) && !overlaps(notes, actions),
+    };
+  });
+  assert.equal(evidence.landscape.overflow, false);
+  assert.ok(evidence.landscape.stick[0] >= 44);
+  assert.ok(evidence.landscape.smallestAction >= 44);
+  assert.equal(evidence.landscape.controlsClearFooter, true);
+  assert.equal(evidence.landscape.notesClearControls, true);
+  await touch.screenshot({ path: "artifacts/a11y-touch-landscape.png" });
+
   for (const key of ["desktop", "touch"])
     for (const v of evidence[key].violations)
       evidence.violations.push(`${key}: ${v}`);

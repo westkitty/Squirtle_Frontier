@@ -19,7 +19,7 @@ import {
 } from "./simulation/deep-history.js";
 import { LANDMARKS } from "./simulation/place-memory.js";
 import * as THREE from "three";
-import { pixelRatioFor } from "./render-quality.js";
+import { effectScaleFor, pixelRatioFor } from "./render-quality.js";
 import { WorldState } from "./worldstate.js";
 import { heightAt } from "./worldgen.js";
 import { Streaming } from "./streaming.js";
@@ -841,11 +841,16 @@ async function boot() {
             ? labRegion
             : recordRegion
         ).water(body.x, body.z, state.waterLevel);
+        const effectScale = effectScaleFor(
+          Settings.get("quality"),
+          Settings.get("effects"),
+          adaptive.value,
+        );
         if (state.place === "frontier")
           effects.update(state, body, {
             water: currentWater,
             isShaking: creature?.isShaking ?? false,
-            renderScale: adaptive.value,
+            effectScale,
             channelFlow: state.watershed.nodes[2].flow,
           });
         if (state.place === "frontier")
@@ -974,7 +979,7 @@ async function boot() {
         });
         creature.present(body, dt, attention);
         if (state.place === "frontier")
-          scenery.update(body, dt, state.waterLevel);
+          scenery.update(body, dt, state.waterLevel, effectScale);
         audio.update(body, Settings.values, {
           water: currentWater,
           isShaking: creature?.isShaking ?? false,
@@ -1181,6 +1186,7 @@ async function boot() {
           document.hidden || contextPaused ? null : (now) => loop.frame(now),
         );
         if (document.hidden) audio.context?.suspend();
+        else void audio.resume();
       },
       options,
     );

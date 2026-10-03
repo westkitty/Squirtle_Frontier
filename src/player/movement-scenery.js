@@ -277,7 +277,7 @@ export class MovementScenery {
     group.removeFromParent();
     this.groups.delete(key);
   }
-  update(body, dt, level = null) {
+  update(body, dt, level = null, effectScale = 1) {
     if (level !== null) {
       const surface = WATER_SURFACE_Y(level);
       this.water.position.y = surface;
@@ -292,10 +292,17 @@ export class MovementScenery {
     this.particleTime += dt;
     // Wake and impact water belong to WorldEffects. This particle stream is Jet-only:
     // ordinary walking/swimming must never look like Squirtle is firing Water Jet.
-    const active = body.jetTime > 0;
-    this.pool.count = active ? 32 : 0;
+    const active = body.jetTime > 0,
+      particleScale = Math.max(
+        0.2,
+        Math.min(1, Number(effectScale) || 1),
+      );
+    this.pool.count = active
+      ? Math.max(8, Math.round(32 * particleScale))
+      : 0;
     for (let i = 0; i < this.pool.count; i++) {
-      const t = (this.particleTime * 2 + i / 32) % 1;
+      const t =
+        (this.particleTime * 2 + i / Math.max(1, this.pool.count)) % 1;
       const behind = body.jetTime > 0 ? t * 2 : t * 0.45;
       this.dummy.position.set(
         body.x - Math.sin(body.yaw) * behind + Math.sin(i * 7) * t * 0.3,

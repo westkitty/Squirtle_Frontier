@@ -256,3 +256,44 @@ test("active fire presentation flickers without allocating new geometry", () => 
   assert.equal(fx.fire.geometry, fx.geo);
   fx.dispose();
 });
+
+test("animated instanced effects use dynamic draw buffers and presentation density scales particles only", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  for (const mesh of [
+    fx.fire,
+    fx.rain,
+    fx.jet,
+    fx.wake,
+    fx.splash,
+    fx.streamFoam,
+  ])
+    assert.equal(
+      mesh.instanceMatrix.usage,
+      THREE.DynamicDrawUsage,
+      "animated instance matrices must tell WebGL they change frequently",
+    );
+
+  const state = createMockState(),
+    body = createBody(0, 0, 0.4);
+  state.frontier.weather.rain = 1;
+  body.mode = "swim";
+  body.vx = 4;
+  body.jetTime = 0.2;
+  fx.update(state, body, {
+    water: { level: 0.5 },
+    effectScale: 1,
+    channelFlow: 1,
+  });
+  const fullJet = fx.jet.count,
+    fullRain = fx.rain.count;
+  fx.update(state, body, {
+    water: { level: 0.5 },
+    effectScale: 0.35,
+    channelFlow: 1,
+  });
+  assert.ok(fx.jet.count < fullJet && fx.jet.count >= 8);
+  assert.ok(fx.rain.count < fullRain);
+  assert.equal(body.jetTime, 0.2, "visual density may not alter Jet state");
+  fx.dispose();
+});
