@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 27
+revision: 28
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -553,3 +553,12 @@ R/contextual button near the wooden platform advances the existing regional simu
 - The patch replaces the fixed painted ellipse with shoreline geometry measured from the same `waterAt()` predicate used by locomotion, makes the Deep Record/status layout non-overlapping, restores hidden semantics for the shaft readout, and adds shoreline/visual capture tooling.
 - Evidence state: **implemented-unverified at full runtime in this session**. Remote source state was verified after application. The MacBook execution node is offline and this repository exposes no GitHub Actions workflow, so `npm test`, `npm run check`, `npm run mutate`, `npm run build`, browser journeys, and the shoreline capture were not rerun here.
 - The submitted `docs/performance/phase1-measured.json` update is retained as patch-provided evidence, not promoted by this checkpoint to independently reverified hardware/browser performance.
+
+## Post-patch validation / Pages / wrapper-delivery checkpoint — 2026-10-03
+
+- Exact runtime implementation head `06b2cc6b6a7feb191e303f0c4a56e61cd231ef28` passed GitHub Actions run `37157516473`.
+- Validation evidence: asset validation passed; source syntax/architecture passed; 178/178 unit tests passed; 56/56 injected mutations were killed by named tests; production Vite build passed; core, habitat, world, recovery, channel, wildlife, accessibility, multitab and watershed browser journeys passed; renderer performance/teardown probe passed; matched-camera shoreline proof measured 1.50 m long-axis movement between low and full water; built production bundle booted from static hosting with movement, persistence, cached asset and zero-resource teardown.
+- Added `.github/workflows/verify.yml` as the durable full validation workflow. Its browser journeys now start one controlled Vite server before dev-hosted browser checks, then run the built-bundle journey separately.
+- Added `.github/workflows/deploy-pages.yml`. Pages production build and artifact upload pass, but deployment is currently BLOCKED by repository administration state: GitHub Pages is not enabled (`has_pages: false`), and `actions/deploy-pages` returns 404 until Settings -> Pages -> Source is set to GitHub Actions. This connector does not expose the required Pages administration mutation.
+- Hardened `macos/build-app.sh`: after installing `~/Applications/Squirtle Frontier.app`, it re-registers LaunchServices, touches the installed bundle/icon, replaces the persistent Dock item through `dockutil`, and restarts Dock so the current `SquirtleFrontier.icns` is not hidden behind a stale Dock cache.
+- macOS local delivery remains PENDING, not verified: the registered MacBook remote node is offline and DEX//REACH is unavailable, so the current repo head has not yet been pulled/built/installed on the physical MacBook in this session.
