@@ -1,0 +1,104 @@
+name: Verify Squirtle Frontier
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BROWSER_BUNDLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare evidence directories
+        run: mkdir -p artifacts/shoreline
+
+      - name: Validate assets
+        run: npm run assets
+
+      - name: Architecture and unit checks
+        run: npm run check
+
+      - name: Mutation suite
+        run: npm run mutate
+
+      - name: Production build
+        run: npm run build
+
+      - name: Core browser journey
+        run: npm run browser
+
+      - name: Habitat browser journey
+        run: npm run browser:habitat
+
+      - name: World browser journey
+        run: npm run browser:world
+
+      - name: Recovery browser journey
+        run: npm run browser:recovery
+
+      - name: Channel browser journey
+        run: npm run browser:channel
+
+      - name: Wildlife browser journey
+        run: npm run browser:wildlife
+
+      - name: Accessibility browser journey
+        run: npm run browser:a11y
+
+      - name: Multi-tab browser journey
+        run: npm run browser:multitab
+
+      - name: Watershed browser journey
+        run: npm run browser:watershed
+
+      - name: Built-bundle browser journey
+        run: npm run browser:dist
+
+      - name: Renderer performance and teardown probe
+        run: npm run perf
+
+      - name: Shoreline matched-camera proof
+        shell: bash
+        run: |
+          npm run start -- --host 127.0.0.1 > /tmp/squirtle-frontier-vite.log 2>&1 &
+          VITE_PID=$!
+          cleanup() { kill "$VITE_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:5173/ >/dev/null
+          node tools/shoreline-capture.mjs
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: squirtle-frontier-validation
+          path: |
+            artifacts/
+            docs/qa/
+            docs/performance/
+          if-no-files-found: warn
