@@ -51,6 +51,7 @@ import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
 import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
+import { flashStatus, settleStatus } from "./status-note.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading"),
   recordReadout = document.querySelector("#record-readout");
@@ -184,6 +185,10 @@ async function boot() {
       state.player = { x: body.x, z: body.z };
       rig.initial = true;
       input.clear();
+      // The instrument belongs to the shaft. The HUD cadence would correct this within
+      // three frames, but the caption and the readout share a column now, so a plate that
+      // lingers for even three frames pushes the caption it no longer belongs above.
+      recordReadout.hidden = place !== "record";
       document.querySelector("h1").textContent =
         place === "record"
           ? "The Deep Record"
@@ -547,6 +552,7 @@ async function boot() {
     let hudTime = 0,
       saveTime = 0,
       lastRender = null,
+      statusFlash = null,
       // The step callback owns the input sample; the render callback below needs to know
       // whether the player is reading a sense line without reaching out of scope.
       senseHeld = false;
@@ -775,6 +781,9 @@ async function boot() {
               ? channelDistance(body.x, body.z)
               : 999,
         });
+        // A transient notice hands the caption back once it has had its moment, and only
+        // if nothing else has spoken in the meantime.
+        statusFlash = settleStatus(status, statusFlash, dt);
         saveTime += dt;
         if (saveTime >= 30) {
           saveTime = 0;
@@ -825,9 +834,11 @@ async function boot() {
           // The scale notice is transient, so it must not overwrite a readout the player
           // is deliberately asking for with the sense key held down.
           if (!senseHeld)
-            status.textContent = `Render scale ${Math.round(
-              adaptive.value * 100,
-            )}%.`;
+            statusFlash = flashStatus(
+              status,
+              `Render scale ${Math.round(adaptive.value * 100)}%.`,
+              statusFlash,
+            );
         }
         hudTime++;
         if (hudTime % 3 === 0) {
