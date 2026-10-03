@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { WATER_BASE, WATER_SURFACE_Y } from "../simulation/water-level.js";
 import { heightAt, WORLD } from "../worldgen.js";
 import { obstacles, treesForChunk } from "./movement-region.js";
+import { levelChanged, pondOutline } from "./pond-surface.js";
 // Presentation-only training landmarks. Each grove is owned by its streamed chunk.
 export class MovementScenery {
   constructor(scene, streaming) {
@@ -34,22 +35,22 @@ export class MovementScenery {
       previousRemove(key, rec);
       this.remove(key);
     };
-    this.water = new THREE.Mesh(
-      new THREE.CircleGeometry(1, 80),
-      new THREE.MeshStandardMaterial({
-        color: 0x419b96,
-        transparent: true,
-        opacity: 0.6,
-        roughness: 0.25,
-        metalness: 0.12,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
-    );
-    this.water.rotation.x = -Math.PI / 2;
-    this.water.scale.set(10, 31, 1);
+    this.waterMaterial = new THREE.MeshStandardMaterial({
+      color: 0x419b96,
+      transparent: true,
+      opacity: 0.6,
+      roughness: 0.25,
+      metalness: 0.12,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    // The mesh owns no geometry until the first measurement, because the geometry *is*
+    // the measurement: a silhouette resolved through the predicate the body swims by.
+    this.water = new THREE.Mesh(new THREE.BufferGeometry(), this.waterMaterial);
     this.water.position.y = WATER_SURFACE_Y(WATER_BASE);
     scene.add(this.water);
+    this.waterLevel = null;
+    this.buildWater(WATER_BASE);
     this.pool = new THREE.InstancedMesh(
       new THREE.SphereGeometry(0.035, 4, 3),
       new THREE.MeshBasicMaterial({
@@ -90,6 +91,63 @@ export class MovementScenery {
     );
     this.contact.rotation.x = -Math.PI / 2;
     scene.add(this.contact);
+  }
+  // Re-resolved only when the basin's level actually moves. A repair moves it by up to
+  // 0.28 m, which walks the shoreline several body-lengths up or down the bank, so the
+  // rebuild is rare and each one is visible.
+  buildWater(level) {
+    if (!levelChanged(this.waterLevel, level)) return false;
+    const { spokes, rings, radii } = pondOutline(level);
+    const count = 1 + spokes * rings,
+      positions = new Float32Array(count * 3),
+      normals = new Float32Array(count * 3),
+      indices = new Uint32Array(spokes * (2 * rings - 1) * 3);
+    // One fan vertex at the centre, then one ring per radial step. Every ring carries the
+    // same spoken directions, so the outer ring is the shore and nothing can overshoot it.
+    for (let s = 0; s < spokes; s++) normals[s * 3 + 1] = 1;
+    for (let k = 1; k <= rings; k++) {
+      const t = k / rings;
+      for (let s = 0; s < spokes; s++) {
+        const angle = (s / spokes) * Math.PI * 2,
+          r = radii[s] * t,
+          i = 1 + (k - 1) * spokes + s;
+        positions[i * 3] = Math.cos(angle) * r;
+        positions[i * 3 + 2] = Math.sin(angle) * r;
+        normals[i * 3 + 1] = 1;
+      }
+    }
+    let p = 0;
+    for (let s = 0; s < spokes; s++) {
+      indices[p++] = 0;
+      indices[p++] = 1 + ((s + 1) % spokes);
+      indices[p++] = 1 + s;
+    }
+    for (let k = 1; k < rings; k++) {
+      const base = 1 + (k - 1) * spokes,
+        next = base + spokes;
+      for (let s = 0; s < spokes; s++) {
+        const s2 = (s + 1) % spokes,
+          a = base + s,
+          b = base + s2,
+          c = next + s,
+          d = next + s2;
+        indices[p++] = a;
+        indices[p++] = b;
+        indices[p++] = c;
+        indices[p++] = b;
+        indices[p++] = d;
+        indices[p++] = c;
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    geometry.computeBoundingSphere();
+    this.water.geometry.dispose();
+    this.water.geometry = geometry;
+    this.waterLevel = level;
+    return true;
   }
   build(key, rec) {
     const trees = treesForChunk(rec.i, rec.j);
@@ -151,7 +209,10 @@ export class MovementScenery {
     this.groups.delete(key);
   }
   update(body, dt, level = null) {
-    if (level !== null) this.water.position.y = WATER_SURFACE_Y(level);
+    if (level !== null) {
+      this.water.position.y = WATER_SURFACE_Y(level);
+      this.buildWater(level);
+    }
     const ground = heightAt(body.x, body.z),
       depth = body.y - ground;
     this.contact.visible = ground > -0.1 && depth < 1.5;
@@ -184,7 +245,7 @@ export class MovementScenery {
       this.leafMat,
       this.rockMat,
       this.water.geometry,
-      this.water.material,
+      this.waterMaterial,
       this.pool.geometry,
       this.pool.material,
     ])
