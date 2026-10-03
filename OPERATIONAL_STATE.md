@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 28
+revision: 29
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -562,3 +562,17 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Added `.github/workflows/deploy-pages.yml`. Pages production build and artifact upload pass, but deployment is currently BLOCKED by repository administration state: GitHub Pages is not enabled (`has_pages: false`), and `actions/deploy-pages` returns 404 until Settings -> Pages -> Source is set to GitHub Actions. This connector does not expose the required Pages administration mutation.
 - Hardened `macos/build-app.sh`: after installing `~/Applications/Squirtle Frontier.app`, it re-registers LaunchServices, touches the installed bundle/icon, replaces the persistent Dock item through `dockutil`, and restarts Dock so the current `SquirtleFrontier.icns` is not hidden behind a stale Dock cache.
 - macOS local delivery remains PENDING, not verified: the registered MacBook remote node is offline and DEX//REACH is unavailable, so the current repo head has not yet been pulled/built/installed on the physical MacBook in this session.
+
+
+## 25-way whole-project uplift checkpoint — 2026-10-03
+
+- Runtime implementation landed on `main` across three bounded change groups, with final runtime source at `d30a18b4960a85e3ade652ff93fca14a77bea3de`; one subsequent validation-harness alignment commit produced current head `a837ac88f397ee09f09dda7abc990ced27537269`.
+- Control-feel uplift: standard Gamepad API movement/look/actions, radial gamepad and touch deadzones, touch-stick geometry derived from its rendered size, smoother aquatic coasting, stronger speed/Water-Jet camera language, and an input-suppression authority used by open panels.
+- Environmental-feedback uplift: adaptive rain particle pressure, allocation-free fire flicker, swim-speed wake density/spread, impact-scaled splash, flow-scaled channel foam, water colour/opacity driven by wetness/sediment/contamination, and weather/depth-coherent fog/background/sun presentation.
+- UX/resilience uplift: exposed contextual-guidance preference, bounded one-shot guidance for swim/sense/Deep Record/controller discovery, explicit close controls for all panels, persistent save/controller state readouts, WebGL context-loss pause/recovery handling, corrected adaptive-performance proof semantics, and cancel-in-progress verification concurrency.
+- No new runtime dependency was added. Existing body-specific locomotion, causal watershed rules, save identity, reduced-motion behavior, asset ownership/disposal and near/distant ecology boundaries remain protected.
+- Pages deployment for current head `a837ac88f397ee09f09dda7abc990ced27537269` passed in run `37160157260`. This supersedes the earlier checkpoint that recorded Pages as administratively blocked.
+- Final-head verification run `37160157267`: asset validation PASS; architecture/unit PASS; mutation suite PASS; production Vite build PASS; core movement, habitat, world, recovery, channel, wildlife and accessibility browser journeys PASS.
+- Remaining validation blocker: `browser:multitab` timed out while attempting a real `KeyQ` dive after its driver tab had left Settings open from an earlier save operation. Open panels now intentionally suppress creature input, so that journey still assumes the pre-uplift behavior in which gameplay leaked through menus. The current failure therefore establishes a stale validation path, not a verified production locomotion defect.
+- Because the multitab journey stops the workflow before later commands, the final-head watershed journey, performance/teardown probe, shoreline capture, and built-production-bundle journey remain **unverified on this exact head** even though earlier baselines covered those paths.
+- Pending proof work: update the multitab journey so it explicitly closes Settings before resuming physical dive input, then rerun the complete verification matrix. Do not weaken panel input suppression to satisfy the old journey.
