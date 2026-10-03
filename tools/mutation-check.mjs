@@ -218,10 +218,22 @@ const MUTATIONS = [
     to: "    if (false && body.jetTime > 0) {",
   },
   {
-    what: "aquatic surface wake fails to generate ripples while swimming",
+    what: "aquatic surface wake fails to generate ripples while moving through water",
     file: "src/player/world-effects.js",
-    from: "    if (inWater && (speed > 0.25 || body.mode === \"swim\" || body.mode === \"dive\")) {",
+    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0) {",
     to: "    if (false) {",
+  },
+  {
+    what: "Water Jet incorrectly overlaps the ordinary swim wake",
+    file: "src/player/world-effects.js",
+    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0) {",
+    to: "    if (inWater && speed > 0.25) {",
+  },
+  {
+    what: "ordinary swimming incorrectly emits the Jet particle stream",
+    file: "src/player/movement-scenery.js",
+    from: "    const active = body.jetTime > 0;",
+    to: "    const active = body.jetTime > 0 || body.mode === \"swim\";",
   },
   {
     what: "strangers can drink from the caretaker's bowl without familiarity",

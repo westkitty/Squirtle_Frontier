@@ -100,6 +100,22 @@ test("Aquatic surface wake generates concentric ripples only when swimming or mo
   assert.equal(fx.wake.visible, true);
   assert.equal(fx.wake.count, 16);
 
+  // Stationary swimming is calm: locomotion does not manufacture a constant spray.
+  body.vx = 0;
+  body.vz = 0;
+  fx.update(state, body, { water });
+  assert.equal(fx.wake.visible, false);
+  assert.equal(fx.wake.count, 0);
+
+  // Jet owns its own pressurized stream and must not stack the ordinary swim wake.
+  body.vx = 1.8;
+  body.jetTime = 0.2;
+  fx.update(state, body, { water });
+  assert.equal(fx.wake.visible, false);
+  assert.equal(fx.wake.count, 0);
+  body.jetTime = 0;
+  fx.update(state, body, { water });
+
   // Check that wake ripple sits precisely at water surface height
   const mat = new THREE.Matrix4();
   fx.wake.getMatrixAt(0, mat);
