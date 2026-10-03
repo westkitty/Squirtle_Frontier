@@ -232,8 +232,8 @@ const MUTATIONS = [
   {
     what: "ordinary swimming incorrectly emits the Jet particle stream",
     file: "src/player/movement-scenery.js",
-    from: "    const active = body.jetTime > 0;",
-    to: "    const active = body.jetTime > 0 || body.mode === \"swim\";",
+    from: "    const active = body.jetTime > 0,",
+    to: "    const active = body.jetTime > 0 || body.mode === \"swim\",",
   },
   {
     what: "strangers can drink from the caretaker's bowl without familiarity",

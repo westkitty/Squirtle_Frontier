@@ -45,9 +45,12 @@ jobs:
         run: npm run mutate
 
       - name: Production build
+        id: production-build
+        if: always()
         run: npm run build
 
       - name: Browser journeys, performance, and shoreline proof
+        if: ${{ always() && steps.production-build.outcome == 'success' }}
         shell: bash
         run: |
           npm run start -- --host 127.0.0.1 > /tmp/squirtle-frontier-vite.log 2>&1 &
@@ -92,7 +95,7 @@ jobs:
           exit "$FAIL"
 
       - name: Built-bundle browser journey
-        if: always()
+        if: ${{ always() && steps.production-build.outcome == 'success' }}
         run: npm run browser:dist
 
       - name: Upload validation evidence
