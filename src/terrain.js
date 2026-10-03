@@ -68,15 +68,15 @@ export function applyGroundShader(mat) {
 }
 
 // --------------------------------------------------------------------------
-const cWater = new THREE.Color(0x3a5c52);
-const cSand = new THREE.Color(0x9a8a63);
-const cGrass = new THREE.Color(0x5f7a3c);
-const cGrassDry = new THREE.Color(0x8a8c4c);
-const cForest = new THREE.Color(0x3f5c30);
-const cHigh = new THREE.Color(0x6a6a4e);
-const cRock = new THREE.Color(0x6e6b66);
+const cWater = new THREE.Color(0x315d58);
+const cSand = new THREE.Color(0xb19a72);
+const cGrass = new THREE.Color(0x668448);
+const cGrassDry = new THREE.Color(0x8b8151);
+const cForest = new THREE.Color(0x355b3c);
+const cHigh = new THREE.Color(0x626b51);
+const cRock = new THREE.Color(0x73766f);
 const cSnow = new THREE.Color(0xe9eef5);
-const cMarsh = new THREE.Color(0x4d5c34);
+const cMarsh = new THREE.Color(0x506b48);
 const tmpC = new THREE.Color();
 
 function colorFor(h, slope, m, out) {
@@ -201,7 +201,7 @@ export class ChunkManager {
         const m = clamp(fbm2(x * 0.0022 + 100, z * 0.0022 - 60, 3, WORLD.seed + 11) * 0.72 +
           (1 - clamp((h - 2) / 24, 0, 1)) * 0.3, 0, 1);
         colorFor(h, slope, m, tmpC);
-        const grain = (valueNoise2(x * 0.09, z * 0.09, 7) - 0.5) * 0.07;
+        const grain = (valueNoise2(x * 0.09, z * 0.09, 7) - 0.5) * 0.045;
         positions[idx * 3] = i * step; positions[idx * 3 + 1] = h; positions[idx * 3 + 2] = j * step;
         normals[idx * 3] = nx; normals[idx * 3 + 1] = ny; normals[idx * 3 + 2] = nz;
         colors[idx * 3] = clamp(tmpC.r + grain, 0, 1);

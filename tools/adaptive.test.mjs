@@ -8,7 +8,12 @@ const fill = (a, ms) => {
   return out;
 };
 test("slow windows step scale down through cooldown gaps; healthy windows recover", () => {
-  const a = new AdaptiveScale({ windowSize: 4, fastMs: 13 });
+  const a = new AdaptiveScale({
+    windowSize: 4,
+    fastMs: 13,
+    slowWindows: 1,
+    fastWindows: 1,
+  });
   assert.equal(fill(a, 12), null, "already at the ceiling cannot increase");
   assert.equal(a.value, 1);
   assert.equal(fill(a, 60), 0.85);
@@ -27,6 +32,17 @@ test("slow windows step scale down through cooldown gaps; healthy windows recove
   );
   // 3 downward steps plus 5 upward steps; skipped cooldown windows never count.
   assert.equal(a.changes, 8);
+});
+test("isolated load spikes do not resize the framebuffer", () => {
+  const a = new AdaptiveScale({ windowSize: 4, cooldownWindows: 0 });
+  assert.equal(fill(a, 60), null, "one slow window is only a transient load signal");
+  assert.equal(a.value, 1);
+  assert.equal(fill(a, 16), null, "a healthy window resets the slow streak");
+  assert.equal(fill(a, 60), null);
+  assert.equal(fill(a, 60), 0.85, "sustained load still reduces render cost");
+  assert.equal(fill(a, 4), null);
+  assert.equal(fill(a, 4), null);
+  assert.equal(fill(a, 4), 0.95, "recovery also requires sustained headroom");
 });
 test("disabled adaptation pins scale at one and rejects outlier samples", () => {
   const a = new AdaptiveScale({ enabled: false });

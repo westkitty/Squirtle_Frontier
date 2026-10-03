@@ -69,14 +69,14 @@ async function boot() {
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#9bb9aa");
-    scene.fog = new THREE.FogExp2("#9bb9aa", 0.025);
+    scene.background = new THREE.Color("#8fb8b5");
+    scene.fog = new THREE.FogExp2("#8fb8b5", 0.018);
     const camera = new THREE.PerspectiveCamera(55, 1, 0.04, 120);
-    scene.add(new THREE.HemisphereLight(0xe7f4da, 0x425549, 2.5));
-    const sun = new THREE.DirectionalLight(0xffedd2, 2.4);
-    sun.position.set(-15, 25, 12);
+    scene.add(new THREE.HemisphereLight(0xd9f0e2, 0x344b43, 2.2));
+    const sun = new THREE.DirectionalLight(0xffdfb0, 2);
+    sun.position.set(-18, 30, 10);
     scene.add(sun);
     const state = new WorldState(),
       assets = new AssetManager(),
@@ -711,11 +711,11 @@ async function boot() {
           readReachWater(),
         );
         scenery.water.material.opacity =
-          0.35 + state.watershed.nodes[2].wetness * 0.25;
+          0.5 + state.watershed.nodes[2].wetness * 0.18;
         scenery.water.material.color.setHSL(
-          0.48,
-          0.22 + state.watershed.nodes[2].wetness * 0.18,
-          0.38,
+          0.49,
+          0.34 + state.watershed.nodes[2].wetness * 0.16,
+          0.31 + state.watershed.nodes[2].wetness * 0.03,
         );
         if (controls.sense && state.place === "lab")
           status.textContent =
@@ -814,15 +814,15 @@ async function boot() {
           ).water(camera.position.x, camera.position.z, state.waterLevel);
         scene.fog.color.set(
           underwater
-            ? "#246c69"
+            ? "#1d5d62"
             : state.place !== "frontier"
-              ? "#597b76"
-              : "#9bb9aa",
+              ? "#526f68"
+              : "#8fb8b5",
         );
         scene.fog.density = underwater
-          ? 0.13
-          : 0.025 + state.frontier.weather.rain * 0.015;
-        sun.intensity = 2.4 - state.frontier.weather.rain * 0.9;
+          ? 0.11
+          : 0.018 + state.frontier.weather.rain * 0.012;
+        sun.intensity = 2 - state.frontier.weather.rain * 0.65;
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
         const previousFrame = loop.frames.at(-1);
@@ -919,6 +919,7 @@ async function boot() {
         sleepProgress: creature?.sleepProgress ?? 0,
         effects: {
           jet: effects?.jet?.count ?? 0,
+          spray: scenery?.pool?.count ?? 0,
           wake: effects?.wake?.count ?? 0,
           splash: effects?.splash?.count ?? 0,
           foam: effects?.streamFoam?.count ?? 0,

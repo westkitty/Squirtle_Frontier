@@ -13,16 +13,16 @@ export class MovementScenery {
     this.leafGeo = new THREE.ConeGeometry(1, 1, 7);
     this.rockGeo = new THREE.IcosahedronGeometry(1, 1);
     this.trunkMat = new THREE.MeshStandardMaterial({
-      color: 0x665743,
-      roughness: 1,
+      color: 0x523f31,
+      roughness: 0.96,
     });
     this.leafMat = new THREE.MeshStandardMaterial({
-      color: 0x294d43,
-      roughness: 1,
+      color: 0x315d42,
+      roughness: 0.92,
     });
     this.rockMat = new THREE.MeshStandardMaterial({
-      color: 0x869185,
-      roughness: 1,
+      color: 0x71817a,
+      roughness: 0.94,
       flatShading: true,
     });
     const previousBuild = streaming.chunks.onChunkBuild,
@@ -36,11 +36,11 @@ export class MovementScenery {
       this.remove(key);
     };
     this.waterMaterial = new THREE.MeshStandardMaterial({
-      color: 0x419b96,
+      color: 0x2f7f83,
       transparent: true,
-      opacity: 0.6,
-      roughness: 0.25,
-      metalness: 0.12,
+      opacity: 0.68,
+      roughness: 0.18,
+      metalness: 0,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
@@ -160,26 +160,56 @@ export class MovementScenery {
       leaves = new THREE.InstancedMesh(
         this.leafGeo,
         this.leafMat,
-        trees.length * 3,
+        trees.length * 4,
       ),
       o = new THREE.Object3D();
     trees.forEach((t, i) => {
-      const y = heightAt(t.x, t.z);
+      const y = heightAt(t.x, t.z),
+        lean = Math.sin(t.x * 0.73 + t.z * 0.41) * 0.055,
+        twist = (t.x * 0.31 + t.z * 0.17 + i * 0.91) % (Math.PI * 2);
       o.position.set(t.x, y + t.h / 2, t.z);
-      o.scale.set(1, t.h, 1);
+      o.rotation.set(lean * 0.55, twist, -lean);
+      o.scale.set(0.82 + (i % 3) * 0.06, t.h, 0.78 + ((i + 1) % 3) * 0.07);
       o.updateMatrix();
       trunks.setMatrixAt(i, o.matrix);
       for (let j = 0; j < 3; j++) {
-        o.position.set(t.x, y + t.h * 0.4 + j * t.h * 0.21, t.z);
-        const w = (1 - j * 0.22) * t.h * 0.26;
-        o.scale.set(w, t.h * 0.48, w);
+        const lateral = Math.sin(i * 2.17 + j * 1.73) * t.h * 0.035,
+          depth = Math.cos(i * 1.61 + j * 2.11) * t.h * 0.03;
+        o.position.set(
+          t.x + lateral,
+          y + t.h * 0.38 + j * t.h * 0.205,
+          t.z + depth,
+        );
+        const w = (1 - j * 0.2) * t.h * 0.25;
+        o.rotation.set(lean * 0.25, twist + j * 1.7, -lean * 0.2);
+        o.scale.set(
+          w * (0.88 + ((i + j) % 3) * 0.08),
+          t.h * (0.36 + j * 0.035),
+          w * (0.72 + ((i + j * 2) % 4) * 0.07),
+        );
         o.updateMatrix();
         leaves.setMatrixAt(i * 3 + j, o.matrix);
         leaves.setColorAt(
           i * 3 + j,
-          new THREE.Color().setHSL(0.4, 0.24, 0.2 + (i % 5) * 0.018),
+          new THREE.Color().setHSL(
+            0.31 + ((i * 3 + j) % 6) * 0.012,
+            0.31 + ((i + j) % 3) * 0.035,
+            0.18 + ((i * 2 + j) % 5) * 0.018,
+          ),
         );
       }
+      const bush = trees.length * 3 + i,
+        bx = t.x + Math.sin(i * 2.73 + t.z) * 1.45,
+        bz = t.z + Math.cos(i * 2.19 + t.x) * 1.45;
+      o.position.set(bx, heightAt(bx, bz) + 0.22, bz);
+      o.rotation.set(0, twist * 1.7, lean * 0.2);
+      o.scale.set(0.34 + (i % 3) * 0.08, 0.44 + (i % 4) * 0.05, 0.3);
+      o.updateMatrix();
+      leaves.setMatrixAt(bush, o.matrix);
+      leaves.setColorAt(
+        bush,
+        new THREE.Color().setHSL(0.28 + (i % 5) * 0.014, 0.34, 0.2),
+      );
     });
     group.add(trunks, leaves);
     for (const rock of obstacles)
@@ -193,7 +223,16 @@ export class MovementScenery {
           heightAt(rock.x, rock.z) + rock.height * 0.4,
           rock.z,
         );
-        mesh.scale.set(rock.radius, rock.height * 0.6, rock.radius);
+        mesh.rotation.set(
+          Math.sin(rock.x * 0.4) * 0.12,
+          (rock.x * 0.23 + rock.z * 0.17) % (Math.PI * 2),
+          Math.cos(rock.z * 0.35) * 0.1,
+        );
+        mesh.scale.set(
+          rock.radius * (0.86 + Math.abs(Math.sin(rock.x)) * 0.28),
+          rock.height * 0.55,
+          rock.radius * (0.78 + Math.abs(Math.cos(rock.z)) * 0.3),
+        );
         group.add(mesh);
       }
     this.groups.set(key, group);
@@ -219,7 +258,9 @@ export class MovementScenery {
     this.contact.position.set(body.x, ground + 0.025, body.z);
     this.contact.material.opacity = Math.max(0, 1 - depth * 0.5);
     this.particleTime += dt;
-    const active = body.jetTime > 0 || body.mode === "swim" || body.impact > 0;
+    // Wake and impact water belong to WorldEffects. This particle stream is Jet-only:
+    // ordinary walking/swimming must never look like Squirtle is firing Water Jet.
+    const active = body.jetTime > 0;
     this.pool.count = active ? 32 : 0;
     for (let i = 0; i < this.pool.count; i++) {
       const t = (this.particleTime * 2 + i / 32) % 1;

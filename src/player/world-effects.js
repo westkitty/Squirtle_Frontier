@@ -187,7 +187,7 @@ export class WorldEffects {
     const water = options?.water;
     const inWater = !!water && body.y <= water.level + 0.15;
     const speed = Math.hypot(body.vx, body.vz);
-    if (inWater && (speed > 0.25 || body.mode === "swim" || body.mode === "dive")) {
+    if (inWater && speed > 0.25 && body.jetTime <= 0) {
       this.wake.visible = true;
       this.wake.count = 16;
       const surfY = water.level + 0.015;

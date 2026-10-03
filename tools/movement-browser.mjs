@@ -38,6 +38,9 @@ try {
   await page.keyboard.up("KeyW");
   await page.keyboard.up("ShiftLeft");
   await mark("keyboard land running");
+  const landEffects = await page.evaluate(() => window.__SF.stats().effects);
+  assert.equal(landEffects.jet, 0, "ordinary land movement must not fire Water Jet");
+  assert.equal(landEffects.spray, 0, "ordinary land movement must not emit water spray");
   await page.keyboard.down("KeyC");
   await page.waitForFunction(
     () => window.__SF.body.mode === "slide" && window.__SF.creature.shell > 0.9,
@@ -59,7 +62,11 @@ try {
   );
   await page.keyboard.up("KeyD");
   await page.keyboard.up("ShiftLeft");
+  await page.waitForFunction(() => window.__SF.body.jetTime === 0);
   await mark("water entry");
+  const swimEffects = await page.evaluate(() => window.__SF.stats().effects);
+  assert.equal(swimEffects.jet, 0, "ordinary swimming must not fire Water Jet");
+  assert.equal(swimEffects.spray, 0, "ordinary swimming must not emit the Jet particle stream");
   await page.keyboard.down("KeyD");
   await page.waitForFunction(() => window.__SF.body.x > -3, null, {
     timeout: 30000,
