@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { WorldEffects } from "../src/player/world-effects.js";
 import { createBody } from "../src/player/body-state.js";
+import { fireSite } from "../src/simulation/frontier-systems.js";
 
 function createMockState() {
   return {
@@ -98,7 +99,12 @@ test("Aquatic surface wake generates concentric ripples only when swimming or mo
   body.vz = 0;
   fx.update(state, body, { water });
   assert.equal(fx.wake.visible, true);
-  assert.equal(fx.wake.count, 16);
+  const mediumWake = fx.wake.count;
+  assert.ok(mediumWake > 4 && mediumWake < 16);
+  body.vx = 4;
+  fx.update(state, body, { water });
+  assert.equal(fx.wake.count, 16, "fast swimming earns the full wake budget");
+  body.vx = 1.8;
 
   // Stationary swimming is calm: locomotion does not manufacture a constant spray.
   body.vx = 0;
@@ -199,4 +205,54 @@ test("WorldEffects teardown cleanly disposes all resources without throwing", ()
   const fx = new WorldEffects(parent);
   assert.doesNotThrow(() => fx.dispose());
   assert.equal(fx.group.parent, null);
+});
+
+test("effect budgets scale with render pressure, impact intensity and channel flow", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  const body = createBody(0, 0, 0);
+
+  state.frontier.weather.rain = 1;
+  fx.update(state, body, { renderScale: 1 });
+  assert.equal(fx.rain.count, 96);
+  fx.update(state, body, { renderScale: 0.5 });
+  assert.equal(fx.rain.count, 48);
+
+  body.y = 0.4;
+  body.mode = "swim";
+  body.impact = 0.08;
+  fx.update(state, body, { water: { level: 0.5 }, isShaking: false });
+  assert.ok(fx.splash.count >= 6 && fx.splash.count < 20);
+  fx.update(state, body, { water: { level: 0.5 }, isShaking: true });
+  assert.equal(fx.splash.count, 20);
+
+  state.frontier.stage = 2;
+  fx.update(state, body, { channelFlow: 0 });
+  assert.equal(fx.streamFoam.count, 0);
+  fx.update(state, body, { channelFlow: 0.5 });
+  assert.equal(fx.streamFoam.count, 8);
+  fx.update(state, body, { channelFlow: 1 });
+  assert.equal(fx.streamFoam.count, 16);
+  fx.dispose();
+});
+
+test("active fire presentation flickers without allocating new geometry", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  const p = fireSite(0);
+  const body = createBody(p.x, p.z, 0);
+  state.frontier.heat[0] = 0.8;
+  const a = new THREE.Matrix4(),
+    b = new THREE.Matrix4();
+  fx.update(state, body);
+  assert.ok(fx.fire.count > 0);
+  fx.fire.getMatrixAt(0, a);
+  state.elapsed += 0.17;
+  fx.update(state, body);
+  fx.fire.getMatrixAt(0, b);
+  assert.notDeepEqual(a.elements, b.elements);
+  assert.equal(fx.fire.geometry, fx.geo);
+  fx.dispose();
 });

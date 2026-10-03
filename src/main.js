@@ -70,12 +70,18 @@ async function boot() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#8fb8b5");
-    scene.fog = new THREE.FogExp2("#8fb8b5", 0.018);
+    const scene = new THREE.Scene(),
+      frontierFogClear = new THREE.Color("#8fb8b5"),
+      frontierFogRain = new THREE.Color("#6f8f91"),
+      shelteredFog = new THREE.Color("#526f68"),
+      underwaterFog = new THREE.Color("#1d5d62"),
+      sunClear = new THREE.Color("#ffdfb0"),
+      sunRain = new THREE.Color("#c7d4cf");
+    scene.background = frontierFogClear.clone();
+    scene.fog = new THREE.FogExp2(frontierFogClear.clone(), 0.018);
     const camera = new THREE.PerspectiveCamera(55, 1, 0.04, 120);
     scene.add(new THREE.HemisphereLight(0xd9f0e2, 0x344b43, 2.2));
-    const sun = new THREE.DirectionalLight(0xffdfb0, 2);
+    const sun = new THREE.DirectionalLight(sunClear, 2);
     sun.position.set(-18, 30, 10);
     scene.add(sun);
     const state = new WorldState(),
@@ -681,6 +687,8 @@ async function boot() {
           effects.update(state, body, {
             water: currentWater,
             isShaking: creature?.isShaking ?? false,
+            renderScale: adaptive.value,
+            channelFlow: state.watershed.nodes[2].flow,
           });
         if (state.place === "frontier")
           habitat.update(
@@ -710,12 +718,19 @@ async function boot() {
           state.frontier.stage,
           readReachWater(),
         );
+        const wetland = state.watershed.nodes[2],
+          sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),
+          contamination = THREE.MathUtils.clamp(
+            wetland.contamination ?? 0,
+            0,
+            1,
+          );
         scenery.water.material.opacity =
-          0.5 + state.watershed.nodes[2].wetness * 0.18;
+          0.48 + wetland.wetness * 0.16 + sediment * 0.06;
         scenery.water.material.color.setHSL(
-          0.49,
-          0.34 + state.watershed.nodes[2].wetness * 0.16,
-          0.31 + state.watershed.nodes[2].wetness * 0.03,
+          0.49 - sediment * 0.12 - contamination * 0.035,
+          0.34 + wetland.wetness * 0.16 - contamination * 0.12,
+          0.31 + wetland.wetness * 0.04 - sediment * 0.06,
         );
         if (controls.sense && state.place === "lab")
           status.textContent =
@@ -804,25 +819,39 @@ async function boot() {
           ...Settings.values,
           reducedMotion: Settings.motionReduced,
         });
-        const underwater =
-          camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
-          (state.place === "record"
-            ? recordRegion
-            : state.place === "lab"
-              ? labRegion
-              : liveRegion
-          ).water(camera.position.x, camera.position.z, state.waterLevel);
-        scene.fog.color.set(
-          underwater
-            ? "#1d5d62"
-            : state.place !== "frontier"
-              ? "#526f68"
-              : "#8fb8b5",
-        );
-        scene.fog.density = underwater
-          ? 0.11
-          : 0.018 + state.frontier.weather.rain * 0.012;
-        sun.intensity = 2 - state.frontier.weather.rain * 0.65;
+        const cameraEnv =
+            state.place === "record"
+              ? recordRegion
+              : state.place === "lab"
+                ? labRegion
+                : liveRegion,
+          cameraWater = cameraEnv.water(
+            camera.position.x,
+            camera.position.z,
+            state.waterLevel,
+          ),
+          underwater =
+            camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
+            !!cameraWater,
+          rain =
+            state.place === "frontier"
+              ? THREE.MathUtils.clamp(state.frontier.weather.rain, 0, 1)
+              : 0;
+        if (underwater) {
+          const depth = Math.max(0, cameraWater.level - camera.position.y);
+          scene.fog.color.copy(underwaterFog).lerp(frontierFogRain, 0.12);
+          scene.fog.density = 0.095 + Math.min(0.08, depth * 0.025);
+        } else if (state.place === "frontier") {
+          scene.fog.color
+            .copy(frontierFogClear)
+            .lerp(frontierFogRain, rain * 0.78);
+          scene.fog.density = 0.016 + rain * 0.016;
+        } else {
+          scene.fog.color.copy(shelteredFog);
+          scene.fog.density = 0.025;
+        }
+        sun.intensity = 2 - rain * 0.65;
+        sun.color.copy(sunClear).lerp(sunRain, rain * 0.82);
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
         const previousFrame = loop.frames.at(-1);

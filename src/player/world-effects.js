@@ -86,7 +86,13 @@ export class WorldEffects {
     this.dummy = new THREE.Object3D();
   }
   update(state, body, options = {}) {
-    this.rain.count = Math.floor(state.frontier.weather.rain * 96);
+    const renderScale = Math.max(
+      0.45,
+      Math.min(1, Number(options.renderScale) || 1),
+    );
+    this.rain.count = Math.floor(
+      state.frontier.weather.rain * 96 * renderScale,
+    );
     for (let i = 0; i < this.rain.count; i++) {
       const x = body.x + Math.sin(i * 3.3) * 8,
         z = body.z + Math.cos(i * 5.7) * 8;
@@ -106,9 +112,20 @@ export class WorldEffects {
       const p = fireSite(i),
         h = state.frontier.heat[i];
       if (h < 0.02 || Math.hypot(body.x - p.x, body.z - p.z) > 35) continue;
-      this.dummy.position.set(p.x, heightAt(p.x, p.z) + h / 2, p.z);
-      this.dummy.rotation.set(0, 0, 0);
-      this.dummy.scale.set(0.5, h * 1.5, 0.5);
+      const flicker =
+          0.9 + Math.sin(state.elapsed * 13 + i * 2.17) * 0.1,
+        lean = Math.sin(state.elapsed * 7.5 + i * 1.31) * 0.11;
+      this.dummy.position.set(
+        p.x + lean * 0.18,
+        heightAt(p.x, p.z) + (h * flicker) / 2,
+        p.z - lean * 0.12,
+      );
+      this.dummy.rotation.set(0, i * 0.73, lean);
+      this.dummy.scale.set(
+        0.42 + flicker * 0.08,
+        h * 1.5 * flicker,
+        0.42 + (1.8 - flicker) * 0.08,
+      );
       this.dummy.updateMatrix();
       this.fire.setMatrixAt(count++, this.dummy.matrix);
     }
@@ -189,12 +206,17 @@ export class WorldEffects {
     const speed = Math.hypot(body.vx, body.vz);
     if (inWater && speed > 0.25 && body.jetTime <= 0) {
       this.wake.visible = true;
-      this.wake.count = 16;
-      const surfY = water.level + 0.015;
-      for (let i = 0; i < 16; i++) {
-        const phase = (((state.elapsed * 1.5 + i * (1 / 16)) % 1) + 1) % 1,
-          r = 0.25 + phase * 1.4,
-          trailDist = phase * Math.min(speed, 4.0) * 0.35,
+      this.wake.count = Math.max(
+        4,
+        Math.min(16, Math.round(4 + Math.min(speed, 4) * 3)),
+      );
+      const surfY = water.level + 0.015,
+        spread = 0.7 + Math.min(speed, 4) * 0.18;
+      for (let i = 0; i < this.wake.count; i++) {
+        const phase =
+            (((state.elapsed * 1.5 + i * (1 / this.wake.count)) % 1) + 1) % 1,
+          r = 0.18 + phase * spread,
+          trailDist = phase * Math.min(speed, 4.0) * 0.42,
           rx = body.x - (speed > 0.01 ? (body.vx / speed) * trailDist : 0),
           rz = body.z - (speed > 0.01 ? (body.vz / speed) * trailDist : 0);
         this.dummy.position.set(rx, surfY, rz);
@@ -214,10 +236,17 @@ export class WorldEffects {
     const splashActive = isShaking || (inWater && body.impact > 0.06);
     if (splashActive) {
       this.splash.visible = true;
-      this.splash.count = 20;
-      for (let i = 0; i < 20; i++) {
-        const theta = (i / 20) * Math.PI * 2 + state.elapsed * 12,
-          arcDist = 0.35 + ((((i * 0.31 + state.elapsed * 4) % 1) + 1) % 1) * 1.1,
+      const strength = isShaking
+        ? 1
+        : Math.max(0.3, Math.min(1, body.impact / 0.2));
+      this.splash.count = Math.max(6, Math.round(20 * strength));
+      for (let i = 0; i < this.splash.count; i++) {
+        const theta =
+            (i / this.splash.count) * Math.PI * 2 + state.elapsed * 12,
+          arcDist =
+            0.25 +
+            ((((i * 0.31 + state.elapsed * 4) % 1) + 1) % 1) *
+              (0.55 + strength * 0.65),
           dropletY = body.y + 0.2 + Math.sin(arcDist * Math.PI) * 0.35;
         this.dummy.position.set(
           body.x + Math.cos(theta) * arcDist,
@@ -237,10 +266,16 @@ export class WorldEffects {
 
     // 4. Stream foam rapids: churning white water along active flowing channel
     if (state.frontier.stage >= 2 && this.route.length > 1) {
-      this.streamFoam.visible = true;
-      this.streamFoam.count = 16;
-      for (let i = 0; i < 16; i++) {
-        const progress = (((i / 16 + state.elapsed * 0.35) % 1) + 1) % 1;
+      const channelFlow = Math.max(
+        0,
+        Math.min(1, Number(options.channelFlow ?? 1)),
+      );
+      this.streamFoam.count =
+        channelFlow > 0.04 ? Math.max(4, Math.round(16 * channelFlow)) : 0;
+      this.streamFoam.visible = this.streamFoam.count > 0;
+      for (let i = 0; i < this.streamFoam.count; i++) {
+        const progress =
+          (((i / this.streamFoam.count + state.elapsed * 0.35) % 1) + 1) % 1;
         const floatIdx = progress * (this.route.length - 1);
         const idx = Math.floor(floatIdx);
         const fract = floatIdx - idx;
