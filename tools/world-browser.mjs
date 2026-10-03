@@ -128,6 +128,20 @@ try {
   evidence.drinkNote = await page.evaluate(
     () => document.querySelector("#drink-note").textContent,
   );
+  evidence.memoryInstrument = await page.evaluate(() => ({
+    playerMarker: !!document.querySelector("[data-map-player]"),
+    facingMarker: !!document.querySelector("[data-map-facing]"),
+    mapLabel: document.querySelector("#survey").getAttribute("aria-label"),
+    waterQuality: document.querySelector("#water-quality-note").textContent,
+  }));
+  assert.equal(evidence.memoryInstrument.playerMarker, true);
+  assert.equal(evidence.memoryInstrument.facingMarker, true);
+  assert.match(evidence.memoryInstrument.mapLabel, /facing/);
+  assert.match(
+    evidence.memoryInstrument.waterQuality,
+    /wetland.*water/i,
+    "Memory must explain current water quality in words",
+  );
   assert.equal(
     evidence.drinkNote,
     "No drink tracks yet. Animals drink where the shallows run clean.",

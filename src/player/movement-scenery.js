@@ -48,7 +48,18 @@ export class MovementScenery {
     // the measurement: a silhouette resolved through the predicate the body swims by.
     this.water = new THREE.Mesh(new THREE.BufferGeometry(), this.waterMaterial);
     this.water.position.y = WATER_SURFACE_Y(WATER_BASE);
-    scene.add(this.water);
+    this.shoreMaterial = new THREE.LineBasicMaterial({
+      color: 0xb8e5dd,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+    });
+    this.shore = new THREE.LineLoop(
+      new THREE.BufferGeometry(),
+      this.shoreMaterial,
+    );
+    this.shore.position.y = WATER_SURFACE_Y(WATER_BASE) + 0.025;
+    scene.add(this.water, this.shore);
     this.waterLevel = null;
     this.buildWater(WATER_BASE);
     this.pool = new THREE.InstancedMesh(
@@ -144,8 +155,27 @@ export class MovementScenery {
     geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
     geometry.computeBoundingSphere();
+
+    // The edge is not a second authored approximation. It is the same measured
+    // outer ring rendered as a line so a changing basin reads clearly at body scale.
+    const shorePositions = new Float32Array(spokes * 3);
+    for (let s = 0; s < spokes; s++) {
+      const angle = (s / spokes) * Math.PI * 2,
+        r = radii[s];
+      shorePositions[s * 3] = Math.cos(angle) * r;
+      shorePositions[s * 3 + 2] = Math.sin(angle) * r;
+    }
+    const shoreGeometry = new THREE.BufferGeometry();
+    shoreGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(shorePositions, 3),
+    );
+    shoreGeometry.computeBoundingSphere();
+
     this.water.geometry.dispose();
     this.water.geometry = geometry;
+    this.shore.geometry.dispose();
+    this.shore.geometry = shoreGeometry;
     this.waterLevel = level;
     return true;
   }
@@ -249,7 +279,9 @@ export class MovementScenery {
   }
   update(body, dt, level = null) {
     if (level !== null) {
-      this.water.position.y = WATER_SURFACE_Y(level);
+      const surface = WATER_SURFACE_Y(level);
+      this.water.position.y = surface;
+      this.shore.position.y = surface + 0.025;
       this.buildWater(level);
     }
     const ground = heightAt(body.x, body.z),
@@ -287,6 +319,8 @@ export class MovementScenery {
       this.rockMat,
       this.water.geometry,
       this.waterMaterial,
+      this.shore.geometry,
+      this.shoreMaterial,
       this.pool.geometry,
       this.pool.material,
     ])
@@ -294,6 +328,7 @@ export class MovementScenery {
     this.pool.dispose();
     this.pool.removeFromParent();
     this.water.removeFromParent();
+    this.shore.removeFromParent();
     this.contact.geometry.dispose();
     this.contact.material.dispose();
     this.contactTexture.dispose();

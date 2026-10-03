@@ -585,3 +585,88 @@ footer {
   right: max(25px, calc(env(safe-area-inset-right) + 18px));
   bottom: max(104px, calc(env(safe-area-inset-bottom) + 88px));
 }
+
+
+.survey-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 8px 0 14px;
+  font-size: calc(10px * var(--ui-scale));
+  color: #d0d7c4;
+}
+.survey-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.survey-swatch {
+  width: 11px;
+  height: 11px;
+  display: inline-block;
+  border-radius: 2px;
+  background: #96bbaa;
+}
+.survey-swatch.you {
+  border-radius: 50%;
+  background: #f7f4de;
+  box-shadow: 0 0 0 1px #193c35;
+}
+.survey-swatch.facing {
+  width: 14px;
+  height: 2px;
+  border-radius: 0;
+  background: #f3cf82;
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  header {
+    top: max(10px, calc(env(safe-area-inset-top) + 8px));
+  }
+  header h1 {
+    font-size: calc(18px * var(--ui-scale));
+    margin-top: 2px;
+  }
+  nav {
+    top: max(10px, calc(env(safe-area-inset-top) + 8px));
+  }
+  aside {
+    top: max(58px, calc(env(safe-area-inset-top) + 52px));
+    max-height: calc(100dvh - 76px - env(safe-area-inset-bottom));
+  }
+  #stick {
+    width: 96px;
+    height: 96px;
+    bottom: max(52px, calc(env(safe-area-inset-bottom) + 42px));
+  }
+  #stick i {
+    width: 34px;
+    height: 34px;
+    left: 30px;
+    top: 30px;
+  }
+  .actions {
+    grid-template-columns: repeat(3, 44px);
+    gap: 6px;
+    bottom: max(50px, calc(env(safe-area-inset-bottom) + 40px));
+  }
+  .actions button {
+    width: 44px;
+    height: 44px;
+    font-size: 10px;
+  }
+  .actions .jet-button {
+    width: 52px;
+    height: 52px;
+  }
+  #field-notes {
+    bottom: max(170px, calc(env(safe-area-inset-bottom) + 160px));
+    max-width: 58vw;
+  }
+  footer {
+    bottom: max(8px, calc(env(safe-area-inset-bottom) + 6px));
+  }
+  #interact {
+    bottom: max(72px, calc(env(safe-area-inset-bottom) + 62px));
+  }
+}

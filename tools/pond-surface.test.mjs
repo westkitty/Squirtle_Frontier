@@ -189,3 +189,21 @@ test('the rendered basin surface is the measurement, and it is rebuilt when the 
   assert.ok(Math.abs(shore(scenery.water.geometry, 0) - radii[0]) < 1e-6);
   scenery.dispose();
 });
+
+test('the visible shoreline edge is the exact measured outer outline', () => {
+  const scenery = new MovementScenery(new THREE.Scene(), {
+    chunks: { onChunkBuild: null, onChunkRemove: null },
+  });
+  const { radii } = pondOutline(WATER_BASE),
+    positions = scenery.shore.geometry.attributes.position.array;
+  assert.equal(positions.length, POND_SPOKES * 3);
+  for (let s = 0; s < POND_SPOKES; s += 12) {
+    const angle = (s / POND_SPOKES) * Math.PI * 2,
+      x = positions[s * 3],
+      z = positions[s * 3 + 2];
+    assert.ok(Math.abs(x - Math.cos(angle) * radii[s]) < 1e-6);
+    assert.ok(Math.abs(z - Math.sin(angle) * radii[s]) < 1e-6);
+  }
+  assert.ok(scenery.shore.position.y > scenery.water.position.y);
+  scenery.dispose();
+});

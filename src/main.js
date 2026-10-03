@@ -76,6 +76,7 @@ async function boot() {
       frontierFogRain = new THREE.Color("#6f8f91"),
       shelteredFog = new THREE.Color("#526f68"),
       underwaterFog = new THREE.Color("#1d5d62"),
+      underwaterMurkyFog = new THREE.Color("#52604b"),
       sunClear = new THREE.Color("#ffdfb0"),
       sunRain = new THREE.Color("#c7d4cf");
     scene.background = frontierFogClear.clone();
@@ -131,6 +132,8 @@ async function boot() {
         },
       },
       rig = new CreatureCamera(camera, liveRegion);
+    let visualRain = THREE.MathUtils.clamp(state.frontier.weather.rain, 0, 1);
+    const waterTargetColor = scenery.water.material.color.clone();
     // Water in the named inflows is read through the predicate the body swims by, and only
     // re-read when the basin's level or the player's cut changes. Nothing here pretends to
     // move water: it is a measurement of where water already is.
@@ -343,6 +346,29 @@ async function boot() {
             REACHES.filter((r) => readReachWater()[r.id]?.flowing).length
           } holding water.`
         : "No channels followed yet. Water runs down from the rim to the shallows.";
+      const wetland = state.watershed.nodes[2],
+        wetnessWord =
+          wetland.wetness < 0.22
+            ? "drying"
+            : wetland.wetness < 0.58
+              ? "damp"
+              : "saturated",
+        clarityWord =
+          wetland.contamination > 0.32
+            ? "fouled"
+            : wetland.sediment > 0.45
+              ? "silty"
+              : wetland.sediment > 0.16
+                ? "clouded"
+                : "clear",
+        flowWord =
+          wetland.flow < 0.05
+            ? "nearly still"
+            : wetland.flow < 0.34
+              ? "moving slowly"
+              : "running";
+      document.querySelector("#water-quality-note").textContent =
+        `The wetland is ${wetnessWord}; its water is ${clarityWord} and ${flowWord}.`;
       const logged = state.memory.strata.length;
       document.querySelector("#strata-note").textContent = logged
         ? `The record is read in ${logged} of ${RECORD_BANDS} bands, down to band ${Math.max(...state.memory.strata) + 1}.`
@@ -350,10 +376,11 @@ async function boot() {
       document.querySelector("#companion").textContent = n
         ? `A marked reed frog remembers ${n.encounters} quiet encounters. ${n.familiarity > 0.3 ? "It lingers nearby." : "It watches from the reeds."}`
         : "No familiar visitor yet. Life needs water and time.";
-      document.querySelector("#survey").replaceChildren(
-        ...Object.keys(state.memory.cells).map((key) => {
+      const survey = document.querySelector("#survey"),
+        svg = "http://www.w3.org/2000/svg",
+        cells = Object.keys(state.memory.cells).map((key) => {
           const [x, z] = key.split(",").map(Number),
-            r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r = document.createElementNS(svg, "rect");
           r.setAttribute("x", String((x + 14) * 5));
           r.setAttribute("y", String((z + 14) * 5));
           r.setAttribute("width", "5");
@@ -361,6 +388,40 @@ async function boot() {
           r.setAttribute("fill", "#96bbaa");
           return r;
         }),
+        mapBody =
+          state.place === "frontier"
+            ? { x: body.x, z: body.z }
+            : state.frontierReturn,
+        mx = THREE.MathUtils.clamp(mapBody.x + 70, 2, 143),
+        mz = THREE.MathUtils.clamp(mapBody.z + 70, 2, 143),
+        player = document.createElementNS(svg, "circle");
+      player.setAttribute("cx", String(mx));
+      player.setAttribute("cy", String(mz));
+      player.setAttribute("r", "2.8");
+      player.setAttribute("fill", "#f7f4de");
+      player.setAttribute("stroke", "#193c35");
+      player.setAttribute("stroke-width", "1");
+      player.setAttribute("data-map-player", "");
+      const mapChildren = [...cells, player],
+        facing = compassTo(Math.sin(body.yaw), Math.cos(body.yaw));
+      if (state.place === "frontier") {
+        const heading = document.createElementNS(svg, "line");
+        heading.setAttribute("x1", String(mx));
+        heading.setAttribute("y1", String(mz));
+        heading.setAttribute("x2", String(mx + Math.sin(body.yaw) * 8));
+        heading.setAttribute("y2", String(mz + Math.cos(body.yaw) * 8));
+        heading.setAttribute("stroke", "#f3cf82");
+        heading.setAttribute("stroke-width", "2");
+        heading.setAttribute("stroke-linecap", "round");
+        heading.setAttribute("data-map-facing", "");
+        mapChildren.push(heading);
+      }
+      survey.replaceChildren(...mapChildren);
+      survey.setAttribute(
+        "aria-label",
+        state.place === "frontier"
+          ? `Visited five-metre survey cells. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
+          : `Visited five-metre survey cells. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
       );
     };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
@@ -821,13 +882,25 @@ async function boot() {
             wetland.contamination ?? 0,
             0,
             1,
-          );
-        scenery.water.material.opacity =
-          0.48 + wetland.wetness * 0.16 + sediment * 0.06;
-        scenery.water.material.color.setHSL(
+          ),
+          waterEase = 1 - Math.exp(-dt / 0.6),
+          waterOpacity =
+            0.48 + wetland.wetness * 0.16 + sediment * 0.06;
+        scenery.water.material.opacity = THREE.MathUtils.lerp(
+          scenery.water.material.opacity,
+          waterOpacity,
+          waterEase,
+        );
+        waterTargetColor.setHSL(
           0.49 - sediment * 0.12 - contamination * 0.035,
           0.34 + wetland.wetness * 0.16 - contamination * 0.12,
           0.31 + wetland.wetness * 0.04 - sediment * 0.06,
+        );
+        scenery.water.material.color.lerp(waterTargetColor, waterEase);
+        scenery.shore.material.opacity = THREE.MathUtils.lerp(
+          scenery.shore.material.opacity,
+          0.16 + wetland.wetness * 0.12 + wetland.flow * 0.12,
+          waterEase,
         );
         if (controls.sense && state.place === "lab")
           status.textContent =
@@ -950,14 +1023,31 @@ async function boot() {
           underwater =
             camera.position.y < (state.place === "lab" ? -0.2 : 0) &&
             !!cameraWater,
-          rain =
+          targetRain =
             state.place === "frontier"
               ? THREE.MathUtils.clamp(state.frontier.weather.rain, 0, 1)
-              : 0;
+              : 0,
+          rainEase = 1 - Math.exp(-cameraDt / 0.75);
+        visualRain = THREE.MathUtils.lerp(visualRain, targetRain, rainEase);
+        const rain = visualRain;
         if (underwater) {
-          const depth = Math.max(0, cameraWater.level - camera.position.y);
-          scene.fog.color.copy(underwaterFog).lerp(frontierFogRain, 0.12);
-          scene.fog.density = 0.095 + Math.min(0.08, depth * 0.025);
+          const depth = Math.max(0, cameraWater.level - camera.position.y),
+            wetland = state.watershed.nodes[2],
+            murk =
+              state.place === "frontier"
+                ? THREE.MathUtils.clamp(
+                    (wetland.sediment ?? 0) * 0.65 +
+                      (wetland.contamination ?? 0) * 0.8,
+                    0,
+                    1,
+                  )
+                : 0;
+          scene.fog.color
+            .copy(underwaterFog)
+            .lerp(underwaterMurkyFog, murk)
+            .lerp(frontierFogRain, rain * 0.08);
+          scene.fog.density =
+            0.095 + Math.min(0.08, depth * 0.025) + murk * 0.055;
         } else if (state.place === "frontier") {
           scene.fog.color
             .copy(frontierFogClear)
