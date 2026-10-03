@@ -670,3 +670,39 @@ footer {
     bottom: max(72px, calc(env(safe-area-inset-bottom) + 62px));
   }
 }
+
+
+/* Phone breakpoints remain authoritative after generic safe-area rules. */
+@media (max-width: 600px) {
+  header {
+    left: max(20px, calc(env(safe-area-inset-left) + 14px));
+    top: max(20px, calc(env(safe-area-inset-top) + 14px));
+  }
+  nav {
+    right: max(16px, calc(env(safe-area-inset-right) + 12px));
+    top: max(102px, calc(env(safe-area-inset-top) + 96px));
+  }
+  aside {
+    right: max(16px, calc(env(safe-area-inset-right) + 12px));
+    top: max(154px, calc(env(safe-area-inset-top) + 144px));
+    max-height: calc(100dvh - 210px - env(safe-area-inset-bottom));
+  }
+  footer {
+    left: max(20px, calc(env(safe-area-inset-left) + 14px));
+    right: max(20px, calc(env(safe-area-inset-right) + 14px));
+    bottom: max(22px, calc(env(safe-area-inset-bottom) + 16px));
+  }
+  #field-notes {
+    left: max(20px, calc(env(safe-area-inset-left) + 14px));
+    right: max(20px, calc(env(safe-area-inset-right) + 14px));
+    bottom: max(274px, calc(env(safe-area-inset-bottom) + 264px));
+  }
+  #stick {
+    left: max(20px, calc(env(safe-area-inset-left) + 14px));
+    bottom: max(108px, calc(env(safe-area-inset-bottom) + 92px));
+  }
+  .actions {
+    right: max(19px, calc(env(safe-area-inset-right) + 13px));
+    bottom: max(104px, calc(env(safe-area-inset-bottom) + 88px));
+  }
+}

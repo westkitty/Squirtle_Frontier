@@ -239,7 +239,10 @@ try {
     // before the first cycle, so the guard is the invariant that matters: the lab
     // never accumulates. A leak of one geometry per cycle breaches the ceiling well
     // before the last cycle, and teardown below must still reach exactly zero.
-    assert.ok(s.memory.geometries <= 20, `lab geometries bounded, cycle ${i}: ${s.memory.geometries}`);
+    assert.ok(
+      s.memory.geometries <= 21,
+      `lab geometries bounded including the persistent shoreline, cycle ${i}: ${s.memory.geometries}`,
+    );
     report.cycles.push({ memory: s.memory, assets: s.assets });
   }
   assert.ok(
