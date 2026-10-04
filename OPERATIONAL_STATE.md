@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 29
+revision: 30
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -631,3 +631,47 @@ R/contextual button near the wooden platform advances the existing regional simu
   - built bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
 - No new runtime dependency was introduced. Simulation authority, save identity, locomotion rules, watershed causality, reduced-motion behavior, asset ownership/disposal and ecology boundaries remain protected.
 
+
+
+## Ten-way creature, habitat and remembered-world uplift closure — 2026-10-03
+
+- Supersedes the immediately preceding ten-way atmosphere/causal-feedback pass and closes its outstanding browser-proof discrepancy.
+- Runtime implementation commit: `a563a55e14b2975f26f07a256e0c9ae555c69cd4` (`Polish creature habitat and remembered world`).
+- Proof-repair / fully verified runtime head: `2ceff0d2a8a980e8966fe2ffb3779aadef1cd380` (`Repair habitat renderer proof bound`).
+- Exact ten-way uplift:
+  1. Added speed-driven shell spin during shell-slide presentation without mutating authoritative body yaw.
+  2. Added bounded impact squash/stretch on the Squirtle presentation wrapper while preserving body/collider authority.
+  3. Made the contact-grounding decal rotate with the body, stretch under fast shell travel, fade with height and disappear underwater.
+  4. Made frontier/Lab reeds sway with environmental wind and visibly respond to habitat wetness without changing ecosystem state.
+  5. Added per-instance wildlife state colouring so parched, drinking/fleeing and predator stalk/ambush states are more legible at creature scale.
+  6. Added bounded near-only mist over sufficiently saturated wetland state; it reuses the existing shared effect geometry rather than increasing geometry ownership.
+  7. Added proximity-driven fauna ambience through one persistent reusable audio oscillator; no per-frame or per-call source allocation.
+  8. Added underwater acoustic occlusion for rain, running-water and nearby-fauna ambience.
+  9. Added remembered-landmark markers to the Memory survey; only places actually present in `state.memory.places` are revealed.
+  10. Added followed-waterway traces to the Memory survey; only reaches actually present in `state.memory.reaches` are drawn.
+- Validation-harness repair evidence:
+  - The previous atmosphere pass introduced one intentional persistent Atmosphere geometry while some browser resource ceilings still encoded the pre-Atmosphere composition.
+  - Earlier run `37166819631` exposed stale Core/World geometry ceilings; those were realigned in the ten-way implementation.
+  - First run for `a563a55e...`, `37167543692`, then exposed the same omitted Atmosphere geometry in the Habitat cycle ceiling (22 observed vs 21 expected). Performance teardown still reached exactly 0 geometries / 0 textures / 0 asset references, so this was proof-contract drift rather than a runtime leak.
+  - `2ceff0d2...` raises only that Habitat proof ceiling by the single known Atmosphere geometry while retaining the across-cycle non-growth assertion and exact zero-resource teardown.
+- Final GitHub Actions verification run `37168039128`: PASS.
+  - asset validation PASS;
+  - architecture/source checks PASS;
+  - unit suite **211/211 PASS**;
+  - mutation suite **58/58 injected defects killed**;
+  - production Vite build PASS;
+  - core movement PASS;
+  - habitat PASS, including all 12 Lab/frontier lifecycle cycles;
+  - world/memory/Deep Record PASS;
+  - recovery PASS;
+  - channel PASS;
+  - wildlife PASS;
+  - accessibility PASS;
+  - synthetic standard-gamepad PASS;
+  - multitab conflict/adoption/pose-resume PASS;
+  - watershed PASS;
+  - renderer performance/teardown PASS;
+  - shoreline capture PASS with **1.50 m** measured low-to-full long-axis shoreline movement;
+  - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
+- GitHub Pages build/deployment run `37168039113`: PASS.
+- No new runtime dependency and no save-schema change were introduced. Simulation authority, watershed causality, locomotion rules, save identity, reduced-motion behavior, bounded near/distant ecology, asset ownership/disposal and the no-quest design thesis remain protected.
