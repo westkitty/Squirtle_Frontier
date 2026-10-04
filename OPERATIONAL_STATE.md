@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 33
+revision: 34
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -862,3 +862,41 @@ R/contextual button near the wooden platform advances the existing regional simu
   - live Pages JavaScript contains the Shucker evidence path plus Urban `water-house-drain` and Freshwater `spring-gully` habitat literals.
 - Evidence boundary remains unchanged: software-rendered browser timing is not representative Mac/mobile GPU FPS, and human gameplay feel/visual acceptance remain separate evidence questions.
 
+## Squirtle social legibility and consequence uplift closure — 2026-10-04
+
+- Runtime implementation is merged on `main` at `54e16d30de2ba248cb036f1c3bbcd8398fd691e1` through PR #4 (`Make Squirtle society legible and consequential`).
+- The pass deliberately reuses existing authoritative systems rather than adding a new quest, faction, combat, renderer, save, or locomotion subsystem:
+  - aggregate same-species abundance plus bounded remembered-individual records now surface through the existing Memory ecology readout;
+  - real Shucker pressure, legal protect/report changes, remembered-individual promotion, and material same-species abundance threshold changes can surface through the existing semantic world-transition/status channel;
+  - caretaker ambient dialogue now distinguishes abstract legal protection from reporting while preserving drought/check-water priority and without spawning attackers;
+  - remaining public prototype-facing language such as `movement proving ground` and `MOVEMENT STUDY / 01` was replaced with Stillwater in-world field language;
+  - Saltwater and Deepwater remain deliberately absent from current Stillwater habitat; no false habitat was invented;
+  - the player remains the existing untyped playable Squirtle.
+- Scope discipline:
+  - no new runtime dependency;
+  - no save-version or save-schema change;
+  - no hydrology, authoritative body movement, ecology population rule, asset-ownership, reduced-motion, or near/distant simulation boundary change;
+  - no new alternate player controller, quest NPC architecture, or combat faction.
+- Proof authority for exact runtime head `54e16d30de2ba248cb036f1c3bbcd8398fd691e1`:
+  - Deploy GitHub Pages run `37208882626`: **PASS**;
+  - Verify Squirtle Frontier run `37208882641`: **PASS**;
+  - source syntax / architecture checks PASS;
+  - unit suite **256/256 PASS**;
+  - mutation suite **80/80 injected defects killed by named tests**, including new kills for lost Shucker world transitions, lost remembered-Squirtle summary output, and collapsed caretaker protection behavior;
+  - production Vite build PASS;
+  - Core Movement PASS;
+  - Habitat PASS, including 12 Lab/frontier cycles and zero-resource teardown;
+  - World / Memory / Deep Record PASS;
+  - Recovery PASS;
+  - Channel PASS;
+  - Wildlife PASS;
+  - Squirtle population PASS, including valid ecotypes, behavior, sense, persistence, watershed causality, legality, Shucker warning, and teardown;
+  - Accessibility PASS;
+  - synthetic Gamepad PASS;
+  - Multitab conflict/adoption/Lab-pose resume PASS;
+  - Watershed PASS;
+  - software-rendered Performance / settled stability / teardown PASS, ending at **0 geometries / 0 textures**;
+  - Shoreline capture PASS with **1.50 m** measured low-to-full long-axis movement;
+  - built production bundle PASS from static hosting with direct movement, persistence, cached asset, and zero-resource teardown.
+- Performance evidence remains correctly bounded: GitHub used Chromium 140 / ANGLE SwiftShader software rendering. The pass proves no automated performance/stability regression in that environment; it does **not** establish representative Mac/mobile GPU FPS.
+- Human enjoyment, final production visual acceptance, touch feel on representative hardware, and subjective social/narrative impact remain human-review questions rather than automated claims.
