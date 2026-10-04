@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 31
+revision: 32
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -724,4 +724,63 @@ R/contextual button near the wooden platform advances the existing regional simu
   - shoreline capture PASS with **1.50 m** measured low-to-full long-axis movement;
   - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
 - Final GitHub Pages build/deployment run `37169569429`: PASS.
+- Human feel, representative hardware/mobile GPU performance and final production visual acceptance remain separate evidence questions; this closure proves the automated/browser contract, not those unmeasured claims.
+
+
+## Ten-way creature-contact, habitat-response and sensory-continuity uplift closure — 2026-10-03
+
+- Continues from the verified water-guidance/aquatic-response closure at revision 31.
+- Primary ten-way implementation commit: `02da9db1258cbcaf7827f1e141ef4f89b733dd24` (`Deepen creature contact and habitat response`).
+- Proof-harness repair / fully verified runtime-equivalent head: `a9fe6a7dc371fb6026badcaec2fae255f58d4b1e` (`Repair and extend mutation proof`).
+- Exact ten improvements:
+  1. Leaving water now produces a bounded, fading wet-foot/contact trail on dry ground. It is presentation-only, capped at twelve marks and creates no save-state burden.
+  2. Loaded frontier foliage now bends locally away from nearby moving Squirtle through shader-level player proximity/brush input while preserving shared geometry and streamed ownership.
+  3. The measured pond shoreline now carries a subtle lapping pulse using a second line object that reuses the exact measured shoreline geometry rather than introducing a second authored outline.
+  4. Wetland/Lab reeds now react to Squirtle's local movement as physical contact, combining body proximity with directional wind instead of responding only to ambient sway.
+  5. The remembered Lab visitor now approaches relationship distance smoothly, shows a low familiarity-linked hop rhythm, and backs off/crouches when afraid instead of teleporting between fixed rings.
+  6. Squirtle attention now has bounded hysteresis: a nearly equal challenger does not steal gaze every frame, preventing visual fixation thrash.
+  7. Attention salience now reflects wildlife behavior: stalking/ambushing predators and fleeing/evading prey can outrank ordinary nearby animals, while ordinary state still obeys proximity and field-of-view rules.
+  8. Same-kind local wildlife now use deterministic short-range separation steering so herd/predator actors preserve personal space without breaking the existing territory leash or population authority.
+  9. Underwater audio is now graded by actual depth below the current water surface: deeper dives strengthen low resonance and progressively attenuate rain, stream and fauna rather than using one binary dive mix.
+  10. Rain acoustics now respond to loaded tree-canopy cover, reducing gain and high-frequency hiss under foliage without deleting the weather bed.
+- Resource/scope discipline:
+  - wet trails reuse the existing contact-plane geometry and texture;
+  - the shoreline lap reuses the exact measured shoreline geometry;
+  - foliage contact is a shader/uniform response on existing streamed foliage;
+  - canopy is derived from already-loaded tree positions;
+  - no runtime dependency was added;
+  - no save version or save-schema change was introduced;
+  - hydrology, authoritative body movement, aggregate ecology population authority, place-memory persistence and interaction rules remain unchanged.
+- Comparative precedent was used only as an advisory filter: favor creatures pursuing readable local state and environmental/sensory continuity over additional HUD/objective machinery. No external project code or dependency was copied.
+- First verification run for `02da9db...`, GitHub Actions `37171092001`, correctly BLOCKED on the mutation proof while all runtime/browser integration evidence was green.
+  - asset validation PASS;
+  - architecture/unit suite **233/233 PASS**;
+  - production build PASS;
+  - core movement, Habitat, World, Recovery, Channel, Wildlife, Accessibility, Gamepad, Multitab, Watershed, Performance, shoreline capture and built production bundle all PASS;
+  - mutation suite reported **57/58** because its existing "dive mode fails to activate submerged cavern sub-drone" mutation still searched for the superseded fixed `0.26` expression after this pass intentionally replaced it with depth-graded audio.
+  - The failure was therefore a stale proof anchor, not an observed runtime regression.
+- Proof repair:
+  - the stale sub-drone mutation was rebound to the new depth-aware expression;
+  - five new named mutations were added for depth grading, canopy rain attenuation, attention fixation hysteresis, same-kind wildlife separation and wet-trail rendering;
+  - the correction commit changes only the mutation harness; runtime source from `02da9db...` is unchanged.
+- Final verification run `37171653400`: PASS.
+  - asset validation PASS;
+  - architecture/source checks PASS;
+  - unit suite **233/233 PASS**;
+  - mutation suite **63/63 injected defects killed by named tests**;
+  - production Vite build PASS;
+  - core movement PASS;
+  - habitat PASS;
+  - world / Memory / Deep Record PASS;
+  - recovery PASS;
+  - channel PASS;
+  - wildlife PASS;
+  - accessibility PASS;
+  - synthetic standard-gamepad PASS;
+  - multitab conflict/adoption/pose-resume PASS;
+  - watershed PASS;
+  - renderer performance and zero-resource teardown PASS;
+  - shoreline capture PASS with **1.50 m** measured low-to-full long-axis movement;
+  - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
+- Final GitHub Pages build/deployment run `37171653434`: PASS.
 - Human feel, representative hardware/mobile GPU performance and final production visual acceptance remain separate evidence questions; this closure proves the automated/browser contract, not those unmeasured claims.
