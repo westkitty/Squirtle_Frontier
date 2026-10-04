@@ -76,6 +76,24 @@ const MUTATIONS = [
     to: "      void this.squirtleEcology;",
   },
   {
+    what: "real Shucker pressure stops surfacing as a world transition",
+    file: "src/presentation-signals.js",
+    from: "  if (previous.shucker !== next.shucker) {",
+    to: "  if (false && previous.shucker !== next.shucker) {",
+  },
+  {
+    what: "remembered Squirtle ecology disappears from the memory summary",
+    file: "src/presentation-signals.js",
+    from: "  return \`${signs}${remembered}${missing}${threat}\`;",
+    to: "  return \\"Squirtle signs are unavailable.\\";",
+  },
+  {
+    what: "protective caretaker legality collapses back to generic welcome",
+    file: "src/simulation/settlement.js",
+    from: "  if (legal === \\"protect\\")",
+    to: "  if (false && legal === \\"protect\\")",
+  },
+  {
     what: "depth leaf keeps two decimals while the screen shows one",
     file: "src/simulation/deep-history.js",
     from: "depth: +finite(depth).toFixed(1),",
