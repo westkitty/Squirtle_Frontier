@@ -240,8 +240,8 @@ try {
     // never accumulates. A leak of one geometry per cycle breaches the ceiling well
     // before the last cycle, and teardown below must still reach exactly zero.
     assert.ok(
-      s.memory.geometries <= 21,
-      `lab geometries bounded including the persistent shoreline, cycle ${i}: ${s.memory.geometries}`,
+      s.memory.geometries <= 22,
+      `lab geometries bounded including the persistent shoreline and one Atmosphere geometry, cycle ${i}: ${s.memory.geometries}`,
     );
     report.cycles.push({ memory: s.memory, assets: s.assets });
   }
