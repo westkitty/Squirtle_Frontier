@@ -637,7 +637,7 @@ footer {
   #stick {
     width: 96px;
     height: 96px;
-    bottom: max(52px, calc(env(safe-area-inset-bottom) + 42px));
+    bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px));
   }
   #stick i {
     width: 34px;
@@ -648,7 +648,7 @@ footer {
   .actions {
     grid-template-columns: repeat(3, 44px);
     gap: 6px;
-    bottom: max(50px, calc(env(safe-area-inset-bottom) + 40px));
+    bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px));
   }
   .actions button {
     width: 44px;
