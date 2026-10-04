@@ -208,8 +208,40 @@ const MUTATIONS = [
   {
     what: "dive mode fails to activate submerged cavern sub-drone",
     file: "src/audio.js",
-    from: "    const subLevel = body.mode === \"dive\" ? 0.26 : 0;",
+    from:
+      "    const subLevel = body.mode === \"dive\" ? 0.12 + depth * 0.18 : 0;",
     to: "    const subLevel = 0;",
+  },
+  {
+    what: "submerged resonance ignores actual depth below the surface",
+    file: "src/audio.js",
+    from:
+      "    const subLevel = body.mode === \"dive\" ? 0.12 + depth * 0.18 : 0;",
+    to: "    const subLevel = body.mode === \"dive\" ? 0.3 : 0;",
+  },
+  {
+    what: "tree canopy fails to soften rain acoustics",
+    file: "src/audio.js",
+    from: "      canopyRain = 1 - canopy * 0.55,",
+    to: "      canopyRain = 1,",
+  },
+  {
+    what: "attention drops its current fixation for a negligible challenger",
+    file: "src/player/creature-attention.js",
+    from: "      if (score(held) >= score(best) - margin) best = held;",
+    to: "      if (false) best = held;",
+  },
+  {
+    what: "nearby herd agents do not steer apart from same-kind neighbours",
+    file: "src/simulation/near-wildlife.js",
+    from: "        dx += separateX * 0.9;\n        dz += separateZ * 0.9;",
+    to: "        dx += 0;\n        dz += 0;",
+  },
+  {
+    what: "water-exit wet tracks never reach the rendered trail pool",
+    file: "src/player/movement-scenery.js",
+    from: "    this.wetTrail.count = this.wetMarks.length;",
+    to: "    this.wetTrail.count = 0;",
   },
   {
     what: "water jet fails to emit forward pressurized particle stream",
