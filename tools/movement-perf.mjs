@@ -197,8 +197,23 @@ try {
 
   await page.evaluate(() => {
     const g = window.__SF;
-    g.state.squirtleEcology.suitability.marsh = 1;
-    g.state.squirtleEcology.suitability.urban = 1;
+    g.state.watershed.nodes[0].flow = 1;
+    g.state.watershed.nodes[0].wetness = 1;
+    g.state.watershed.nodes[1].restoration = 1;
+    g.state.watershed.nodes[2].wetness = 0.9;
+    g.state.watershed.nodes[2].contamination = 0;
+    g.state.watershed.nodes[2].sediment = 0;
+    g.state.ecosystem.reeds = 0.9;
+    g.state.ecosystem.cistern = 0.9;
+    g.state.settlement.waterReliability = 0.9;
+    g.state.settlement.familiarity = 0.35;
+    g.state.settlement.fear = 0;
+    for (let i = 0; i < 500; i++)
+      g.state.squirtleEcology.tick(
+        g.state.watershed,
+        g.state.ecosystem,
+        g.state.settlement,
+      );
     g.state.squirtleEcology.abundance.marsh = 1;
     g.state.squirtleEcology.abundance.urban = 1;
     g.state.squirtleEcology.bumpRevision();
@@ -209,6 +224,7 @@ try {
       vx: 0,
       vy: 0,
       vz: 0,
+      jetTime: 0,
       mode: "land",
       grounded: true,
     });
