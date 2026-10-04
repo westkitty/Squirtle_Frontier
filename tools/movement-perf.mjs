@@ -227,10 +227,23 @@ try {
     g.rig.initial = true;
     g.loop.frames.length = 0;
   });
+  await page.waitForFunction(
+    () => {
+      const chunks = window.__SF.streaming.stats();
+      return chunks.active === 9 && chunks.queued === 0;
+    },
+    null,
+    { timeout: 60000 },
+  );
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    window.__SF.loop.frames.length = 0;
+  });
   const stabilityStart = await page.evaluate(() => {
     const s = window.__SF.stats();
     return {
       memory: s.memory,
+      chunks: s.chunks,
       heap: performance.memory?.usedJSHeapSize ?? null,
       performance: s.performance,
     };
@@ -260,15 +273,20 @@ try {
       start,
       end: {
         memory: s.memory,
+        chunks: s.chunks,
         heap: performance.memory?.usedJSHeapSize ?? null,
         performance: s.performance,
       },
     };
   }, stabilityStart);
+  assert.equal(evidence.stability.start.chunks.active, 9);
+  assert.equal(evidence.stability.start.chunks.queued, 0);
+  assert.equal(evidence.stability.end.chunks.active, 9);
+  assert.equal(evidence.stability.end.chunks.queued, 0);
   assert.deepEqual(
     evidence.stability.end.memory,
     evidence.stability.start.memory,
-    "steady play must not accumulate renderer geometries/textures",
+    "steady play must not accumulate renderer geometries/textures after streaming settles",
   );
   if (
     evidence.stability.start.heap !== null &&
