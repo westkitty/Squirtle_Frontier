@@ -12,6 +12,8 @@ export function resolveAttentionTarget({
   place = "frontier",
   state = null,
   wildlife = null,
+  squirtles = null,
+  squirtleEcology = null,
   settlement = null,
   previous = null,
 }) {
@@ -46,6 +48,31 @@ export function resolveAttentionTarget({
   };
 
   if (place === "frontier") {
+    const shucker = squirtleEcology?.shuckerEvidence?.();
+    if (shucker)
+      addCandidate({
+        id: shucker.id,
+        type: "shucker-evidence",
+        x: shucker.x,
+        z: shucker.z,
+        priority: 14,
+        radius: 10,
+      });
+    if (squirtles?.actors) {
+      for (const actor of squirtles.actors) {
+        if (!actor?.active) continue;
+        addCandidate({
+          id: actor.id,
+          type: "squirtle",
+          x: actor.x,
+          z: actor.z,
+          y: heightAt(actor.x, actor.z) + 0.32,
+          priority: actor.mode === "flee" || actor.mode === "hide" ? 12 : actor.mode === "socialize" ? 11 : 10,
+          radius: 10,
+        });
+      }
+    }
+
     // 1. Living Wildlife Agents (Priority 10)
     if (wildlife?.actors) {
       for (const actor of wildlife.actors) {

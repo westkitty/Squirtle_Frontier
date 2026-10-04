@@ -28,6 +28,54 @@ import { resolve } from "node:path";
 
 const MUTATIONS = [
   {
+    what: "Stillwater invents saltwater/deepwater habitat",
+    file: "src/simulation/squirtle-ecology.js",
+    from: "    this.suitability.saltwater = 0;\n    this.suitability.deepwater = 0;",
+    to: "    this.suitability.saltwater = 1;\n    this.suitability.deepwater = 1;",
+  },
+  {
+    what: "Shucker pressure no longer makes viable habitat unsafe",
+    file: "src/simulation/squirtle-ecology.js",
+    from: "this.shuckerPressure * 0.78",
+    to: "this.shuckerPressure * 0",
+  },
+  {
+    what: "nearby Squirtles lose their hard three-actor cap",
+    file: "src/simulation/near-squirtles.js",
+    from: "export const MAX_NEAR_CONSPECIFICS = 3;",
+    to: "export const MAX_NEAR_CONSPECIFICS = 30;",
+  },
+  {
+    what: "Current Sense invents Shucker evidence without Shucker state",
+    file: "src/simulation/squirtle-ecology.js",
+    from: "    if (this.shuckerPressure < 0.35 || this.shuckerTicks <= 0) return null;",
+    to: "    if (false) return null;",
+  },
+  {
+    what: "notable Squirtle memory loses its hard storage bound",
+    file: "src/simulation/place-memory.js",
+    from: "      if (this.squirtles.length >= MAX_NOTABLE_CONSPECIFICS) return null;",
+    to: "      if (false) return null;",
+  },
+  {
+    what: "ordinary humans universally report rather than ignore strangers",
+    file: "src/simulation/settlement.js",
+    from: '    if (this.visits === 0 && !this.present) return "ignore";',
+    to: '    if (this.visits === 0 && !this.present) return "report";',
+  },
+  {
+    what: "the new save schema stays on version six",
+    file: "src/worldstate.js",
+    from: "    this.version = 7;",
+    to: "    this.version = 6;",
+  },
+  {
+    what: "offline and active regional ticks stop advancing conspecific ecology",
+    file: "src/worldstate.js",
+    from: "      this.squirtleEcology.tick(this.watershed, this.ecosystem, this.settlement);",
+    to: "      void this.squirtleEcology;",
+  },
+  {
     what: "depth leaf keeps two decimals while the screen shows one",
     file: "src/simulation/deep-history.js",
     from: "depth: +finite(depth).toFixed(1),",

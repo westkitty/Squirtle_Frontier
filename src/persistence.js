@@ -3,6 +3,7 @@ import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
 import { Watershed } from "./simulation/watershed.js";
 import { Ecosystem } from "./simulation/ecosystem.js";
+import { ConspecificEcology } from "./simulation/squirtle-ecology.js";
 export const SAVE_KEY = "squirtle_frontier_baseline_v1";
 export const BACKUP_KEY = SAVE_KEY + "_backup";
 export const MAX_OFFLINE_SECONDS = 6 * 60 * 60;
@@ -23,7 +24,7 @@ const validPose = (p) =>
 function decode(text, seed) {
   const s = JSON.parse(text);
   if (
-    ![1, 2, 3, 4, 5, 6].includes(s.version) ||
+    ![1, 2, 3, 4, 5, 6, 7].includes(s.version) ||
     s.seed !== seed ||
     !Number.isFinite(s.elapsed) ||
     s.elapsed < 0 ||
@@ -56,7 +57,12 @@ function decode(text, seed) {
     s.version < 4 ? new PlaceMemory(seed) : PlaceMemory.restore(s.memory, seed);
   const settlement =
     s.version < 5 ? new Settlement() : Settlement.restore(s.settlement);
-  return { s, watershed, ecosystem, frontier, memory, settlement };
+  if (s.version < 7) memory.squirtles.length = 0;
+  const squirtleEcology =
+    s.version < 7
+      ? new ConspecificEcology(seed)
+      : ConspecificEcology.restore(s.squirtles, seed);
+  return { s, watershed, ecosystem, frontier, memory, settlement, squirtleEcology };
 }
 export function advanceOffline(state, seconds) {
   if (!Number.isFinite(seconds) || seconds < 0)
@@ -110,13 +116,14 @@ export function load(
       decoded = decode(backup, state.seed);
       recovered = true;
     }
-    const { s, watershed, ecosystem, frontier, memory, settlement } = decoded;
+    const { s, watershed, ecosystem, frontier, memory, settlement, squirtleEcology } = decoded;
     // Keep the newest world clock even when a caller re-enters load().
     state.watershed = watershed;
     state.ecosystem = ecosystem;
     state.frontier = frontier;
     state.memory = memory;
     state.settlement = settlement;
+    state.squirtleEcology = squirtleEcology;
     state.elapsed = s.elapsed;
     state.ecoRemainder = s.version >= 3 ? s.ecoRemainder : 0;
     state.player = { x: s.player.x, z: s.player.z };

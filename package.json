@@ -19,6 +19,7 @@
     "browser:recovery": "node tools/recovery-browser.mjs",
     "browser:channel": "node tools/channel-browser.mjs",
     "browser:wildlife": "node tools/wildlife-browser.mjs",
+    "browser:squirtles": "node tools/squirtle-social-browser.mjs",
     "browser:a11y": "node tools/accessibility-browser.mjs",
     "browser:gamepad": "node tools/gamepad-browser.mjs",
     "browser:dist": "node tools/dist-browser.mjs",

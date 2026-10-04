@@ -195,6 +195,44 @@ try {
     Math.atan2(22, -20),
   );
 
+  await page.evaluate(() => {
+    const g = window.__SF;
+    g.state.squirtleEcology.suitability.marsh = 1;
+    g.state.squirtleEcology.suitability.urban = 1;
+    g.state.squirtleEcology.abundance.marsh = 1;
+    g.state.squirtleEcology.abundance.urban = 1;
+    g.state.squirtleEcology.bumpRevision();
+    Object.assign(g.body, {
+      x: -9,
+      z: -12,
+      y: g.state.sampleHeight(-9, -12),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      mode: "land",
+      grounded: true,
+    });
+    g.rig.initial = true;
+  });
+  await page.waitForFunction(
+    () =>
+      window.__SF.squirtles.activeCount === 3 &&
+      window.__SF.squirtleView.performanceStats().active === 3 &&
+      window.__SF.squirtleView.performanceStats().pending === 0,
+    null,
+    { timeout: 30000 },
+  );
+  evidence.squirtles = await measureScene("three nearby Squirtles");
+  assert.equal(evidence.squirtles.performance.squirtles.simulation.active, 3);
+  assert.equal(evidence.squirtles.performance.squirtles.view.active, 3);
+  await page.evaluate(() => {
+    const g = window.__SF;
+    Object.assign(g.body, { x: -10, z: 18, y: g.state.sampleHeight(-10, 18), vx: 0, vy: 0, vz: 0 });
+    g.squirtles.leaveLocal();
+    g.squirtleView.releaseAll();
+    g.rig.initial = true;
+  });
+
   const high = evidence.scenarios.find((scenario) => scenario.quality === "high");
   assert.ok(
     high.render.calls <= 41,

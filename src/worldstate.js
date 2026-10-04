@@ -4,12 +4,13 @@ import { channelHeight } from "./simulation/channel-terrain.js";
 import { FrontierSystems } from "./simulation/frontier-systems.js";
 import { PlaceMemory } from "./simulation/place-memory.js";
 import { Ecosystem } from "./simulation/ecosystem.js";
+import { ConspecificEcology } from "./simulation/squirtle-ecology.js";
 import { Watershed } from "./simulation/watershed.js";
 import { waterLevelFor } from "./simulation/water-level.js";
 import { WORLD } from "./worldgen.js";
 export class WorldState {
   constructor() {
-    this.version = 6;
+    this.version = 7;
     this.seed = WORLD.seed;
     this.elapsed = 0;
     this.watershed = new Watershed();
@@ -17,6 +18,7 @@ export class WorldState {
     this.settlement = new Settlement();
     this.memory = new PlaceMemory(this.seed);
     this.ecosystem = new Ecosystem(this.seed);
+    this.squirtleEcology = new ConspecificEcology(this.seed);
     this.ecoRemainder = 0;
     this.place = "frontier";
     this.frontierReturn = { x: -10, z: 18 };
@@ -48,6 +50,7 @@ export class WorldState {
       this.watershed.update(1, forcing);
       this.ecosystem.tick(this.watershed);
       this.settlement.tick(this.ecosystem);
+      this.squirtleEcology.tick(this.watershed, this.ecosystem, this.settlement);
       this.frontier.record(this.watershed, this.ecosystem);
     }
   }
@@ -61,6 +64,7 @@ export class WorldState {
       pose: this.pose ? { ...this.pose } : null,
       watershed: this.watershed.snapshot(),
       ecosystem: this.ecosystem.snapshot(),
+      squirtles: this.squirtleEcology.snapshot(),
       frontier: this.frontier.snapshot(),
       memory: this.memory.snapshot(),
       settlement: this.settlement.snapshot(),
