@@ -147,6 +147,28 @@ export class WorldEffects {
     this.group.add(this.underwaterMotes);
 
     this.route = traceChannel();
+    this.fireSites = Array.from({ length: 16 }, (_, i) => {
+      const p = fireSite(i);
+      return { x: p.x, z: p.z, ground: heightAt(p.x, p.z) };
+    });
+    this.rainGround = new Float32Array(96);
+    this.rainAnchorX = Infinity;
+    this.rainAnchorZ = Infinity;
+    this.rainGroundCount = 0;
+    this.rainGroundAt = -Infinity;
+    this.mistGround = new Float32Array(14);
+    this.mistGroundAt = -Infinity;
+    this.mistGroundCount = 0;
+    this.terrainSamples = 16;
+    this.rainGroundRefreshes = 0;
+    this.mistGroundRefreshes = 0;
+    this.foamRebuilds = 0;
+    this.foamPathX = new Float32Array(128);
+    this.foamPathY = new Float32Array(128);
+    this.foamPathZ = new Float32Array(128);
+    this.foamPathTX = new Float32Array(128);
+    this.foamPathTZ = new Float32Array(128);
+    this.channelStage = -1;
     this.channelGeo = new THREE.BufferGeometry();
     this.channelGeo.setAttribute(
       "position",
@@ -163,7 +185,101 @@ export class WorldEffects {
     this.channel = new THREE.Mesh(this.channelGeo, this.channelMat);
     this.group.add(this.channel);
     this.channel.frustumCulled = false;
+    for (const mesh of [
+      this.fire,
+      this.fireSmoke,
+      this.rain,
+      this.jet,
+      this.wake,
+      this.splash,
+      this.slideDust,
+      this.streamFoam,
+      this.wetlandMist,
+      this.rainRipples,
+      this.underwaterMotes,
+      this.channel,
+    ]) {
+      mesh.updateMatrix();
+      mesh.matrixAutoUpdate = false;
+    }
     this.dummy = new THREE.Object3D();
+  }
+  refreshRainGround(body, count, elapsed) {
+    const moved =
+        Math.hypot(body.x - this.rainAnchorX, body.z - this.rainAnchorZ) > 0.75,
+      stale = elapsed - this.rainGroundAt >= 0.25,
+      grew = count > this.rainGroundCount;
+    if (!moved && !stale && !grew) return;
+    this.rainAnchorX = body.x;
+    this.rainAnchorZ = body.z;
+    this.rainGroundAt = elapsed;
+    this.rainGroundCount = count;
+    this.rainGroundRefreshes++;
+    for (let i = 0; i < count; i++) {
+      const x = body.x + Math.sin(i * 3.3) * 8,
+        z = body.z + Math.cos(i * 5.7) * 8;
+      this.rainGround[i] = heightAt(x, z);
+      this.terrainSamples++;
+    }
+  }
+  rebuildChannel(stage) {
+    this.channelStage = stage;
+    const positions = this.channelGeo.attributes.position;
+    let index = 0;
+    for (let i = 0; i < this.route.length - 1; i++) {
+      const a = this.route[i],
+        b = this.route[i + 1],
+        dx = b.x - a.x,
+        dz = b.z - a.z,
+        len = Math.hypot(dx, dz) || 1,
+        w = 0.045 + stage * 0.022,
+        nx = dz / len,
+        nz = -dx / len,
+        ay =
+          channelHeight(a.x, a.z, stage) +
+          CHANNEL_DEPTH[stage] * 0.55 +
+          0.015,
+        by =
+          channelHeight(b.x, b.z, stage) +
+          CHANNEL_DEPTH[stage] * 0.55 +
+          0.015,
+        al = [a.x - nx * w, ay, a.z - nz * w],
+        ar = [a.x + nx * w, ay, a.z + nz * w],
+        bl = [b.x - nx * w, by, b.z - nz * w],
+        br = [b.x + nx * w, by, b.z + nz * w];
+      for (const v of [al, bl, ar, ar, bl, br])
+        positions.setXYZ(index++, v[0], v[1], v[2]);
+    }
+    positions.needsUpdate = true;
+    this.channelGeo.computeVertexNormals();
+    this.channelGeo.computeBoundingSphere();
+
+    const last = this.foamPathX.length - 1;
+    for (let i = 0; i <= last; i++) {
+      const progress = i / last,
+        floatIdx = progress * (this.route.length - 1),
+        routeIndex = Math.min(
+          this.route.length - 2,
+          Math.floor(floatIdx),
+        ),
+        fract = floatIdx - routeIndex,
+        p0 = this.route[routeIndex],
+        p1 = this.route[routeIndex + 1],
+        dx = p1.x - p0.x,
+        dz = p1.z - p0.z,
+        len = Math.hypot(dx, dz) || 1,
+        px = p0.x + dx * fract,
+        pz = p0.z + dz * fract;
+      this.foamPathX[i] = px;
+      this.foamPathZ[i] = pz;
+      this.foamPathY[i] =
+        channelHeight(px, pz, stage) +
+        CHANNEL_DEPTH[stage] * 0.55 +
+        0.022;
+      this.foamPathTX[i] = dx / len;
+      this.foamPathTZ[i] = dz / len;
+    }
+    this.foamRebuilds++;
   }
   update(state, body, options = {}) {
     const effectScale = Math.max(
@@ -176,12 +292,15 @@ export class WorldEffects {
     this.rain.count = Math.floor(
       state.frontier.weather.rain * 96 * effectScale,
     );
+    if (this.rain.count > 0)
+      this.refreshRainGround(body, this.rain.count, state.elapsed);
     for (let i = 0; i < this.rain.count; i++) {
       const x = body.x + Math.sin(i * 3.3) * 8,
         z = body.z + Math.cos(i * 5.7) * 8;
       this.dummy.position.set(
         x,
-        heightAt(x, z) + ((((i * 0.37 - state.elapsed * 5) % 5) + 5) % 5),
+        this.rainGround[i] +
+          ((((i * 0.37 - state.elapsed * 5) % 5) + 5) % 5),
         z,
       );
       this.dummy.rotation.set(0, 0, -0.18);
@@ -189,10 +308,10 @@ export class WorldEffects {
       this.dummy.updateMatrix();
       this.rain.setMatrixAt(i, this.dummy.matrix);
     }
-    this.rain.instanceMatrix.needsUpdate = true;
+    if (this.rain.count > 0) this.rain.instanceMatrix.needsUpdate = true;
     let count = 0;
     for (let i = 0; i < 16; i++) {
-      const p = fireSite(i),
+      const p = this.fireSites[i],
         h = state.frontier.heat[i];
       if (h < 0.02 || Math.hypot(body.x - p.x, body.z - p.z) > 35) continue;
       const flicker =
@@ -200,7 +319,7 @@ export class WorldEffects {
         lean = Math.sin(state.elapsed * 7.5 + i * 1.31) * 0.11;
       this.dummy.position.set(
         p.x + lean * 0.18,
-        heightAt(p.x, p.z) + (h * flicker) / 2,
+        p.ground + (h * flicker) / 2,
         p.z - lean * 0.12,
       );
       this.dummy.rotation.set(0, i * 0.73, lean);
@@ -228,38 +347,13 @@ export class WorldEffects {
     this.fireSmoke.visible = this.fireSmoke.count > 0;
     this.rain.visible = this.rain.count > 0;
     this.channel.visible = state.frontier.stage > 0;
-    this.fire.instanceMatrix.needsUpdate = true;
-    this.fireSmoke.instanceMatrix.needsUpdate = true;
-    this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
-    if (this.channelStage !== state.frontier.stage) {
-      this.channelStage = state.frontier.stage;
-      const positions = this.channelGeo.attributes.position;
-      let index = 0;
-      for (let i = 0; i < this.route.length - 1; i++) {
-        const a = this.route[i],
-          b = this.route[i + 1],
-          dx = b.x - a.x,
-          dz = b.z - a.z,
-          len = Math.hypot(dx, dz);
-        const w = 0.045 + state.frontier.stage * 0.022;
-        const point = (p, sign) => [
-          p.x + ((sign * dz) / len) * w,
-          channelHeight(p.x, p.z, state.frontier.stage) +
-            CHANNEL_DEPTH[state.frontier.stage] * 0.55 +
-            0.015,
-          p.z - ((sign * dx) / len) * w,
-        ];
-        const al = point(a, -1),
-          ar = point(a, 1),
-          bl = point(b, -1),
-          br = point(b, 1);
-        for (const v of [al, bl, ar, ar, bl, br])
-          positions.setXYZ(index++, ...v);
-      }
-      positions.needsUpdate = true;
-      this.channelGeo.computeVertexNormals();
-      this.channelGeo.computeBoundingSphere();
+    if (count > 0) {
+      this.fire.instanceMatrix.needsUpdate = true;
+      this.fireSmoke.instanceMatrix.needsUpdate = true;
     }
+    this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
+    if (this.channelStage !== state.frontier.stage)
+      this.rebuildChannel(state.frontier.stage);
 
     // 1. Water Jet stream: pressurized aquatic propulsion forward from snout
     if (body.jetTime > 0) {
@@ -453,17 +547,19 @@ export class WorldEffects {
       const dustBase = Math.min(18, Math.max(4, Math.round(speed * 3.2)));
       this.slideDust.count = Math.max(3, Math.round(dustBase * effectScale));
       const dirX = speed > 0.01 ? body.vx / speed : Math.sin(body.yaw),
-        dirZ = speed > 0.01 ? body.vz / speed : Math.cos(body.yaw);
+        dirZ = speed > 0.01 ? body.vz / speed : Math.cos(body.yaw),
+        dustStartY = heightAt(body.x, body.z),
+        dustEndY = heightAt(body.x - dirX * 1.33, body.z - dirZ * 1.33);
+      this.terrainSamples += 2;
       for (let i = 0; i < this.slideDust.count; i++) {
         const phase =
             (((state.elapsed * 2.1 + i / this.slideDust.count) % 1) + 1) % 1,
           side = Math.sin(i * 5.31) * 0.22 * phase,
-          behind = 0.18 + phase * 1.15;
+          behind = 0.18 + phase * 1.15,
+          groundY = THREE.MathUtils.lerp(dustStartY, dustEndY, phase);
         this.dummy.position.set(
           body.x - dirX * behind - dirZ * side,
-          heightAt(body.x - dirX * behind, body.z - dirZ * behind) +
-            0.03 +
-            phase * 0.18,
+          groundY + 0.03 + phase * 0.18,
           body.z - dirZ * behind + dirX * side,
         );
         const size = 0.06 + phase * 0.1;
@@ -493,6 +589,24 @@ export class WorldEffects {
       mistBase = Math.round(14 * mistStrength * effectScale);
     this.wetlandMist.count = mistBase;
     this.wetlandMist.visible = mistBase > 0;
+    if (
+      mistBase > 0 &&
+      (state.elapsed - this.mistGroundAt >= 0.5 ||
+        mistBase > this.mistGroundCount)
+    ) {
+      this.mistGroundAt = state.elapsed;
+      this.mistGroundCount = mistBase;
+      this.mistGroundRefreshes++;
+      for (let i = 0; i < mistBase; i++) {
+        const angle = i * 2.39996 + state.elapsed * 0.025,
+          radius = 1.4 + (i % 5) * 0.92,
+          drift = Math.sin(state.elapsed * 0.22 + i * 1.71) * 0.28,
+          x = WETLAND.x + Math.cos(angle) * (radius + drift),
+          z = WETLAND.z + Math.sin(angle) * (radius + drift);
+        this.mistGround[i] = heightAt(x, z);
+        this.terrainSamples++;
+      }
+    }
     this.mistMat.opacity =
       0.06 +
       mistStrength * 0.1 * (1 - state.frontier.weather.rain * 0.45);
@@ -502,7 +616,7 @@ export class WorldEffects {
         drift = Math.sin(state.elapsed * 0.22 + i * 1.71) * 0.28,
         x = WETLAND.x + Math.cos(angle) * (radius + drift),
         z = WETLAND.z + Math.sin(angle) * (radius + drift),
-        y = heightAt(x, z) + 0.16 + (i % 4) * 0.07;
+        y = this.mistGround[i] + 0.16 + (i % 4) * 0.07;
       this.dummy.position.set(x, y, z);
       this.dummy.rotation.set(Math.PI / 2, angle, 0);
       this.dummy.scale.set(
@@ -513,7 +627,8 @@ export class WorldEffects {
       this.dummy.updateMatrix();
       this.wetlandMist.setMatrixAt(i, this.dummy.matrix);
     }
-    this.wetlandMist.instanceMatrix.needsUpdate = true;
+    if (this.wetlandMist.count > 0)
+      this.wetlandMist.instanceMatrix.needsUpdate = true;
 
     // 6. Stream foam rapids: churning white water along active flowing channel
     if (state.frontier.stage >= 2 && this.route.length > 1) {
@@ -528,23 +643,27 @@ export class WorldEffects {
       this.streamFoam.visible = this.streamFoam.count > 0;
       for (let i = 0; i < this.streamFoam.count; i++) {
         const progress =
-          (((i / this.streamFoam.count + state.elapsed * 0.35) % 1) + 1) % 1;
-        const floatIdx = progress * (this.route.length - 1);
-        const idx = Math.floor(floatIdx);
-        const fract = floatIdx - idx;
-        const p0 = this.route[idx];
-        const p1 = this.route[Math.min(idx + 1, this.route.length - 1)];
-        const wobble = Math.sin(state.elapsed * 5.5 + i * 2.1) * 0.035;
-        const dx = p1.x - p0.x,
-          dz = p1.z - p0.z;
-        const len = Math.hypot(dx, dz) || 1;
-        const px = p0.x + dx * fract + (-dz / len) * wobble;
-        const pz = p0.z + dz * fract + (dx / len) * wobble;
-        const py =
-          channelHeight(px, pz, state.frontier.stage) +
-          CHANNEL_DEPTH[state.frontier.stage] * 0.55 +
-          0.022;
-        const s = 0.032 + Math.sin(i * 3.7 + state.elapsed * 4) * 0.01;
+            (((i / this.streamFoam.count + state.elapsed * 0.35) % 1) + 1) %
+            1,
+          sample = progress * (this.foamPathX.length - 1),
+          a = Math.floor(sample),
+          b = Math.min(this.foamPathX.length - 1, a + 1),
+          t = sample - a,
+          tx = THREE.MathUtils.lerp(this.foamPathTX[a], this.foamPathTX[b], t),
+          tz = THREE.MathUtils.lerp(this.foamPathTZ[a], this.foamPathTZ[b], t),
+          wobble = Math.sin(state.elapsed * 5.5 + i * 2.1) * 0.035,
+          px =
+            THREE.MathUtils.lerp(this.foamPathX[a], this.foamPathX[b], t) -
+            tz * wobble,
+          pz =
+            THREE.MathUtils.lerp(this.foamPathZ[a], this.foamPathZ[b], t) +
+            tx * wobble,
+          py = THREE.MathUtils.lerp(
+            this.foamPathY[a],
+            this.foamPathY[b],
+            t,
+          ),
+          s = 0.032 + Math.sin(i * 3.7 + state.elapsed * 4) * 0.01;
         this.dummy.position.set(px, py, pz);
         this.dummy.scale.set(s * 1.6, s * 0.5, s * 1.6);
         this.dummy.rotation.set(0, state.elapsed * 2.8 + i, 0);
@@ -571,6 +690,10 @@ export class WorldEffects {
       wake: this.wake.count,
       splash: this.splash.count,
       foam: this.streamFoam.count,
+      terrainSamples: this.terrainSamples,
+      rainGroundRefreshes: this.rainGroundRefreshes,
+      mistGroundRefreshes: this.mistGroundRefreshes,
+      foamRebuilds: this.foamRebuilds,
     };
   }
 

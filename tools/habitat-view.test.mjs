@@ -254,3 +254,91 @@ test("the remembered Lab visitor approaches smoothly, hops when familiar, and cr
   );
   view.dispose();
 });
+
+
+test("distant frontier habitat stops uploading invisible wildlife matrices", () => {
+  const parent = new THREE.Group(),
+    view = new HabitatView(parent),
+    body = createBody(60, 60, 0),
+    wildlife = {
+      actors: [
+        {
+          kind: "prey",
+          slot: 0,
+          x: -6,
+          z: -15,
+          yaw: 0,
+          mode: "forage",
+          phase: 0,
+        },
+      ],
+    },
+    beforeAnimalVersion = view.animals.instanceMatrix.version,
+    beforeHeadVersion = view.preyHeads.instanceMatrix.version;
+
+  view.update(
+    ecosystem(),
+    body,
+    1,
+    null,
+    wildlife,
+    null,
+    1 / 60,
+    { windStrength: 0.2, wetness: 0.5 },
+  );
+
+  assert.equal(view.animals.count, 0);
+  assert.equal(view.animals.visible, false);
+  assert.equal(view.preyHeads.visible, false);
+  assert.equal(
+    view.animals.instanceMatrix.version,
+    beforeAnimalVersion,
+    "hidden fauna must not upload an instance buffer",
+  );
+  assert.equal(view.preyHeads.instanceMatrix.version, beforeHeadVersion);
+  view.dispose();
+});
+
+test("frontier wildlife samples terrain once per actor and reuses it across body parts", () => {
+  const parent = new THREE.Group(),
+    view = new HabitatView(parent),
+    body = createBody(-6, -15, 0),
+    wildlife = {
+      actors: [
+        {
+          kind: "prey",
+          slot: 0,
+          x: -6,
+          z: -15,
+          yaw: 0.4,
+          mode: "forage",
+          phase: 0,
+        },
+        {
+          kind: "predator",
+          slot: 0,
+          x: -4,
+          z: -15,
+          yaw: -0.2,
+          mode: "stalk",
+          phase: 0,
+        },
+      ],
+    };
+
+  view.update(
+    ecosystem(),
+    body,
+    1,
+    null,
+    wildlife,
+    null,
+    1 / 60,
+    { windStrength: 0.2, wetness: 0.5 },
+  );
+  assert.equal(view.animals.count, 1);
+  assert.equal(view.predators.count, 1);
+  assert.equal(view.preyLegs.count, 2);
+  assert.equal(view.predatorLegs.count, 4);
+  view.dispose();
+});

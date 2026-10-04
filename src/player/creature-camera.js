@@ -50,6 +50,7 @@ export class CreatureCamera {
     this.target = new THREE.Vector3();
     this.desired = new THREE.Vector3();
     this.probe = new THREE.Vector3();
+    this.movementVector = { x: 0, z: 0 };
   }
   constrain(from, to, blockers) {
     let fraction = 1;
@@ -65,7 +66,9 @@ export class CreatureCamera {
         from,
         to,
         obstacle,
-        this.env.sample(obstacle.x, obstacle.z).height,
+        Number.isFinite(obstacle.ground)
+          ? obstacle.ground
+          : this.env.sample(obstacle.x, obstacle.z).height,
       );
       if (hit < 1)
         fraction = Math.min(
@@ -203,9 +206,10 @@ export class CreatureCamera {
     }
   }
   movement(x, z) {
-    return {
-      x: x * -Math.cos(this.yaw) + z * Math.sin(this.yaw),
-      z: x * Math.sin(this.yaw) + z * Math.cos(this.yaw),
-    };
+    const sin = Math.sin(this.yaw),
+      cos = Math.cos(this.yaw);
+    this.movementVector.x = x * -cos + z * sin;
+    this.movementVector.z = x * sin + z * cos;
+    return this.movementVector;
   }
 }

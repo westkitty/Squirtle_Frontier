@@ -306,3 +306,39 @@ test("local herd agents preserve personal space instead of occupying one point",
       "separation may not break the existing territory leash",
     );
 });
+
+
+test("stable population counts do not rebuild the local herd every fixed step", () => {
+  const h = herd();
+  run(h, 1);
+  const actors = h.wildlife.actors.slice(),
+    runs = h.wildlife.performanceStats().reconcileRuns;
+  run(h, 600);
+  assert.equal(
+    h.wildlife.performanceStats().reconcileRuns,
+    runs,
+    "unchanged aggregate counts must not trigger reconciliation work",
+  );
+  assert.equal(h.wildlife.actors.length, actors.length);
+  for (let i = 0; i < actors.length; i++)
+    assert.equal(
+      h.wildlife.actors[i],
+      actors[i],
+      "stable reconciliation must preserve actor identity and ordering",
+    );
+});
+
+test("wildlife snapshot and drink-track buffers are reused rather than replaced every step", () => {
+  const h = herd();
+  run(h, 10);
+  const snapshotBuffer = h.wildlife.before,
+    drinkerBuffer = h.wildlife.drinkers;
+  run(h, 900);
+  assert.equal(h.wildlife.before, snapshotBuffer);
+  assert.equal(h.wildlife.drinkers, drinkerBuffer);
+  assert.equal(
+    h.wildlife.before.length,
+    h.wildlife.actors.length,
+    "snapshot buffer should match active actors without growing unbounded",
+  );
+});

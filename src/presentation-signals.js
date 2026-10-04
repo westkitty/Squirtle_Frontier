@@ -6,7 +6,7 @@ const band = (value, cuts) => {
   return cuts.length;
 };
 
-export function presentationSignals(state) {
+export function presentationSignals(state, out = {}) {
   const wetland =
       state?.watershed?.nodes?.find?.((node) => node.id === "wetland") ||
       state?.watershed?.nodes?.[2] ||
@@ -20,26 +20,25 @@ export function presentationSignals(state) {
     wetGround = clamp01(rain * 0.72 + wetness * 0.22),
     windStrength = clamp01(0.18 + rain * 0.72 + flow * 0.08);
 
-  return {
-    rain,
-    wetness,
-    sediment,
-    contamination,
-    flow,
-    waterQuality,
-    wetGround,
-    windStrength,
-    windX: 0.72 + rain * 0.18,
-    windZ: 0.38 - rain * 0.12,
-    waterRoughness: Math.max(
-      0.12,
-      Math.min(0.52, 0.18 + rain * 0.14 + sediment * 0.2),
-    ),
-    rippleStrength: Math.max(
-      0.18,
-      Math.min(1, 0.32 + rain * 0.48 + flow * 0.34),
-    ),
-  };
+  out.rain = rain;
+  out.wetness = wetness;
+  out.sediment = sediment;
+  out.contamination = contamination;
+  out.flow = flow;
+  out.waterQuality = waterQuality;
+  out.wetGround = wetGround;
+  out.windStrength = windStrength;
+  out.windX = 0.72 + rain * 0.18;
+  out.windZ = 0.38 - rain * 0.12;
+  out.waterRoughness = Math.max(
+    0.12,
+    Math.min(0.52, 0.18 + rain * 0.14 + sediment * 0.2),
+  );
+  out.rippleStrength = Math.max(
+    0.18,
+    Math.min(1, 0.32 + rain * 0.48 + flow * 0.34),
+  );
+  return out;
 }
 
 export function observationSnapshot(state) {

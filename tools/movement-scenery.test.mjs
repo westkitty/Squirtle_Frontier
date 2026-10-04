@@ -162,19 +162,22 @@ test("nearby foliage receives local brush input from Squirtle without changing t
   scenery.dispose();
 });
 
-test("measured shoreline carries a second shared-geometry lap pulse without widening geometry count", () => {
+test("measured shoreline carries its lap pulse in one draw object", () => {
   const parent = new THREE.Group();
   const scenery = new MovementScenery(parent, makeStreaming());
   const body = createBody(-10, 18, heightAt(-10, 18));
 
   scenery.update(body, 0.37, WATER_BASE, 1, { rippleStrength: 1 });
   assert.equal(
-    scenery.shoreLap.geometry,
-    scenery.shore.geometry,
-    "lap pulse must reuse the exact measured shoreline geometry",
+    scenery.shoreLap,
+    undefined,
+    "shoreline motion must not require a second line draw",
   );
-  assert.ok(scenery.shoreLapMaterial.opacity > 0.2);
-  assert.notEqual(scenery.shoreLap.scale.x, 1, "lap pulse must move perceptibly over time");
+  assert.notEqual(
+    scenery.shore.scale.x,
+    1,
+    "the existing measured shoreline must retain perceptible lap motion",
+  );
   scenery.dispose();
 });
 
@@ -188,5 +191,58 @@ test("loaded tree positions expose bounded local canopy cover for environmental 
   assert.ok(scenery.canopyCoverAt(2, 3) > 0.9);
   assert.equal(scenery.canopyCoverAt(20, 20), 0);
   assert.ok(scenery.canopyCoverAt(4.5, 3) > 0);
+  scenery.dispose();
+});
+
+
+test("canopy cover memoizes within a half-metre cell and invalidates when scenery changes", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const group = new THREE.Group();
+  group.userData.trees = [{ x: 2, z: 3, h: 5 }];
+  scenery.groups.set("fixture", group);
+
+  const first = scenery.canopyCoverAt(2, 3);
+  const afterFirst = scenery.performanceStats().canopyScans;
+  const second = scenery.canopyCoverAt(2.1, 3.1);
+  assert.equal(second, first);
+  assert.equal(
+    scenery.performanceStats().canopyScans,
+    afterFirst,
+    "sub-cell movement must reuse canopy result",
+  );
+
+  scenery.canopyCoverAt(3, 3);
+  assert.equal(
+    scenery.performanceStats().canopyScans,
+    afterFirst + 1,
+    "moving to another memo cell must rescan",
+  );
+
+  scenery.remove("fixture");
+  scenery.canopyCoverAt(2, 3);
+  assert.equal(
+    scenery.performanceStats().canopyScans,
+    afterFirst + 2,
+    "streamed scenery changes must invalidate the memo",
+  );
+  scenery.dispose();
+});
+
+test("static streamed scenery roots stop automatic matrix recomputation", () => {
+  const parent = new THREE.Group();
+  const streaming = makeStreaming();
+  const scenery = new MovementScenery(parent, streaming);
+  scenery.build("0,0", { i: 0, j: 0 });
+  const group = scenery.groups.get("0,0");
+  assert.equal(group.matrixAutoUpdate, false);
+  for (const child of group.children)
+    assert.equal(
+      child.matrixAutoUpdate,
+      false,
+      "static trunk, leaf, and rock roots must keep their one authored matrix",
+    );
+  assert.equal(scenery.pool.matrixAutoUpdate, false);
+  assert.equal(scenery.wetTrail.matrixAutoUpdate, false);
   scenery.dispose();
 });

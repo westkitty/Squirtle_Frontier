@@ -71,3 +71,17 @@ test("ecology summary remains descriptive rather than objective-driven", () => {
   assert.match(summary, /pacing/);
   assert.doesNotMatch(summary, /quest|objective|reward/i);
 });
+
+
+test("presentation signals can update a reusable output record without changing values", () => {
+  const source = state(),
+    reusable = { sentinel: 1 },
+    first = presentationSignals(source, reusable);
+  assert.equal(first, reusable);
+  const before = { ...reusable };
+  source.frontier.weather.rain = 0.75;
+  const second = presentationSignals(source, reusable);
+  assert.equal(second, reusable);
+  assert.notEqual(second.rain, before.rain);
+  assert.equal(second.sentinel, 1, "unowned caller fields remain untouched");
+});

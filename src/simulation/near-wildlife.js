@@ -23,15 +23,22 @@ export class NearWildlife {
     this.sites = [];
     this.sitesAge = Infinity;
     this.drinkers = [];
+    this.before = [];
+    this.preyLimit = -1;
+    this.predatorLimit = -1;
+    this.reconcileRuns = 0;
     this.parched = false;
     this.waterIssue = null;
   }
   clear() {
     this.actors.length = 0;
     this.active = false;
-    this.sites = [];
+    this.sites.length = 0;
     this.sitesAge = Infinity;
-    this.drinkers = [];
+    this.drinkers.length = 0;
+    this.before.length = 0;
+    this.preyLimit = -1;
+    this.predatorLimit = -1;
     this.parched = false;
     this.waterIssue = null;
   }
@@ -54,34 +61,76 @@ export class NearWildlife {
     return sites;
   }
   reconcile(prey, predators) {
+    if (prey === this.preyLimit && predators === this.predatorLimit) return;
+    this.reconcileRuns++;
+    let write = 0;
+    for (let i = 0; i < this.actors.length; i++) {
+      const actor = this.actors[i],
+        limit = actor.kind === "prey" ? prey : predators;
+      if (actor.slot < limit) this.actors[write++] = actor;
+    }
+    this.actors.length = write;
     for (const [kind, limit] of [
       ["prey", prey],
       ["predator", predators],
     ]) {
-      this.actors = this.actors.filter(
-        (a) => a.kind !== kind || a.slot < limit,
-      );
-      for (let slot = 0; slot < limit; slot++)
-        if (!this.actors.some((a) => a.kind === kind && a.slot === slot)) {
-          const phase =
-            hash2i(slot, kind === "prey" ? 91 : 92, this.seed) * Math.PI * 2;
-          const radius = kind === "prey" ? 1.5 + slot * 0.2 : 5;
-          this.actors.push({
-            kind,
-            slot,
-            x: WILDLIFE_HOME.x + Math.cos(phase) * radius,
-            z: WILDLIFE_HOME.z + Math.sin(phase) * radius,
-            yaw: phase,
-            mode: "forage",
-            phase,
-            vx: 0,
-            vz: 0,
-            // Staggered so a herd does not drink as one animal.
-            thirst: kind === "prey" ? hash2i(slot, 93, this.seed) * 0.4 : 0,
-            drink: 0,
-          });
+      for (let slot = 0; slot < limit; slot++) {
+        let exists = false;
+        for (let i = 0; i < this.actors.length; i++) {
+          const actor = this.actors[i];
+          if (actor.kind === kind && actor.slot === slot) {
+            exists = true;
+            break;
+          }
         }
+        if (exists) continue;
+        const phase =
+            hash2i(slot, kind === "prey" ? 91 : 92, this.seed) * Math.PI * 2,
+          radius = kind === "prey" ? 1.5 + slot * 0.2 : 5;
+        this.actors.push({
+          kind,
+          slot,
+          x: WILDLIFE_HOME.x + Math.cos(phase) * radius,
+          z: WILDLIFE_HOME.z + Math.sin(phase) * radius,
+          yaw: phase,
+          mode: "forage",
+          phase,
+          vx: 0,
+          vz: 0,
+          // Staggered so a herd does not drink as one animal.
+          thirst: kind === "prey" ? hash2i(slot, 93, this.seed) * 0.4 : 0,
+          drink: 0,
+        });
+      }
     }
+    this.preyLimit = prey;
+    this.predatorLimit = predators;
+  }
+  snapshotActors() {
+    for (let i = 0; i < this.actors.length; i++) {
+      const actor = this.actors[i],
+        snap = this.before[i] || (this.before[i] = {});
+      snap.kind = actor.kind;
+      snap.slot = actor.slot;
+      snap.x = actor.x;
+      snap.z = actor.z;
+      snap.yaw = actor.yaw;
+      snap.mode = actor.mode;
+      snap.phase = actor.phase;
+      snap.vx = actor.vx;
+      snap.vz = actor.vz;
+      snap.thirst = actor.thirst;
+      snap.drink = actor.drink;
+    }
+    this.before.length = this.actors.length;
+    return this.before;
+  }
+  snapshotFor(kind, slot) {
+    for (let i = 0; i < this.before.length; i++) {
+      const actor = this.before[i];
+      if (actor.kind === kind && actor.slot === slot) return actor;
+    }
+    return null;
   }
   step(dt, body, place, ecosystem, env) {
     if (!Number.isFinite(dt) || dt < 0 || dt > 0.1)
@@ -115,12 +164,11 @@ export class NearWildlife {
         : quality <= 0.5
           ? "fouled"
           : "dry";
-    // Decisions sample a single immutable beginning-of-step snapshot, independent of array order.
-    const before = this.actors.map((a) => ({ ...a }));
-    const drinkersBefore = before.filter((b) => b.mode === "drink");
+    // Decisions sample one reusable beginning-of-step snapshot, independent of array order.
+    const before = this.snapshotActors();
     let parched = false;
     for (const a of this.actors) {
-      const old = before.find((b) => b.kind === a.kind && b.slot === a.slot);
+      const old = this.snapshotFor(a.kind, a.slot);
       let dx = 0,
         dz = 0,
         speed = 0.22;
@@ -138,14 +186,20 @@ export class NearWildlife {
         a.mode = "evade";
         a.drink = 0; // a flush interrupts a drink rather than queueing one
       } else if (a.kind === "prey") {
-        const hunter = before
-          .filter((b) => b.kind === "predator")
-          .sort(
-            (l, r) =>
-              Math.hypot(l.x - old.x, l.z - old.z) -
-              Math.hypot(r.x - old.x, r.z - old.z),
-          )[0];
-        if (hunter && Math.hypot(hunter.x - old.x, hunter.z - old.z) < 3) {
+        let hunter = null,
+          hunterDist2 = Infinity;
+        for (let i = 0; i < before.length; i++) {
+          const candidate = before[i];
+          if (candidate.kind !== "predator") continue;
+          const hx = candidate.x - old.x,
+            hz = candidate.z - old.z,
+            dist2 = hx * hx + hz * hz;
+          if (dist2 < hunterDist2) {
+            hunterDist2 = dist2;
+            hunter = candidate;
+          }
+        }
+        if (hunter && hunterDist2 < 9) {
           dx = old.x - hunter.x;
           dz = old.z - hunter.z;
           speed = 1.3;
@@ -175,20 +229,23 @@ export class NearWildlife {
           parched = true;
         }
       } else {
-        const quarry = drinkersBefore.concat(
-          before.filter((b) => b.kind === "prey" && b.mode !== "drink"),
-        );
-        const target = quarry
-          .filter((b) => b.kind === "prey")
-          .sort(
-            (l, r) =>
-              Math.hypot(l.x - old.x, l.z - old.z) -
-              Math.hypot(r.x - old.x, r.z - old.z),
-          )[0];
+        let target = null,
+          targetDist2 = Infinity;
+        for (let i = 0; i < before.length; i++) {
+          const candidate = before[i];
+          if (candidate.kind !== "prey") continue;
+          const qx = candidate.x - old.x,
+            qz = candidate.z - old.z,
+            dist2 = qx * qx + qz * qz;
+          if (dist2 < targetDist2) {
+            targetDist2 = dist2;
+            target = candidate;
+          }
+        }
         if (target) {
           dx = target.x - old.x;
           dz = target.z - old.z;
-          const d = Math.hypot(dx, dz);
+          const d = Math.sqrt(targetDist2);
           // Drinking prey are committed and slower to notice, so they are stalked.
           const hold = target.mode === "drink" ? 2.2 : 0.5;
           speed = d > hold ? (target.mode === "drink" ? 0.5 : 0.7) : 0;
@@ -212,10 +269,11 @@ export class NearWildlife {
           if (peer.kind !== old.kind || peer.slot === old.slot) continue;
           const px = old.x - peer.x,
             pz = old.z - peer.z,
-            distance = Math.hypot(px, pz),
+            distance2 = px * px + pz * pz,
             radius = old.kind === "prey" ? 0.72 : 0.95;
-          if (distance >= radius) continue;
-          const weight = (radius - distance) / radius;
+          if (distance2 >= radius * radius) continue;
+          const distance = Math.sqrt(distance2),
+            weight = (radius - distance) / radius;
           if (distance > 1e-5) {
             separateX += (px / distance) * weight;
             separateZ += (pz / distance) * weight;
@@ -257,10 +315,27 @@ export class NearWildlife {
       a.z = z;
       if (speed > 0) a.yaw = Math.atan2(a.vx, a.vz);
     }
-    this.drinkers = this.actors
-      .filter((a) => a.mode === "drink")
-      .map((a) => ({ x: a.x, z: a.z }));
+    let drinkerCount = 0;
+    for (let i = 0; i < this.actors.length; i++) {
+      const actor = this.actors[i];
+      if (actor.mode !== "drink") continue;
+      const point =
+        this.drinkers[drinkerCount] ||
+        (this.drinkers[drinkerCount] = { x: 0, z: 0 });
+      point.x = actor.x;
+      point.z = actor.z;
+      drinkerCount++;
+    }
+    this.drinkers.length = drinkerCount;
     this.parched = parched;
     if (drinkable) this.waterIssue = null;
+  }
+  performanceStats() {
+    return {
+      actors: this.actors.length,
+      snapshots: this.before.length,
+      reconcileRuns: this.reconcileRuns,
+      drinkers: this.drinkers.length,
+    };
   }
 }

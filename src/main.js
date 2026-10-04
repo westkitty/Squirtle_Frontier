@@ -40,7 +40,7 @@ import { createBody } from "./player/body-state.js";
 import { stepBody } from "./player/squirtle-controller.js";
 import { resolveAttentionTarget } from "./player/creature-attention.js";
 import { CreatureCamera } from "./player/creature-camera.js";
-import { region } from "./player/movement-region.js";
+import { fillObstaclesAt, region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
 import {
   applyWaterJet,
@@ -128,27 +128,36 @@ async function boot() {
       habitat = new HabitatView(frontierGroup),
       effects = new WorldEffects(frontierGroup),
       wildlife = new NearWildlife(state.seed),
+      collisionBuffer = [],
+      settlementCollision = settlementObstacles.map((obstacle) => ({
+        ...obstacle,
+        ground: heightAt(obstacle.x, obstacle.z),
+      })),
+      drinkQualityView = { wetness: 0, contamination: 0, sediment: 0 },
       liveRegion = {
         ...region,
-        obstaclesAt: (x, z) => [
-          ...region.obstaclesAt(x, z),
-          ...settlementObstacles,
-        ],
+        obstaclesAt: (x, z) => {
+          fillObstaclesAt(x, z, collisionBuffer);
+          for (let i = 0; i < settlementCollision.length; i++)
+            collisionBuffer.push(settlementCollision[i]);
+          return collisionBuffer;
+        },
         sample: (x, z) => channelSample(x, z, state.frontier.stage),
-        // The wetland node is what animals react to when they choose a shore.
+        // Stable view: wildlife reads current node values without a fresh object each step.
         get drinkQuality() {
           const node = state.watershed.nodes[2];
-          return {
-            wetness: node.wetness,
-            contamination: node.contamination,
-            sediment: node.sediment,
-          };
+          drinkQualityView.wetness = node.wetness;
+          drinkQualityView.contamination = node.contamination;
+          drinkQualityView.sediment = node.sediment;
+          return drinkQualityView;
         },
         water: (x, z) => {
           const water = region.water(x, z, state.waterLevel);
           if (!water) return null;
           const flow = state.watershed.nodes[2].flow;
-          return { ...water, currentX: 0.08 * flow, currentZ: -0.18 * flow };
+          water.currentX = 0.08 * flow;
+          water.currentZ = -0.18 * flow;
+          return water;
         },
       },
       rig = new CreatureCamera(camera, liveRegion);
@@ -158,7 +167,17 @@ async function boot() {
     // re-read when the basin's level or the player's cut changes. Nothing here pretends to
     // move water: it is a measurement of where water already is.
     let reachWater = {},
-      reachWaterKey = "";
+      reachWaterKey = "",
+      audioChannelKey = "",
+      audioChannelDistance = 999;
+    const readAudioChannelDistance = (x, z, stage) => {
+      const key = `${stage}|${Math.round(x * 2)},${Math.round(z * 2)}`;
+      if (key !== audioChannelKey) {
+        audioChannelKey = key;
+        audioChannelDistance = channelDistance(x, z);
+      }
+      return audioChannelDistance;
+    };
     const readReachWater = () => {
       const key = `${state.frontier.stage}|${(state.waterLevel * 1000) | 0}`;
       if (key === reachWaterKey) return reachWater;
@@ -692,7 +711,14 @@ async function boot() {
       options,
     );
     const saveState = document.querySelector("#save-state"),
-      controllerState = document.querySelector("#controller-state");
+      controllerState = document.querySelector("#controller-state"),
+      interact = document.querySelector("#interact"),
+      weatherReadout = document.querySelector("#weather"),
+      memoryPanel = document.querySelector("#memory"),
+      modeReadout = document.querySelector("#mode"),
+      speedReadout = document.querySelector("#speed"),
+      jetReadout = document.querySelector("#jet"),
+      jetKeyReadout = document.querySelector("#jet-key");
     const noteSave = (result, label = "Saved locally") => {
       saveState.textContent = result.ok
         ? `${label} · just now`
@@ -785,6 +811,54 @@ async function boot() {
     // Standing in a band for a moment is what turns a depth into a record.
     let strataHold = { band: -1, held: 0 },
       strataLoggedAt = -10;
+    const placeContext = {
+        settlement: state.settlement,
+        ecosystem: state.ecosystem,
+      },
+      movementControls = {
+        x: 0,
+        z: 0,
+        slide: false,
+        jet: false,
+        dive: false,
+        ascend: false,
+        run: false,
+      },
+      effectsOptions = {
+        water: null,
+        isShaking: false,
+        effectScale: 1,
+        channelFlow: 0,
+      },
+      labEnvironment = { windStrength: 0.08, wetness: 0 },
+      audioContext = {
+        water: null,
+        isShaking: false,
+        isSleeping: false,
+        channelStage: 0,
+        channelDist: 999,
+        rain: 0,
+        waterQuality: 1,
+        waterWetness: 0,
+        wildlifeLevel: 0,
+        wildlifeDistance: 999,
+        canopyCover: 0,
+      },
+      cameraSettings = {
+        sensitivity: Settings.values.sensitivity,
+        invertY: Settings.values.invertY,
+        reducedMotion: Settings.motionReduced,
+      },
+      actionLabels = {
+        enter: "Enter basin",
+        leave: "Leave basin",
+        rest: "Rest five minutes",
+        record: "Enter the Deep Record",
+        "record-exit": "Return to the basin",
+        "drink-bowl": "Drink fresh water",
+        "play-frogs": "Splash with frogs",
+      },
+      hudCache = { weather: "", mode: "", speed: "", jetKey: "", jet: -1 };
     let hudTime = 0,
       saveTime = 0,
       lastRender = null,
@@ -793,6 +867,7 @@ async function boot() {
       // whether the player is reading a sense line without reaching out of scope.
       senseHeld = false,
       controllerSignature = "",
+      interactionSignature = "",
       observedWorld = observationSnapshot(state),
       presentation = presentationSignals(state);
     const showHint = (key, text) => {
@@ -813,30 +888,25 @@ async function boot() {
           world = rig.movement(controls.x, controls.z),
           inputMode = input.inputMode();
         senseHeld = !!controls.sense;
-        const action = placeAction(state.place, body, {
-          settlement: state.settlement,
-          ecosystem: state.ecosystem,
-        });
-        const interact = document.querySelector("#interact"),
+        placeContext.settlement = state.settlement;
+        placeContext.ecosystem = state.ecosystem;
+        const action = placeAction(state.place, body, placeContext),
           interactControl =
             inputMode === "gamepad"
               ? "Y"
               : inputMode === "touch"
                 ? "Tap"
                 : "R",
-          actionLabel = {
-            enter: "Enter basin",
-            leave: "Leave basin",
-            rest: "Rest five minutes",
-            record: "Enter the Deep Record",
-            "record-exit": "Return to the basin",
-            "drink-bowl": "Drink fresh water",
-            "play-frogs": "Splash with frogs",
-          }[action] || "";
-        interact.hidden = !action;
-        interact.textContent = actionLabel
-          ? `${actionLabel} · ${interactControl}`
-          : "";
+          actionLabel = actionLabels[action] || "",
+          nextInteraction = actionLabel
+            ? `${actionLabel} · ${interactControl}`
+            : "",
+          nextInteractionSignature = `${action || ""}|${interactControl}`;
+        if (nextInteractionSignature !== interactionSignature) {
+          interactionSignature = nextInteractionSignature;
+          interact.hidden = !action;
+          interact.textContent = nextInteraction;
+        }
         if (controls.interact && !interactionHeld && action) {
           if (action === "rest") {
             advanceOffline(state, 300);
@@ -889,7 +959,14 @@ async function boot() {
             : state.place === "lab"
               ? labRegion
               : liveRegion;
-        stepBody(body, { ...controls, ...world }, env, dt);
+        movementControls.x = world.x;
+        movementControls.z = world.z;
+        movementControls.slide = controls.slide;
+        movementControls.jet = controls.jet;
+        movementControls.dive = controls.dive;
+        movementControls.ascend = controls.ascend;
+        movementControls.run = controls.run;
+        stepBody(body, movementControls, env, dt);
         if (state.place === "lab") {
           body.x = Math.max(-7.5, Math.min(7.5, body.x));
           body.z = Math.max(-7.5, Math.min(7.5, body.z));
@@ -915,7 +992,8 @@ async function boot() {
             state.memory.markStrata(ledger.layer, ledger.layers)
           ) {
             strataLoggedAt = state.elapsed;
-            strataHold = { band: -1, held: 0 };
+            strataHold.band = -1;
+            strataHold.held = 0;
           }
           status.textContent =
             record.describe(body.y) +
@@ -930,7 +1008,10 @@ async function boot() {
         }
         // A reading is earned in the shaft or not at all: leaving must not bank progress
         // toward logging a band that was never stood in.
-        if (state.place !== "record") strataHold = { band: -1, held: 0 };
+        if (state.place !== "record") {
+          strataHold.band = -1;
+          strataHold.held = 0;
+        }
         const previousTick = state.frontier.tick;
         state.update(dt);
         if (state.frontier.tick !== previousTick) {
@@ -944,7 +1025,7 @@ async function boot() {
         }
         if (state.frontier.tick !== previousTick)
           state.settlement.observe(body, state.place, state.frontier.tick);
-        presentation = presentationSignals(state);
+        presentationSignals(state, presentation);
         shared.uTime.value = state.elapsed;
         shared.uWet.value = presentation.wetGround;
         shared.uWindStrength.value = presentation.windStrength;
@@ -956,7 +1037,8 @@ async function boot() {
           if (change && !statusFlash && !controls.sense)
             statusFlash = flashStatus(status, change.message, statusFlash, 4.5);
         }
-        wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
+        if (state.place === "frontier")
+          wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
         const currentWater = (state.place === "frontier"
           ? liveRegion
           : state.place === "lab"
@@ -968,13 +1050,13 @@ async function boot() {
           Settings.get("effects"),
           adaptive.value,
         );
-        if (state.place === "frontier")
-          effects.update(state, body, {
-            water: currentWater,
-            isShaking: creature?.isShaking ?? false,
-            effectScale,
-            channelFlow: state.watershed.nodes[2].flow,
-          });
+        if (state.place === "frontier") {
+          effectsOptions.water = currentWater;
+          effectsOptions.isShaking = creature?.isShaking ?? false;
+          effectsOptions.effectScale = effectScale;
+          effectsOptions.channelFlow = state.watershed.nodes[2].flow;
+          effects.update(state, body, effectsOptions);
+        }
         if (state.place === "frontier")
           habitat.update(
             state.ecosystem,
@@ -986,37 +1068,39 @@ async function boot() {
             dt,
             presentation,
           );
-        lab?.update(
-          state.ecosystem,
-          body,
-          state.elapsed,
-          state.memory.notable,
-          null,
-          null,
-          dt,
-          {
-            windStrength: 0.08,
-            wetness: state.ecosystem.labWater,
-          },
-        );
-        const signal = controls.sense
-          ? senseWater(
-              state.watershed,
-              body,
-              !!liveRegion.water(body.x, body.z) && body.y < 0.3,
-              state.frontier,
-            )
-          : null;
-        watershedView.update(
-          state.watershed,
-          body,
-          !!signal,
-          state.elapsed,
-          state.memory.reaches,
-          state.frontier.stage,
-          readReachWater(),
-          !!controls.sense,
-        );
+        if (lab) {
+          labEnvironment.wetness = state.ecosystem.labWater;
+          lab.update(
+            state.ecosystem,
+            body,
+            state.elapsed,
+            state.memory.notable,
+            null,
+            null,
+            dt,
+            labEnvironment,
+          );
+        }
+        const signal =
+          controls.sense && state.place === "frontier"
+            ? senseWater(
+                state.watershed,
+                body,
+                !!liveRegion.water(body.x, body.z) && body.y < 0.3,
+                state.frontier,
+              )
+            : null;
+        if (state.place === "frontier")
+          watershedView.update(
+            state.watershed,
+            body,
+            !!signal,
+            state.elapsed,
+            state.memory.reaches,
+            state.frontier.stage,
+            readReachWater(),
+            !!controls.sense,
+          );
         const wetland = state.watershed.nodes[2],
           sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),
           contamination = THREE.MathUtils.clamp(
@@ -1099,13 +1183,14 @@ async function boot() {
         state.player.x = body.x;
         state.player.z = body.z;
         // Full pose: a saved x/z pair would drop the body through a basin floor.
-        state.pose = {
-          x: +body.x.toFixed(4),
-          y: +body.y.toFixed(4),
-          z: +body.z.toFixed(4),
-          yaw: +body.yaw.toFixed(4),
-          place: state.place,
-        };
+        const pose =
+          state.pose ||
+          (state.pose = { x: 0, y: 0, z: 0, yaw: 0, place: state.place });
+        pose.x = Math.round(body.x * 10000) / 10000;
+        pose.y = Math.round(body.y * 10000) / 10000;
+        pose.z = Math.round(body.z * 10000) / 10000;
+        pose.yaw = Math.round(body.yaw * 10000) / 10000;
+        pose.place = state.place;
         const attention = resolveAttentionTarget({
           body,
           place: state.place,
@@ -1123,14 +1208,12 @@ async function boot() {
             effectScale,
             presentation,
           );
-        const faunaSource =
-            state.place === "lab"
-              ? { x: 0, z: 0 }
-              : WETLAND,
+        const faunaX = state.place === "lab" ? 0 : WETLAND.x,
+          faunaZ = state.place === "lab" ? 0 : WETLAND.z,
           wildlifeDistance =
             state.place === "record"
               ? 999
-              : Math.hypot(body.x - faunaSource.x, body.z - faunaSource.z),
+              : Math.hypot(body.x - faunaX, body.z - faunaZ),
           wildlifeLevel =
             state.place === "lab"
               ? state.ecosystem.labFrogs
@@ -1142,25 +1225,30 @@ async function boot() {
                     1,
                   )
                 : 0;
-        audio.update(body, Settings.values, {
-          water: currentWater,
-          isShaking: creature?.isShaking ?? false,
-          isSleeping: creature?.isSleeping ?? false,
-          channelStage: state.place === "frontier" ? state.frontier.stage : 0,
-          channelDist:
-            state.place === "frontier" && state.frontier.stage >= 2
-              ? channelDistance(body.x, body.z)
-              : 999,
-          rain: state.place === "frontier" ? presentation.rain : 0,
-          waterQuality: presentation.waterQuality,
-          waterWetness: presentation.wetness,
-          wildlifeLevel,
-          wildlifeDistance,
-          canopyCover:
-            state.place === "frontier"
-              ? scenery.canopyCoverAt(body.x, body.z)
-              : 0,
-        });
+        audioContext.water = currentWater;
+        audioContext.isShaking = creature?.isShaking ?? false;
+        audioContext.isSleeping = creature?.isSleeping ?? false;
+        audioContext.channelStage =
+          state.place === "frontier" ? state.frontier.stage : 0;
+        audioContext.channelDist =
+          state.place === "frontier" && state.frontier.stage >= 2
+            ? readAudioChannelDistance(
+                body.x,
+                body.z,
+                state.frontier.stage,
+              )
+            : 999;
+        audioContext.rain =
+          state.place === "frontier" ? presentation.rain : 0;
+        audioContext.waterQuality = presentation.waterQuality;
+        audioContext.waterWetness = presentation.wetness;
+        audioContext.wildlifeLevel = wildlifeLevel;
+        audioContext.wildlifeDistance = wildlifeDistance;
+        audioContext.canopyCover =
+          state.place === "frontier"
+            ? scenery.canopyCoverAt(body.x, body.z)
+            : 0;
+        audio.update(body, Settings.values, audioContext);
         // A transient notice hands the caption back once it has had its moment, and only
         // if nothing else has spoken in the meantime.
         statusFlash = settleStatus(status, statusFlash, dt);
@@ -1181,10 +1269,10 @@ async function boot() {
               : Math.min(0.1, (now - lastRender) / 1000);
         lastRender = now;
         if (state.place === "frontier") streaming.update(body.x, body.z);
-        rig.update(body, input.consumeLook(), cameraDt, {
-          ...Settings.values,
-          reducedMotion: Settings.motionReduced,
-        });
+        cameraSettings.sensitivity = Settings.values.sensitivity;
+        cameraSettings.invertY = Settings.values.invertY;
+        cameraSettings.reducedMotion = Settings.motionReduced;
+        rig.update(body, input.consumeLook(), cameraDt, cameraSettings);
         const cameraEnv =
             state.place === "record"
               ? recordRegion
@@ -1258,33 +1346,52 @@ async function boot() {
         }
         hudTime++;
         if (hudTime % 3 === 0) {
-          document.querySelector("#weather").textContent =
+          const weather =
             state.place === "frontier"
               ? state.frontier.weather.type
               : "Sheltered";
-          if (!document.querySelector("#memory").hidden) refreshMemoryPanel();
+          if (weather !== hudCache.weather) {
+            hudCache.weather = weather;
+            weatherReadout.textContent = weather;
+          }
+          if (!memoryPanel.hidden) refreshMemoryPanel();
           // The instrument belongs to the shaft and to nothing else.
           recordReadout.hidden = state.place !== "record";
 
-          document.querySelector("#mode").textContent = {
-            land:
-              Math.hypot(body.vx, body.vz) > 0.2
-                ? "On little feet"
-                : "On the bank",
-            swim: "At the surface",
-            dive: "Below the surface",
-            slide: "In your shell",
-            air: "In the air",
-          }[body.mode];
-          document.querySelector("#speed").textContent =
-            `${Math.hypot(body.vx, body.vz).toFixed(1)} m/s`;
-          document.querySelector("#jet").value = 1 - body.jetCooldown / 1.1;
-          document.querySelector("#jet-key").textContent =
-            input.inputMode() === "gamepad"
-              ? "A"
-              : input.inputMode() === "touch"
-                ? "JET"
-                : "SPACE";
+          const mode = {
+              land:
+                Math.hypot(body.vx, body.vz) > 0.2
+                  ? "On little feet"
+                  : "On the bank",
+              swim: "At the surface",
+              dive: "Below the surface",
+              slide: "In your shell",
+              air: "In the air",
+            }[body.mode],
+            speed = `${Math.hypot(body.vx, body.vz).toFixed(1)} m/s`,
+            jetValue = 1 - body.jetCooldown / 1.1,
+            jetKey =
+              input.inputMode() === "gamepad"
+                ? "A"
+                : input.inputMode() === "touch"
+                  ? "JET"
+                  : "SPACE";
+          if (mode !== hudCache.mode) {
+            hudCache.mode = mode;
+            modeReadout.textContent = mode;
+          }
+          if (speed !== hudCache.speed) {
+            hudCache.speed = speed;
+            speedReadout.textContent = speed;
+          }
+          if (Math.abs(jetValue - hudCache.jet) > 0.001) {
+            hudCache.jet = jetValue;
+            jetReadout.value = jetValue;
+          }
+          if (jetKey !== hudCache.jetKey) {
+            hudCache.jetKey = jetKey;
+            jetKeyReadout.textContent = jetKey;
+          }
           if (hudTime % 15 === 0) {
             const controller = input.gamepadStatus(),
               nextController = controller.connected
@@ -1394,6 +1501,12 @@ async function boot() {
         gaze: creature ? { yaw: creature.gazeYaw, pitch: creature.gazePitch } : null,
         sleeping: creature?.isSleeping ?? false,
         sleepProgress: creature?.sleepProgress ?? 0,
+        performance: {
+          scenery: scenery.performanceStats(),
+          habitat: habitat.performanceStats(),
+          wildlife: wildlife.performanceStats(),
+          effects: effects.stats(),
+        },
         effects: {
           jet: effects?.jet?.count ?? 0,
           spray: scenery?.pool?.count ?? 0,

@@ -3,9 +3,9 @@ import { WATER_BASE, WATER_SHORELINE } from "../simulation/water-level.js";
 import { heightAt, WORLD } from "../worldgen.js";
 import { hash2i, mulberry32 } from "../rng.js";
 export const obstacles = [
-  { x: -10, z: -8, radius: 1.4, height: 2.2 },
-  { x: 13, z: 8, radius: 1.1, height: 1.6 },
-  { x: -17, z: 20, radius: 2, height: 2.5 },
+  { x: -10, z: -8, radius: 1.4, height: 2.2, ground: heightAt(-10, -8) },
+  { x: 13, z: 8, radius: 1.1, height: 1.6, ground: heightAt(13, 8) },
+  { x: -17, z: 20, radius: 2, height: 2.5, ground: heightAt(-17, 20) },
 ];
 export function sampleGround(x, z) {
   const e = 0.15;
@@ -38,9 +38,10 @@ export function treesForChunk(i, j) {
   return trees;
 }
 const colliderCache = new Map();
-export function obstaclesAt(x, z) {
-  const result = [...obstacles],
-    ci = Math.floor(x / WORLD.chunk),
+export function fillObstaclesAt(x, z, result = []) {
+  result.length = 0;
+  for (let k = 0; k < obstacles.length; k++) result.push(obstacles[k]);
+  const ci = Math.floor(x / WORLD.chunk),
     cj = Math.floor(z / WORLD.chunk);
   for (let j = cj - 1; j <= cj + 1; j++)
     for (let i = ci - 1; i <= ci + 1; i++) {
@@ -53,14 +54,19 @@ export function obstaclesAt(x, z) {
             z: t.z,
             radius: 0.32,
             height: t.h,
+            ground: heightAt(t.x, t.z),
           })),
         );
         if (colliderCache.size > 16)
           colliderCache.delete(colliderCache.keys().next().value);
       }
-      result.push(...colliderCache.get(key));
+      const cached = colliderCache.get(key);
+      for (let k = 0; k < cached.length; k++) result.push(cached[k]);
     }
   return result;
+}
+export function obstaclesAt(x, z) {
+  return fillObstaclesAt(x, z, []);
 }
 export const region = {
   sample: sampleGround,

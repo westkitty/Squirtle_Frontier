@@ -408,3 +408,87 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
   assert.equal(body.jetTime, 0.2, "visual density may not alter Jet state");
   fx.dispose();
 });
+
+
+test("rain terrain sampling is spatially cached across nearby frames", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent),
+    state = createMockState(),
+    body = createBody(0, 0, 0);
+  state.frontier.weather.rain = 1;
+
+  fx.update(state, body, { effectScale: 1 });
+  const first = fx.stats();
+  assert.equal(first.rainGroundRefreshes, 1);
+  assert.ok(first.terrainSamples >= 112);
+
+  state.elapsed += 0.05;
+  body.x += 0.1;
+  body.z += 0.1;
+  fx.update(state, body, { effectScale: 1 });
+  const cached = fx.stats();
+  assert.equal(
+    cached.rainGroundRefreshes,
+    first.rainGroundRefreshes,
+    "sub-cell movement inside the refresh window must reuse rain ground samples",
+  );
+  assert.equal(cached.terrainSamples, first.terrainSamples);
+
+  body.x += 1;
+  state.elapsed += 0.05;
+  fx.update(state, body, { effectScale: 1 });
+  assert.equal(fx.stats().rainGroundRefreshes, first.rainGroundRefreshes + 1);
+  fx.dispose();
+});
+
+test("channel foam height path rebuilds only when channel stage changes", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent),
+    state = createMockState(),
+    body = createBody(0, 0, 0);
+  state.frontier.stage = 2;
+  state.watershed = { nodes: [{}, {}, { wetness: 0.8 }] };
+
+  fx.update(state, body, { channelFlow: 1 });
+  const rebuilt = fx.stats().foamRebuilds;
+  assert.ok(rebuilt >= 1);
+  for (let i = 0; i < 30; i++) {
+    state.elapsed += 1 / 60;
+    fx.update(state, body, { channelFlow: 1 });
+  }
+  assert.equal(
+    fx.stats().foamRebuilds,
+    rebuilt,
+    "animation must travel over the precomputed path without rebuilding terrain",
+  );
+
+  state.frontier.stage = 3;
+  fx.update(state, body, { channelFlow: 1 });
+  assert.equal(fx.stats().foamRebuilds, rebuilt + 1);
+  fx.dispose();
+});
+
+test("effect batch roots keep static object matrices while instance buffers animate", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent);
+  for (const mesh of [
+    fx.fire,
+    fx.fireSmoke,
+    fx.rain,
+    fx.jet,
+    fx.wake,
+    fx.splash,
+    fx.slideDust,
+    fx.streamFoam,
+    fx.wetlandMist,
+    fx.rainRipples,
+    fx.underwaterMotes,
+    fx.channel,
+  ])
+    assert.equal(
+      mesh.matrixAutoUpdate,
+      false,
+      "identity batch roots should not recompute Object3D matrices each frame",
+    );
+  fx.dispose();
+});

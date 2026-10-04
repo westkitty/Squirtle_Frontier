@@ -127,7 +127,10 @@ export function stepBody(b, input, env, dt) {
       dz = nz - o.z,
       d = Math.hypot(dx, dz),
       radius = o.radius + 0.23;
-    if (d < radius && b.y < env.sample(o.x, o.z).height + o.height) {
+    const obstacleGround = Number.isFinite(o.ground)
+      ? o.ground
+      : env.sample(o.x, o.z).height;
+    if (d < radius && b.y < obstacleGround + o.height) {
       const normalX = d > 0.001 ? dx / d : 1,
         normalZ = d > 0.001 ? dz / d : 0;
       nx = o.x + normalX * radius;

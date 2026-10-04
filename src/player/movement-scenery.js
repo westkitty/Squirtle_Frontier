@@ -9,6 +9,9 @@ export class MovementScenery {
     this.scene = scene;
     this.streaming = streaming;
     this.groups = new Map();
+    this.canopyKey = "";
+    this.canopyValue = 0;
+    this.canopyScans = 0;
     this.trunkGeo = new THREE.CylinderGeometry(0.2, 0.32, 1, 6);
     this.leafGeo = new THREE.ConeGeometry(1, 1, 7);
     this.rockGeo = new THREE.IcosahedronGeometry(1, 1);
@@ -110,15 +113,7 @@ export class MovementScenery {
     const shoreGeometry = new THREE.BufferGeometry();
     this.shore = new THREE.LineLoop(shoreGeometry, this.shoreMaterial);
     this.shore.position.y = WATER_SURFACE_Y(WATER_BASE) + 0.025;
-    this.shoreLapMaterial = new THREE.LineBasicMaterial({
-      color: 0xd9f3ed,
-      transparent: true,
-      opacity: 0.12,
-      depthWrite: false,
-    });
-    this.shoreLap = new THREE.LineLoop(shoreGeometry, this.shoreLapMaterial);
-    this.shoreLap.position.y = WATER_SURFACE_Y(WATER_BASE) + 0.032;
-    scene.add(this.water, this.shore, this.shoreLap);
+    scene.add(this.water, this.shore);
     this.waterLevel = null;
     this.buildWater(WATER_BASE);
     this.pool = new THREE.InstancedMesh(
@@ -132,6 +127,8 @@ export class MovementScenery {
     );
     this.pool.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.pool.frustumCulled = false;
+    this.pool.updateMatrix();
+    this.pool.matrixAutoUpdate = false;
     scene.add(this.pool);
     this.dummy = new THREE.Object3D();
     this.particleTime = 0;
@@ -178,6 +175,8 @@ export class MovementScenery {
     );
     this.wetTrail.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.wetTrail.frustumCulled = false;
+    this.wetTrail.updateMatrix();
+    this.wetTrail.matrixAutoUpdate = false;
     this.wetTrail.count = 0;
     this.wetTrail.visible = false;
     scene.add(this.wetTrail);
@@ -261,7 +260,6 @@ export class MovementScenery {
     this.water.geometry = geometry;
     this.shore.geometry.dispose();
     this.shore.geometry = shoreGeometry;
-    this.shoreLap.geometry = shoreGeometry;
     this.waterLevel = level;
     return true;
   }
@@ -327,6 +325,10 @@ export class MovementScenery {
         new THREE.Color().setHSL(0.28 + (i % 5) * 0.014, 0.34, 0.2),
       );
     });
+    for (const mesh of [trunks, leaves]) {
+      mesh.updateMatrix();
+      mesh.matrixAutoUpdate = false;
+    }
     group.add(trunks, leaves);
     for (const rock of obstacles)
       if (
@@ -349,9 +351,14 @@ export class MovementScenery {
           rock.height * 0.55,
           rock.radius * (0.78 + Math.abs(Math.cos(rock.z)) * 0.3),
         );
+        mesh.updateMatrix();
+        mesh.matrixAutoUpdate = false;
         group.add(mesh);
       }
     group.userData.trees = trees;
+    group.updateMatrix();
+    group.matrixAutoUpdate = false;
+    this.canopyKey = "";
     this.groups.set(key, group);
     this.scene.add(group);
   }
@@ -363,8 +370,13 @@ export class MovementScenery {
     });
     group.removeFromParent();
     this.groups.delete(key);
+    this.canopyKey = "";
   }
   canopyCoverAt(x, z) {
+    const key = `${Math.round(x * 2)},${Math.round(z * 2)}`;
+    if (key === this.canopyKey) return this.canopyValue;
+    this.canopyKey = key;
+    this.canopyScans++;
     let cover = 0;
     for (const group of this.groups.values())
       for (const tree of group.userData?.trees || []) {
@@ -376,14 +388,14 @@ export class MovementScenery {
           (1 - distance / 3.2) * heightWeight,
         );
       }
-    return THREE.MathUtils.clamp(cover, 0, 1);
+    this.canopyValue = THREE.MathUtils.clamp(cover, 0, 1);
+    return this.canopyValue;
   }
   update(body, dt, level = null, effectScale = 1, environment = {}) {
     const surface = level !== null ? WATER_SURFACE_Y(level) : null;
     if (surface !== null) {
       this.water.position.y = surface;
       this.shore.position.y = surface + 0.025;
-      this.shoreLap.position.y = surface + 0.032;
       this.buildWater(level);
     }
     const ground = heightAt(body.x, body.z),
@@ -424,8 +436,13 @@ export class MovementScenery {
       this.lastWetMark = null;
     }
     this.wasSubmerged = submerged;
-    for (const mark of this.wetMarks) mark.age += dt;
-    this.wetMarks = this.wetMarks.filter((mark) => mark.age < mark.life);
+    let wetWrite = 0;
+    for (let i = 0; i < this.wetMarks.length; i++) {
+      const mark = this.wetMarks[i];
+      mark.age += dt;
+      if (mark.age < mark.life) this.wetMarks[wetWrite++] = mark;
+    }
+    this.wetMarks.length = wetWrite;
     if (
       !submerged &&
       body.grounded &&
@@ -504,10 +521,9 @@ export class MovementScenery {
       0.52,
     );
     const shoreMotion = this.waterUniforms.ripple.value;
-    this.shoreLap.scale.setScalar(
+    this.shore.scale.setScalar(
       1 + Math.sin(this.particleTime * 2.1) * 0.0018 * shoreMotion,
     );
-    this.shoreLapMaterial.opacity = 0.06 + shoreMotion * 0.2;
     // Wake and impact water belong to WorldEffects. This particle stream is Jet-only:
     // ordinary walking/swimming must never look like Squirtle is firing Water Jet.
     const active = body.jetTime > 0,
@@ -533,6 +549,12 @@ export class MovementScenery {
     }
     this.pool.instanceMatrix.needsUpdate = true;
   }
+  performanceStats() {
+    return {
+      canopyScans: this.canopyScans,
+      wetMarks: this.wetMarks.length,
+    };
+  }
   dispose() {
     for (const key of [...this.groups.keys()]) this.remove(key);
     for (const r of [
@@ -546,7 +568,6 @@ export class MovementScenery {
       this.waterMaterial,
       this.shore.geometry,
       this.shoreMaterial,
-      this.shoreLapMaterial,
       this.pool.geometry,
       this.pool.material,
     ])
@@ -557,7 +578,6 @@ export class MovementScenery {
     this.wetTrail.removeFromParent();
     this.water.removeFromParent();
     this.shore.removeFromParent();
-    this.shoreLap.removeFromParent();
     this.contact.geometry.dispose();
     this.contact.material.dispose();
     this.wetTrailMaterial.dispose();

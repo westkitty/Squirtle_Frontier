@@ -34,8 +34,13 @@ try {
         samples: f.length,
         medianMs: f[Math.floor(f.length * 0.5)],
         p95Ms: f[Math.floor(f.length * 0.95)],
+        p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+        maxMs: f.at(-1),
+        over33Pct: +(f.filter((ms) => ms > 33.4).length * 100 / f.length).toFixed(1),
+        over50Pct: +(f.filter((ms) => ms > 50).length * 100 / f.length).toFixed(1),
         memory: s.memory,
         render: s.render,
+        performance: s.performance,
         heap: performance.memory?.usedJSHeapSize ?? null,
         renderer: debug
           ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
@@ -76,6 +81,8 @@ try {
         samples: f.length,
         medianMs: f[Math.floor(f.length * 0.5)],
         p95Ms: f[Math.floor(f.length * 0.95)],
+        p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+        maxMs: f.at(-1),
         adaptiveValue: g.adaptive.value,
         adaptiveChangesCumulative: g.adaptive.changes,
         pixelRatio: g.renderer.getPixelRatio(),
@@ -134,8 +141,13 @@ try {
         samples: f.length,
         medianMs: f[Math.floor(f.length * 0.5)],
         p95Ms: f[Math.floor(f.length * 0.95)],
+        p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+        maxMs: f.at(-1),
+        over33Pct: +(f.filter((ms) => ms > 33.4).length * 100 / f.length).toFixed(1),
+        over50Pct: +(f.filter((ms) => ms > 50).length * 100 / f.length).toFixed(1),
         memory: s.memory,
         render: s.render,
+        performance: s.performance,
       };
     });
     evidence.scenarios.push({ label, ...m });
@@ -182,6 +194,91 @@ try {
     30,
     Math.atan2(22, -20),
   );
+
+  const high = evidence.scenarios.find((scenario) => scenario.quality === "high");
+  assert.ok(
+    high.render.calls <= 41,
+    `normal scene draw calls regressed above revision-32 baseline: ${high.render.calls}`,
+  );
+  assert.ok(
+    evidence.channelCut.render.calls <= 42,
+    `channel scene draw calls regressed above revision-32 baseline: ${evidence.channelCut.render.calls}`,
+  );
+  assert.ok(high.memory.geometries <= 25);
+  assert.ok(high.memory.textures <= 6);
+
+  // Long-session stability window: same low-quality scene, no reload, enough frames for
+  // adaptive/weather/wildlife systems to cycle while renderer resources must remain flat.
+  await page.click("#settings-toggle");
+  await page.selectOption("#quality", "low");
+  await page.click("#settings-toggle");
+  await page.evaluate(() => {
+    const g = window.__SF;
+    Object.assign(g.body, {
+      x: -10,
+      z: 18,
+      y: g.state.sampleHeight(-10, 18),
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      mode: "land",
+      grounded: true,
+    });
+    g.rig.initial = true;
+    g.loop.frames.length = 0;
+  });
+  const stabilityStart = await page.evaluate(() => {
+    const s = window.__SF.stats();
+    return {
+      memory: s.memory,
+      heap: performance.memory?.usedJSHeapSize ?? null,
+      performance: s.performance,
+    };
+  });
+  await page.waitForFunction(
+    () => window.__SF.loop.frames.length >= 360,
+    null,
+    { timeout: 120000 },
+  );
+  evidence.stability = await page.evaluate((start) => {
+    const g = window.__SF,
+      s = g.stats(),
+      frames = s.frames,
+      summarize = (slice) => {
+        const f = slice.slice().sort((a, b) => a - b);
+        return {
+          samples: f.length,
+          medianMs: f[Math.floor(f.length * 0.5)],
+          p95Ms: f[Math.floor(f.length * 0.95)],
+          p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+          maxMs: f.at(-1),
+        };
+      };
+    return {
+      first: summarize(frames.slice(20, 160)),
+      last: summarize(frames.slice(-140)),
+      start,
+      end: {
+        memory: s.memory,
+        heap: performance.memory?.usedJSHeapSize ?? null,
+        performance: s.performance,
+      },
+    };
+  }, stabilityStart);
+  assert.deepEqual(
+    evidence.stability.end.memory,
+    evidence.stability.start.memory,
+    "steady play must not accumulate renderer geometries/textures",
+  );
+  if (
+    evidence.stability.start.heap !== null &&
+    evidence.stability.end.heap !== null
+  )
+    assert.ok(
+      evidence.stability.end.heap <= evidence.stability.start.heap + 8_000_000,
+      "steady-play JS heap grew beyond the bounded stability allowance",
+    );
+
   await page.evaluate(async () => {
     await window.__SF.dispose();
   });

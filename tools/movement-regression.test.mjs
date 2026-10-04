@@ -308,3 +308,37 @@ test("aquatic camera banks with turns and looks along vertical travel while redu
   assert.equal(rig.roll, 0);
   assert.equal(rig.verticalLead, 0);
 });
+
+
+test("cached obstacle ground heights avoid procedural resampling in body collision", () => {
+  const body = createBody(0, 0, 0),
+    env = {
+      sample: (x, z) => {
+        if (Math.abs(x - 0.5) < 1e-9 && Math.abs(z) < 1e-9)
+          throw new Error("static obstacle ground was resampled");
+        return { height: 0, dx: 0, dz: 0 };
+      },
+      water: () => null,
+      obstacles: [
+        { x: 0.5, z: 0, radius: 0.5, height: 2, ground: 0 },
+      ],
+    };
+  assert.doesNotThrow(() =>
+    stepBody(body, controls({ x: 1 }), env, 1 / 60),
+  );
+});
+
+test("camera-relative movement reuses one scratch vector instead of allocating per fixed step", () => {
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1, 0.04, 100),
+    flat,
+  );
+  rig.yaw = 0.7;
+  const first = rig.movement(1, 0.5),
+    x = first.x,
+    z = first.z,
+    second = rig.movement(-0.25, 0.8);
+  assert.equal(second, first);
+  assert.notEqual(second.x, x);
+  assert.notEqual(second.z, z);
+});

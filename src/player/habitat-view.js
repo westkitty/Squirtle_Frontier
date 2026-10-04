@@ -87,6 +87,16 @@ export class HabitatView {
     this.dummy = new THREE.Object3D();
     if (lab) this.buildLab();
     else this.buildFrontier();
+    this.center = lab ? { x: 0, z: 0 } : WETLAND;
+    this.reedLayout = Array.from({ length: 48 }, (_, i) => {
+      const angle = i * 2.39996,
+        radius = lab ? 2.8 + (i % 4) * 0.08 : 1 + (i % 8) * 0.28,
+        x = this.center.x + Math.cos(angle) * radius,
+        z = this.center.z + Math.sin(angle) * radius,
+        h = 0.25 + (i % 5) * 0.12,
+        y = lab ? labHeight(x, z) : heightAt(x, z);
+      return { angle, x, z, h, y };
+    });
   }
   own(resource) {
     this.resources.push(resource);
@@ -113,6 +123,8 @@ export class HabitatView {
     const m = new THREE.InstancedMesh(geometry, material, capacity);
     m.frustumCulled = false;
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    m.updateMatrix();
+    m.matrixAutoUpdate = false;
     parent.add(m);
     this.instances.push(m);
     return m;
@@ -149,6 +161,7 @@ export class HabitatView {
     this.group.add(this.settlement);
     const a = SETTLEMENT,
       h = heightAt(a.x, a.z);
+    this.settlementHeight = h;
     this.mesh(
       this.box,
       this.wood,
@@ -376,6 +389,15 @@ export class HabitatView {
     this.visitor.position.set(0, 0, 3.6);
     this.visitorTarget = new THREE.Vector3(0, 0, 3.6);
   }
+  part(pool, index, actor, ground, sin, cos, ox, oy, oz, sx, sy, sz) {
+    const x = actor.x + cos * ox + sin * oz,
+      z = actor.z - sin * ox + cos * oz;
+    this.dummy.position.set(x, ground + oy, z);
+    this.dummy.rotation.set(0, actor.yaw, 0);
+    this.dummy.scale.set(sx, sy, sz);
+    this.dummy.updateMatrix();
+    pool.setMatrixAt(index, this.dummy.matrix);
+  }
   update(
     ecosystem,
     body,
@@ -479,7 +501,7 @@ export class HabitatView {
       0.32 + habitatWetness * 0.12,
       0.26 - habitatWetness * 0.035,
     );
-    const center = this.lab ? { x: 0, z: 0 } : WETLAND;
+    const center = this.center;
     const nearby =
       this.lab || Math.hypot(body.x - center.x, body.z - center.z) < 28;
     if (!this.lab) {
@@ -490,16 +512,22 @@ export class HabitatView {
       this.wetland.visible = nearby;
       if (settlement) {
         const mode = settlement.response,
-          h = heightAt(SETTLEMENT.x, SETTLEMENT.z);
-        const target =
-          mode === "withdraw"
-            ? { x: SETTLEMENT.x, z: SETTLEMENT.z + 1.8 }
-            : mode === "check-water"
-              ? { x: SETTLEMENT.x + 2.4, z: SETTLEMENT.z + 3.4 }
-              : { x: SETTLEMENT.x + 2.9, z: SETTLEMENT.z + 2.6 };
-        const a = 1 - Math.exp(-dt * 1.5);
-        this.caretaker.position.x += (target.x - this.caretaker.position.x) * a;
-        this.caretaker.position.z += (target.z - this.caretaker.position.z) * a;
+          h = this.settlementHeight,
+          targetX =
+            mode === "withdraw"
+              ? SETTLEMENT.x
+              : mode === "check-water"
+                ? SETTLEMENT.x + 2.4
+                : SETTLEMENT.x + 2.9,
+          targetZ =
+            mode === "withdraw"
+              ? SETTLEMENT.z + 1.8
+              : mode === "check-water"
+                ? SETTLEMENT.z + 3.4
+                : SETTLEMENT.z + 2.6,
+          a = 1 - Math.exp(-dt * 1.5);
+        this.caretaker.position.x += (targetX - this.caretaker.position.x) * a;
+        this.caretaker.position.z += (targetZ - this.caretaker.position.z) * a;
         this.caretaker.position.y = h + Math.sin(time * 1.8) * 0.012;
         this.caretaker.rotation.y = Math.atan2(
           body.x - this.caretaker.position.x,
@@ -529,19 +557,19 @@ export class HabitatView {
       }
       this.trough.visible = ecosystem.cistern > 0.03;
       this.trough.position.y =
-        heightAt(SETTLEMENT.x, SETTLEMENT.z) + 0.2 + ecosystem.cistern * 0.83;
+        this.settlementHeight + 0.2 + ecosystem.cistern * 0.83;
     } else {
       this.basin.material.opacity = 0.25 + ecosystem.labWater * 0.45;
     }
     this.reeds.count = nearby ? Math.floor(amount * 48) : 0;
     for (let i = 0; i < this.reeds.count; i++) {
-      const angle = i * 2.39996,
-        radius = this.lab ? 2.8 + (i % 4) * 0.08 : 1 + (i % 8) * 0.28;
-      const x = center.x + Math.cos(angle) * radius,
-        z = center.z + Math.sin(angle) * radius;
-      const h = 0.25 + (i % 5) * 0.12,
-        y = this.lab ? labHeight(x, z) : heightAt(x, z);
-      const sway =
+      const reed = this.reedLayout[i],
+        angle = reed.angle,
+        x = reed.x,
+        z = reed.z,
+        h = reed.h,
+        y = reed.y,
+        sway =
           Math.sin(time * 1.65 + i * 0.71) *
           windStrength *
           (0.08 + h * 0.12),
@@ -573,137 +601,165 @@ export class HabitatView {
       this.reeds.setMatrixAt(i, this.dummy.matrix);
     }
     if (!this.lab) {
-      const agents = wildlife?.actors || [];
-      const prey = agents.filter((a) => a.kind === "prey"),
-        predators = agents.filter((a) => a.kind === "predator");
-      this.animals.count = prey.length;
-      this.preyHeads.count = prey.length;
-      this.preyLegs.count = prey.length * 2;
-      this.predators.count = predators.length;
-      this.predatorHeads.count = predators.length;
-      this.predatorLegs.count = predators.length * 4;
-      const part = (pool, index, a, ox, oy, oz, sx, sy, sz) => {
-        const x = a.x + Math.cos(a.yaw) * ox + Math.sin(a.yaw) * oz,
-          z = a.z - Math.sin(a.yaw) * ox + Math.cos(a.yaw) * oz;
-        this.dummy.position.set(x, heightAt(a.x, a.z) + oy, z);
-        this.dummy.rotation.set(0, a.yaw, 0);
-        this.dummy.scale.set(sx, sy, sz);
-        this.dummy.updateMatrix();
-        pool.setMatrixAt(index, this.dummy.matrix);
-      };
-      prey.forEach((a, i) => {
-        // Drinking lowers the muzzle to the water; a herd that cannot drink paces.
-        const drinking = a.mode === "drink",
-          color = this.preyColors[a.mode] || this.preyColors.forage;
-        this.animals.setColorAt(i, color);
-        this.preyHeads.setColorAt(i, color);
-        this.preyLegs.setColorAt(i * 2, color);
-        this.preyLegs.setColorAt(i * 2 + 1, color);
-        const hop =
-            a.mode === "forage" || drinking
-              ? 0
-              : Math.abs(
-                  Math.sin(time * (a.mode === "parched" ? 6 : 12) + a.phase),
-                ) * (a.mode === "parched" ? 0.03 : 0.08),
-          alert =
-            a.mode === "evade" || a.mode === "flee"
-              ? 1
-              : a.mode === "parched"
-                ? 0.5
-                : a.mode === "seek-water"
-                  ? 0.2
-                  : 0;
-        part(
-          this.animals,
-          i,
-          a,
-          0,
-          0.1 + hop + alert * 0.025 - (drinking ? 0.025 : 0),
-          0,
-          0.16,
-          0.1 + alert * 0.018,
-          0.23,
-        );
-        part(
-          this.preyHeads,
-          i,
-          a,
-          drinking ? 0.05 : 0,
-          0.18 + hop + alert * 0.065 - (drinking ? 0.075 : 0),
-          0.17 + (drinking ? 0.06 : 0) + alert * 0.025,
-          0.14,
-          0.09,
-          0.12,
-        );
-        for (let j = 0; j < 2; j++)
-          part(
-            this.preyLegs,
-            i * 2 + j,
-            a,
-            j ? 0.15 : -0.15,
-            0.05 + hop,
-            -0.12,
-            0.1,
-            0.04,
-            0.17,
-          );
-      });
-      predators.forEach((a, i) => {
-        const color =
-            this.predatorColors[a.mode] || this.predatorColors.watch,
-          crouch =
-            a.mode === "ambush" ? 1 : a.mode === "stalk" ? 0.45 : 0;
-        this.predators.setColorAt(i, color);
-        this.predatorHeads.setColorAt(i, color);
-        for (let j = 0; j < 4; j++)
-          this.predatorLegs.setColorAt(i * 4 + j, color);
-        part(
-          this.predators,
-          i,
-          a,
-          0,
-          0.38 - crouch * 0.11,
-          0,
-          0.23,
-          0.2 - crouch * 0.025,
-          0.48 + crouch * 0.035,
-        );
-        part(
-          this.predatorHeads,
-          i,
-          a,
-          0,
-          0.48 - crouch * 0.1,
-          0.4 + crouch * 0.075,
-          0.17,
-          0.15 - crouch * 0.012,
-          0.22,
-        );
-        for (let j = 0; j < 4; j++)
-          part(
-            this.predatorLegs,
-            i * 4 + j,
-            a,
-            j % 2 ? 0.16 : -0.16,
-            0.15 -
-              crouch * 0.075 +
-              (a.mode === "stalk" ? Math.sin(time * 9 + j) * 0.025 : 0),
-            j < 2 ? 0.27 : -0.27,
-            0.065,
-            0.3 - crouch * 0.04,
-            0.07,
-          );
-      });
-      for (const mesh of [
+      const meshes = [
         this.animals,
         this.preyHeads,
         this.preyLegs,
         this.predators,
         this.predatorHeads,
         this.predatorLegs,
-      ]) {
-        mesh.instanceMatrix.needsUpdate = true;
-        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      ];
+      if (!nearby) {
+        for (const mesh of meshes) {
+          mesh.count = 0;
+          mesh.visible = false;
+        }
+      } else {
+        const agents = wildlife?.actors || [];
+        let preyCount = 0,
+          predatorCount = 0;
+        for (let n = 0; n < agents.length; n++) {
+          const actor = agents[n],
+            ground = heightAt(actor.x, actor.z),
+            sin = Math.sin(actor.yaw),
+            cos = Math.cos(actor.yaw);
+          if (actor.kind === "prey") {
+            const i = preyCount++,
+              drinking = actor.mode === "drink",
+              color = this.preyColors[actor.mode] || this.preyColors.forage,
+              hop =
+                actor.mode === "forage" || drinking
+                  ? 0
+                  : Math.abs(
+                      Math.sin(
+                        time * (actor.mode === "parched" ? 6 : 12) +
+                          actor.phase,
+                      ),
+                    ) * (actor.mode === "parched" ? 0.03 : 0.08),
+              alert =
+                actor.mode === "evade" || actor.mode === "flee"
+                  ? 1
+                  : actor.mode === "parched"
+                    ? 0.5
+                    : actor.mode === "seek-water"
+                      ? 0.2
+                      : 0;
+            this.animals.setColorAt(i, color);
+            this.preyHeads.setColorAt(i, color);
+            this.preyLegs.setColorAt(i * 2, color);
+            this.preyLegs.setColorAt(i * 2 + 1, color);
+            this.part(
+              this.animals,
+              i,
+              actor,
+              ground,
+              sin,
+              cos,
+              0,
+              0.1 + hop + alert * 0.025 - (drinking ? 0.025 : 0),
+              0,
+              0.16,
+              0.1 + alert * 0.018,
+              0.23,
+            );
+            this.part(
+              this.preyHeads,
+              i,
+              actor,
+              ground,
+              sin,
+              cos,
+              drinking ? 0.05 : 0,
+              0.18 + hop + alert * 0.065 - (drinking ? 0.075 : 0),
+              0.17 + (drinking ? 0.06 : 0) + alert * 0.025,
+              0.14,
+              0.09,
+              0.12,
+            );
+            for (let j = 0; j < 2; j++)
+              this.part(
+                this.preyLegs,
+                i * 2 + j,
+                actor,
+                ground,
+                j ? 0.15 : -0.15,
+                0.05 + hop,
+                -0.12,
+                0.1,
+                0.04,
+                0.17,
+              );
+          } else {
+            const i = predatorCount++,
+              color =
+                this.predatorColors[actor.mode] || this.predatorColors.watch,
+              crouch =
+                actor.mode === "ambush"
+                  ? 1
+                  : actor.mode === "stalk"
+                    ? 0.45
+                    : 0;
+            this.predators.setColorAt(i, color);
+            this.predatorHeads.setColorAt(i, color);
+            for (let j = 0; j < 4; j++)
+              this.predatorLegs.setColorAt(i * 4 + j, color);
+            this.part(
+              this.predators,
+              i,
+              actor,
+              ground,
+              sin,
+              cos,
+              0,
+              0.38 - crouch * 0.11,
+              0,
+              0.23,
+              0.2 - crouch * 0.025,
+              0.48 + crouch * 0.035,
+            );
+            this.part(
+              this.predatorHeads,
+              i,
+              actor,
+              ground,
+              sin,
+              cos,
+              0,
+              0.48 - crouch * 0.1,
+              0.4 + crouch * 0.075,
+              0.17,
+              0.15 - crouch * 0.012,
+              0.22,
+            );
+            for (let j = 0; j < 4; j++)
+              this.part(
+                this.predatorLegs,
+                i * 4 + j,
+                actor,
+                ground,
+                j % 2 ? 0.16 : -0.16,
+                0.15 -
+                  crouch * 0.075 +
+                  (actor.mode === "stalk"
+                    ? Math.sin(time * 9 + j) * 0.025
+                    : 0),
+                j < 2 ? 0.27 : -0.27,
+                0.065,
+                0.3 - crouch * 0.04,
+                0.07,
+              );
+          }
+        }
+        this.animals.count = preyCount;
+        this.preyHeads.count = preyCount;
+        this.preyLegs.count = preyCount * 2;
+        this.predators.count = predatorCount;
+        this.predatorHeads.count = predatorCount;
+        this.predatorLegs.count = predatorCount * 4;
+        for (const mesh of meshes) {
+          mesh.instanceMatrix.needsUpdate = true;
+          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        }
       }
     } else {
       this.animals.count = nearby ? Math.floor(life * 12) : 0;
@@ -719,10 +775,20 @@ export class HabitatView {
         this.animals.setMatrixAt(i, this.dummy.matrix);
       }
     }
-    this.reeds.instanceMatrix.needsUpdate = true;
-    this.animals.instanceMatrix.needsUpdate = true;
+    if (this.reeds.count > 0) this.reeds.instanceMatrix.needsUpdate = true;
+    if (this.animals.count > 0) this.animals.instanceMatrix.needsUpdate = true;
     // Zero-length instance batches still cost a draw call unless hidden outright.
     for (const mesh of this.instances) mesh.visible = mesh.count > 0;
+  }
+  performanceStats() {
+    return {
+      reeds: this.reeds.count,
+      animals: this.animals.count,
+      visiblePools: this.instances.reduce(
+        (count, mesh) => count + (mesh.visible ? 1 : 0),
+        0,
+      ),
+    };
   }
   dispose() {
     for (const m of this.instances) m.dispose();

@@ -417,6 +417,42 @@ const MUTATIONS = [
     from: "    } else if (body.grounded && speed <= 0.1 && contextInfo.isSleeping) {",
     to: "    } else if (false && body.grounded && speed <= 0.1 && contextInfo.isSleeping) {",
   },
+  {
+    what: "body collision ignores cached static obstacle ground and resamples terrain",
+    file: "src/player/squirtle-controller.js",
+    from: "    const obstacleGround = Number.isFinite(o.ground)\n      ? o.ground\n      : env.sample(o.x, o.z).height;",
+    to: "    const obstacleGround = env.sample(o.x, o.z).height;",
+  },
+  {
+    what: "unchanged wildlife populations reconcile again every fixed step",
+    file: "src/simulation/near-wildlife.js",
+    from: "    if (prey === this.preyLimit && predators === this.predatorLimit) return;",
+    to: "    if (false) return;",
+  },
+  {
+    what: "presentation signals discard the caller's reusable output record",
+    file: "src/presentation-signals.js",
+    from: "export function presentationSignals(state, out = {}) {",
+    to: "export function presentationSignals(state, out = {}) {\n  out = {};",
+  },
+  {
+    what: "rain terrain cache refreshes every frame instead of reusing nearby samples",
+    file: "src/player/world-effects.js",
+    from: "    if (!moved && !stale && !grew) return;",
+    to: "    if (false) return;",
+  },
+  {
+    what: "canopy cover rescans streamed trees inside the same memo cell",
+    file: "src/player/movement-scenery.js",
+    from: "    if (key === this.canopyKey) return this.canopyValue;",
+    to: "    if (false) return this.canopyValue;",
+  },
+  {
+    what: "distant frontier wildlife still uploads invisible instance matrices",
+    file: "src/player/habitat-view.js",
+    from: "      if (!nearby) {",
+    to: "      if (false) {",
+  },
 ];
 
 // What the tests can reach from their own directory: sources, tools, and the small amount of
