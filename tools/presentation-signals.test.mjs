@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  conspecificMemorySummary,
   ecologySummary,
   observationSnapshot,
   presentationSignals,
@@ -22,8 +23,15 @@ const state = () => ({
       },
     ],
   },
-  settlement: { response: "watch" },
+  settlement: { response: "watch", legalResponse: "watch" },
   ecosystem: { reeds: 0.4, prey: 0.6, predators: 0.2, labFrogs: 0.05 },
+  squirtleEcology: {
+    abundance: { freshwater: 0.04, marsh: 0.05, urban: 0.03 },
+    suitability: { freshwater: 0.2, marsh: 0.2, urban: 0.2 },
+    shuckerPressure: 0,
+    shuckerTicks: 0,
+  },
+  memory: { squirtles: [] },
 });
 
 test("weather and watershed state map to bounded presentation signals", () => {
@@ -70,6 +78,58 @@ test("ecology summary remains descriptive rather than objective-driven", () => {
   assert.match(summary, /grazers/);
   assert.match(summary, /pacing/);
   assert.doesNotMatch(summary, /quest|objective|reward/i);
+});
+
+
+test("same-species ecology and persistent individual memory are legible without becoming objectives", () => {
+  const s = state();
+  s.squirtleEcology.abundance.marsh = 0.42;
+  s.squirtleEcology.suitability.marsh = 0.75;
+  s.memory.squirtles.push({
+    id: "sq-marsh-reed-shallows-0-abc",
+    ecotype: "marsh",
+    state: "alive",
+  });
+  const summary = conspecificMemorySummary(s);
+  assert.match(summary, /Squirtle signs/);
+  assert.match(summary, /marsh water/);
+  assert.match(summary, /remember 1 individual/);
+  assert.doesNotMatch(summary, /quest|objective|reward/i);
+});
+
+test("world transitions surface only real Shucker, legal and remembered-Squirtle changes", () => {
+  const s = state(),
+    quiet = observationSnapshot(s);
+  s.squirtleEcology.shuckerPressure = 0.8;
+  s.squirtleEcology.shuckerTicks = 60;
+  const danger = observationSnapshot(s),
+    shucker = worldTransition(quiet, danger);
+  assert.equal(shucker.kind, "shucker");
+  assert.match(shucker.message, /Shucker pressure/);
+
+  s.squirtleEcology.shuckerPressure = 0;
+  s.squirtleEcology.shuckerTicks = 0;
+  const safe = observationSnapshot(s),
+    cleared = worldTransition(danger, safe);
+  assert.equal(cleared.kind, "shucker");
+  assert.match(cleared.message, /pressure has passed/);
+
+  const legalBefore = observationSnapshot(s);
+  s.settlement.legalResponse = "protect";
+  const protectedState = observationSnapshot(s),
+    legal = worldTransition(legalBefore, protectedState);
+  assert.equal(legal.kind, "legal");
+  assert.match(legal.message, /watches the road/);
+
+  const memoryBefore = observationSnapshot(s);
+  s.memory.squirtles.push({
+    id: "sq-urban-water-house-drain-0-def",
+    ecotype: "urban",
+    state: "alive",
+  });
+  const remembered = worldTransition(memoryBefore, observationSnapshot(s));
+  assert.equal(remembered.kind, "conspecific-memory");
+  assert.match(remembered.message, /familiar enough to remember/);
 });
 
 

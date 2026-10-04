@@ -277,6 +277,26 @@ test("settlementDialogue provides context-sensitive ambient voice for all careta
   // 6. Welcoming mode with bowl empty
   s.bowl = 0.02;
   assert.match(settlementDialogue(s, nearBody), /by the cistern/, "welcoming mode without bowl gives warm greeting");
+
+  // 7. Familiar low-fear caretaker explicitly protects instead of giving generic welcome
+  s.familiarity = 0.8;
+  s.fear = 0;
+  s.waterReliability = 0.8;
+  assert.equal(s.legalResponse, "protect");
+  assert.match(
+    settlementDialogue(s, nearBody),
+    /watches the road.*Stay near the water house/,
+    "protective legal state is visible in ambient behavior",
+  );
+
+  // 8. High fear escalates to reporting without inventing combatants
+  s.fear = 0.8;
+  assert.equal(s.legalResponse, "report");
+  assert.match(
+    settlementDialogue(s, nearBody),
+    /message is being sent beyond the reeds/,
+    "reporting is legible as legal pressure rather than an attack spawn",
+  );
 });
 
 
