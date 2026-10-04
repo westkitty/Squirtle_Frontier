@@ -1,146 +1,490 @@
 {
   "environment": "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
-  "date": "2026-10-03T19:31:06.452Z",
+  "date": "2026-10-04T04:07:07.677Z",
   "scenarios": [
     {
       "quality": "high",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 83.30000000000109,
-      "p95Ms": 216.69999999999982,
+      "medianMs": 50,
+      "p95Ms": 100,
+      "p99Ms": 133.4000000000001,
+      "maxMs": 183.29999999999927,
+      "over33Pct": 85.5,
+      "over50Pct": 48.2,
       "memory": {
-        "geometries": 23,
+        "geometries": 25,
         "textures": 6
       },
       "render": {
-        "frame": 143,
+        "frame": 145,
         "calls": 40,
-        "triangles": 31236,
+        "triangles": 33506,
         "points": 0,
-        "lines": 122
+        "lines": 218
       },
-      "heap": 19300000,
+      "performance": {
+        "scenery": {
+          "canopyScans": 4,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 0,
+          "animals": 0,
+          "visiblePools": 0
+        },
+        "wildlife": {
+          "actors": 0,
+          "snapshots": 0,
+          "reconcileRuns": 0,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 0,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 1
+        }
+      },
+      "heap": 23100000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "quality": "low",
       "viewport": "960x640",
       "samples": 110,
-      "medianMs": 50,
-      "p95Ms": 116.70000000000073,
+      "medianMs": 33.29999999999927,
+      "p95Ms": 50,
+      "p99Ms": 83.39999999999964,
+      "maxMs": 100.10000000000036,
+      "over33Pct": 13.6,
+      "over50Pct": 2.7,
       "memory": {
-        "geometries": 23,
+        "geometries": 25,
         "textures": 6
       },
       "render": {
-        "frame": 270,
+        "frame": 273,
         "calls": 40,
-        "triangles": 31236,
+        "triangles": 33506,
         "points": 0,
-        "lines": 122
+        "lines": 218
       },
-      "heap": 19300000,
+      "performance": {
+        "scenery": {
+          "canopyScans": 4,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 0,
+          "animals": 0,
+          "visiblePools": 0
+        },
+        "wildlife": {
+          "actors": 0,
+          "snapshots": 0,
+          "reconcileRuns": 0,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 0,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 1
+        }
+      },
+      "heap": 23100000,
       "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
     },
     {
       "label": "channel-cut (standing in the groove)",
       "samples": 110,
-      "medianMs": 100.09999999999854,
-      "p95Ms": 266.79999999999563,
+      "medianMs": 50,
+      "p95Ms": 66.79999999999563,
+      "p99Ms": 116.59999999999854,
+      "maxMs": 166.6999999999971,
+      "over33Pct": 95.5,
+      "over50Pct": 47.3,
       "memory": {
-        "geometries": 23,
+        "geometries": 25,
         "textures": 6
       },
       "render": {
-        "frame": 684,
-        "calls": 40,
-        "triangles": 55481,
+        "frame": 704,
+        "calls": 41,
+        "triangles": 57535,
         "points": 0,
-        "lines": 122
+        "lines": 218
+      },
+      "performance": {
+        "scenery": {
+          "canopyScans": 6,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 3,
+          "animals": 1,
+          "visiblePools": 4
+        },
+        "wildlife": {
+          "actors": 1,
+          "snapshots": 1,
+          "reconcileRuns": 1,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 3,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 2
+        }
       }
     },
     {
       "label": "channel-cut (viewed from the next chunk over)",
       "samples": 110,
-      "medianMs": 66.69999999999709,
-      "p95Ms": 150.09999999999127,
+      "medianMs": 33.400000000001455,
+      "p95Ms": 50.099999999998545,
+      "p99Ms": 83.40000000000146,
+      "maxMs": 133.40000000000146,
+      "over33Pct": 62.7,
+      "over50Pct": 9.1,
       "memory": {
-        "geometries": 21,
+        "geometries": 23,
         "textures": 6
       },
       "render": {
-        "frame": 816,
-        "calls": 26,
-        "triangles": 32109,
+        "frame": 850,
+        "calls": 28,
+        "triangles": 36935,
         "points": 0,
-        "lines": 122
+        "lines": 218
+      },
+      "performance": {
+        "scenery": {
+          "canopyScans": 10,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 0,
+          "animals": 0,
+          "visiblePools": 0
+        },
+        "wildlife": {
+          "actors": 0,
+          "snapshots": 0,
+          "reconcileRuns": 1,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 3,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 2
+        }
       }
     }
   ],
   "adaptiveAb": {
     "pinnedFullDetail": {
       "samples": 140,
-      "medianMs": 100,
-      "p95Ms": 200.10000000000218,
+      "medianMs": 50,
+      "p95Ms": 66.70000000000073,
+      "p99Ms": 116.80000000000109,
+      "maxMs": 133.3000000000011,
       "adaptiveValue": 1,
       "adaptiveChangesCumulative": 2,
       "pixelRatio": 1,
       "buffer": "960x640",
       "css": "960x640",
-      "triangles": 31236,
-      "geometryBytes": 23
+      "triangles": 33506,
+      "geometryBytes": 25
     },
     "adaptiveEnabled": {
-      "samples": 100,
-      "medianMs": 99.90000000000146,
-      "p95Ms": 249.90000000000146,
+      "samples": 110,
+      "medianMs": 50,
+      "p95Ms": 100,
+      "p99Ms": 116.70000000000073,
+      "maxMs": 166.70000000000073,
       "adaptiveValue": 0.85,
       "adaptiveChangesCumulative": 3,
       "pixelRatio": 0.85,
       "buffer": "816x544",
       "css": "960x640",
-      "triangles": 31236,
-      "geometryBytes": 23
+      "triangles": 33506,
+      "geometryBytes": 25
     },
     "findings": {
       "bufferShrank": true,
       "layoutUnchanged": true,
       "scaleReduced": true,
-      "medianDeltaMs": -0.1,
-      "p95DeltaMs": 49.8,
+      "fullDetailHealthy": false,
+      "adaptiveResponseValid": true,
+      "medianDeltaMs": 0,
+      "p95DeltaMs": 33.3,
       "note": "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured."
     }
   },
   "channelCut": {
     "samples": 110,
-    "medianMs": 100.09999999999854,
-    "p95Ms": 266.79999999999563,
+    "medianMs": 50,
+    "p95Ms": 66.79999999999563,
+    "p99Ms": 116.59999999999854,
+    "maxMs": 166.6999999999971,
+    "over33Pct": 95.5,
+    "over50Pct": 47.3,
     "memory": {
-      "geometries": 23,
+      "geometries": 25,
       "textures": 6
     },
     "render": {
-      "frame": 684,
-      "calls": 40,
-      "triangles": 55481,
+      "frame": 704,
+      "calls": 41,
+      "triangles": 57535,
       "points": 0,
-      "lines": 122
+      "lines": 218
+    },
+    "performance": {
+      "scenery": {
+        "canopyScans": 6,
+        "wetMarks": 0
+      },
+      "habitat": {
+        "reeds": 3,
+        "animals": 1,
+        "visiblePools": 4
+      },
+      "wildlife": {
+        "actors": 1,
+        "snapshots": 1,
+        "reconcileRuns": 1,
+        "drinkers": 0
+      },
+      "effects": {
+        "rain": 0,
+        "fire": 0,
+        "smoke": 0,
+        "dust": 0,
+        "mist": 0,
+        "rainRipples": 0,
+        "underwaterMotes": 0,
+        "jet": 0,
+        "wake": 0,
+        "splash": 0,
+        "foam": 3,
+        "terrainSamples": 16,
+        "rainGroundRefreshes": 0,
+        "mistGroundRefreshes": 0,
+        "foamRebuilds": 2
+      }
     }
   },
   "channelDistant": {
     "samples": 110,
-    "medianMs": 66.69999999999709,
-    "p95Ms": 150.09999999999127,
+    "medianMs": 33.400000000001455,
+    "p95Ms": 50.099999999998545,
+    "p99Ms": 83.40000000000146,
+    "maxMs": 133.40000000000146,
+    "over33Pct": 62.7,
+    "over50Pct": 9.1,
     "memory": {
-      "geometries": 21,
-      "textures": 6
+      "geometries": 23,
+      "textures+": 6
     },
     "render": {
-      "frame": 816,
-      "calls": 26,
-      "triangles": 32109,
+      "frame": 850,
+      "calls": 28,
+      "triangles": 36935,
       "points": 0,
-      "lines": 122
+      "lines": 218
+    },
+    "performance": {
+      "scenery": {
+        "canopyScans": 10,
+        "wetMarks": 0
+      },
+      "habitat": {
+        "reeds": 0,
+        "animals": 0,
+        "visiblePools": 0
+      },
+      "wildlife": {
+        "actors": 0,
+        "snapshots": 0,
+        "reconcileRuns": 1,
+        "drinkers": 0
+      },
+      "effects": {
+        "rain": 0,
+        "fire": 0,
+        "smoke": 0,
+        "dust": 0,
+        "mist": 0,
+        "rainRipples": 0,
+        "underwaterMotes": 0,
+        "jet": 0,
+        "wake": 0,
+        "splash": 0,
+        "foam": 3,
+        "terrainSamples": 16,
+        "rainGroundRefreshes": 0,
+        "mistGroundRefreshes": 0,
+        "foamRebuilds": 2
+      }
+    }
+  },
+  "stability": {
+    "first": {
+      "samples": 140,
+      "medianMs": 33.3000000000291,
+      "p95Ms": 50,
+      "p99Ms": 66.59999999999854,
+      "maxMs": 66.69999999999709
+    },
+    "last": {
+      "samples": 140,
+      "medianMs": 33.30000000000291,
+      "p95Ms": 33.400000000001455,
+      "p99Ms": 33.400000000001455,
+      "maxMs": 50.099999999998545
+    },
+    "start": {
+      "memory": {
+        "geometries": 26,
+        "textures": 6
+      },
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 22,
+        "unloads": 13
+      },
+      "heap": 23100000,
+      "performance": {
+        "scenery": {
+          "canopyScans": 14,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 0,
+          "animals": 0,
+          "visiblePools": 0
+        },
+        "wildlife": {
+          "actors": 0,
+          "snapshots": 0,
+          "reconcileRuns": 1,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 3,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 2
+        }
+      }
+    },
+    "end": {
+      "memory": {
+        "geometries": 26,
+        "textures": 6
+      },
+      "chunks": {
+        "active": 9,
+        "queued": 0,
+        "loads": 22,
+        "unloads": 13
+      },
+      "heap": 23100000,
+      "performance": {
+        "scenery": {
+          "canopyScans": 14,
+          "wetMarks": 0
+        },
+        "habitat": {
+          "reeds": 0,
+          "animals": 0,
+          "visiblePools": 0
+        },
+        "wildlife": {
+          "actors": 0,
+          "snapshots": 0,
+          "reconcileRuns": 1,
+          "drinkers": 0
+        },
+        "effects": {
+          "rain": 0,
+          "fire": 0,
+          "smoke": 0,
+          "dust": 0,
+          "mist": 0,
+          "rainRipples": 0,
+          "underwaterMotes": 0,
+          "jet": 0,
+          "wake": 0,
+          "splash": 0,
+          "foam": 3,
+          "terrainSamples": 16,
+          "rainGroundRefreshes": 0,
+          "mistGroundRefreshes": 0,
+          "foamRebuilds": 2
+        }
+      }
     }
   },
   "teardown": {
@@ -151,8 +495,8 @@
     "chunks": {
       "active": 0,
       "queued": 0,
-      "loads": 16,
-      "unloads": 16
+      "loads": 22,
+      "unloads": 22
     },
     "assets": {
       "cached": 0,

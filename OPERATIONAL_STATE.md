@@ -784,3 +784,49 @@ R/contextual button near the wooden platform advances the existing regional simu
   - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
 - Final GitHub Pages build/deployment run `37171653434`: PASS.
 - Human feel, representative hardware/mobile GPU performance and final production visual acceptance remain separate evidence questions; this closure proves the automated/browser contract, not those unmeasured claims.
+
+
+## Ten-way frame-time, efficiency and stability uplift closure — 2026-10-04
+
+- Continues from the verified creature-contact / habitat-response closure at `a9fe6a7dc371fb6026badcaec2fae255f58d4b1e`.
+- Runtime implementation commit: `8fa0aa6ba3e55cc58ace9d5433b57136f57339da` (`Optimize frame loop and renderer hot paths`).
+- Benchmark-equilibrium proof repair / final runtime-equivalent head: `9f62441f0bbf0cf9bc36d591e567b787c3c495e8` (`Stabilize performance equilibrium proof`).
+- Exact ten runtime improvements:
+  1. Cached static collider ground heights so body and camera collision avoid repeat procedural terrain sampling for fixed obstacles and streamed trees.
+  2. Reused the local collision-result buffer and stable environment views instead of allocating spread arrays and temporary water/quality records each fixed step.
+  3. Froze identity/static Object3D transforms (`matrixAutoUpdate = false`) for streamed scenery roots, instanced effect roots and other objects whose object transform never changes.
+  4. Collapsed the shoreline lap pulse into the existing measured shoreline draw, preserving motion while removing one line draw call and its duplicate material/object.
+  5. Wildlife reconciliation now runs only when aggregate prey/predator limits change; actor snapshots and drink-track output reuse bounded buffers.
+  6. Nearest predator/prey selection and separation broad phase now use single-pass / squared-distance logic rather than per-step filter/sort/concat allocation.
+  7. Habitat reeds use precomputed authored positions/heights; visible wildlife samples terrain once per actor and reuses that ground across body parts.
+  8. Distant wetland wildlife pools stop uploading invisible instance matrices; empty instance pools remain hidden.
+  9. Rain, mist, fire, slide-dust and channel-foam presentation cache expensive terrain/path samples with bounded spatial/time invalidation rather than recomputing per particle every frame.
+  10. Hot-loop presentation/audio/camera/HUD paths reuse scratch records, memoize canopy/channel distance, use numeric pose rounding, cache DOM nodes and write controls/readouts only when values change.
+- Immediate pre-pass benchmark source: verified run `37171653400` on `a9fe6a7...`, Chromium 140 / ANGLE SwiftShader at 960x640.
+- Final benchmark source: verification run `37175673624`, artifact `11293276546`, on `9f62441...`.
+- Matched frame-time result (software rendering; lower is better):
+  - high: median **66.7 -> 50.0 ms** (-25.0%); p95 **183.4 -> 100.0 ms** (-45.5%); draw calls **41 -> 40**;
+  - low: median **33.3 -> 33.3 ms** (flat coarse bucket); p95 **83.4 -> 50.0 ms** (-40.0%); draw calls **41 -> 40**;
+  - channel cut / standing in groove: median **66.7 -> 50.0 ms** (-25.0%); p95 **133.3 -> 66.8 ms** (-49.9%); draw calls **42 -> 41**;
+  - channel cut / next chunk over: median **50.0 -> 33.4 ms** (-33.2%); p95 **116.7 -> 50.1 ms** (-57.1%); draw calls **29 -> 28**.
+- Geometry complexity was not deleted to manufacture the result: normal and channel triangle counts remain **33,506 / 57,535 / 36,935** in the matched final scenes while draw submission fell by one call.
+- Settled 360-frame stability proof:
+  - waits for exactly nine active chunks and zero queued builds before taking the start snapshot;
+  - renderer memory stayed exactly **26 geometries / 6 textures** from start to end;
+  - chunk state stayed exactly **9 active / 0 queued**, with no load/unload growth during the window;
+  - Chromium-reported JS heap stayed exactly **23.1 MB**;
+  - first-vs-last window median remained **33.3 ms**, while p95 improved **50.0 -> 33.4 ms** rather than drifting upward.
+- Teardown proof: **0 geometries, 0 textures, 0 active chunks, 0 queued chunks, 0 asset references, 0 cached asset records**.
+- Proof authority:
+  - source / architecture / unit suite **245/245 PASS**;
+  - mutation suite **69/69 injected defects killed by named tests**, including new mutations for collision-ground caching, wildlife reconciliation gating, reusable presentation records, rain terrain caching, canopy memoization and distant-habitat upload suppression;
+  - production Vite build PASS;
+  - Core Movement, Habitat, World, Recovery, Channel, Wildlife, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS;
+  - performance + settled stability + teardown PASS;
+  - shoreline capture PASS;
+  - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown;
+  - Pages build/deployment run `37175673619` PASS.
+- One proof defect was found and repaired during the pass: the first stability assertion sampled renderer memory before the post-teleport streaming queue had settled, so it compared 23 geometries to the later equilibrium of 26. The runtime was already stable; the harness now waits for nine active chunks / zero queued builds before taking the start snapshot.
+- Scope discipline: no new dependency, no save-version change, no authoritative hydrology/body/ecology rule change, no effect deletion used as a performance shortcut.
+- Verdict: **PASS — material software-browser frame-time uplift with stable long-session resource ownership and no measured regression.**
+- Remaining evidence boundary: this does **not** claim representative Mac, mobile or real-GPU FPS. Hardware/mobile performance and final human visual/feel acceptance remain separate evidence questions.
