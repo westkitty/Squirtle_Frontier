@@ -576,3 +576,58 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Remaining validation blocker: `browser:multitab` timed out while attempting a real `KeyQ` dive after its driver tab had left Settings open from an earlier save operation. Open panels now intentionally suppress creature input, so that journey still assumes the pre-uplift behavior in which gameplay leaked through menus. The current failure therefore establishes a stale validation path, not a verified production locomotion defect.
 - Because the multitab journey stops the workflow before later commands, the final-head watershed journey, performance/teardown probe, shoreline capture, and built-production-bundle journey remain **unverified on this exact head** even though earlier baselines covered those paths.
 - Pending proof work: update the multitab journey so it explicitly closes Settings before resuming physical dive input, then rerun the complete verification matrix. Do not weaken panel input suppression to satisfy the old journey.
+
+## Second 25-way whole-project uplift closure — 2026-10-03
+
+- Supersedes the earlier 25-way checkpoint's pending multitab proof state. The second, non-duplicative uplift is implemented and fully verified.
+- Verified runtime head: `b9f411bc049e3224bf4413771697a0142f86082a`.
+- Final verification: GitHub Actions run `37165306623` PASS.
+- Final Pages deployment: GitHub Actions run `37165306655` PASS.
+- Exact second uplift set (25):
+  1. Repaired the stale multitab browser journey so gameplay input resumes only after Settings is explicitly closed.
+  2. Added persistent input-modality tracking across keyboard, pointer, touch and gamepad activity.
+  3. Made interaction prompts report the active control modality instead of hard-coding keyboard labels.
+  4. Made the Water Jet HUD keycap adapt to keyboard, touch and gamepad input.
+  5. Added camera recenter on keyboard `V` and standard-gamepad R3.
+  6. Added controller-disconnect fallback and a clear non-blocking player notice.
+  7. Added a contrast preference with system-following, high-contrast and standard modes.
+  8. Added persistent UI text scaling at standard, large and extra-large sizes.
+  9. Added a persistent visual-effects density preference independent of simulation rules.
+  10. Added safe-area-aware placement for notched/rounded mobile displays.
+  11. Added a dedicated coarse-pointer landscape layout that preserves full-size touch controls and clear UI lanes.
+  12. Upgraded the Memory survey with a live player-position marker.
+  13. Added a facing-direction vector and spatially descriptive accessible map label.
+  14. Added plain-language wetland condition, water clarity and flow reporting to Memory.
+  15. Added a visible shoreline line generated from the exact measured locomotion shoreline, not a second approximation.
+  16. Smoothed visible water opacity and colour transitions while retaining watershed state as authority.
+  17. Smoothed weather/fog/sun transitions instead of snapping between simulation states.
+  18. Made underwater fog visibly respond to sediment and contamination without changing water physics.
+  19. Added one composable presentation effect budget combining render quality, user effect density and adaptive render pressure.
+  20. Marked continuously animated instanced effect buffers with `THREE.DynamicDrawUsage`.
+  21. Scaled rain, Water Jet, wake, splash and channel-foam particle counts through the presentation effect budget.
+  22. Scaled the dedicated Jet-only movement trail through the same presentation budget while preserving its Jet-only invariant.
+  23. Added explicit AudioContext resume lifecycle handling when a backgrounded tab returns, reusing the existing graph.
+  24. Added an end-to-end synthetic standard-gamepad browser journey covering movement, look, Water Jet, modality UI and camera recenter.
+  25. Hardened CI into an evidence-collecting browser matrix so one journey cannot hide later failures; production build/bundle proof is explicitly gated on a successful build.
+- Proof repairs made during closure did not add new feature scope: mutation anchors were realigned after the effect-budget refactor, resource ceilings were updated by exactly one persistent measured-shoreline geometry, and the phone safe-area cascade was corrected after the landscape audit caught footer overlap.
+- Final proof state:
+  - asset validation PASS;
+  - architecture checks PASS;
+  - unit suite **194/194 PASS**;
+  - mutation suite **58/58 injected defects killed**;
+  - production Vite build PASS;
+  - core movement PASS;
+  - habitat PASS;
+  - world PASS;
+  - recovery PASS;
+  - channel PASS;
+  - wildlife PASS;
+  - accessibility PASS, including portrait touch and coarse-pointer landscape layout;
+  - synthetic gamepad PASS;
+  - multitab conflict/adoption/Lab pose-resume PASS;
+  - watershed PASS;
+  - renderer performance/teardown PASS;
+  - shoreline proof PASS with **1.50 m** measured long-axis movement from low to full water;
+  - built bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
+- No new runtime dependency was introduced. Simulation authority, save identity, locomotion rules, watershed causality, reduced-motion behavior, asset ownership/disposal and ecology boundaries remain protected.
+
