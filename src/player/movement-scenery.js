@@ -321,17 +321,33 @@ export class MovementScenery {
     this.groups.delete(key);
   }
   update(body, dt, level = null, effectScale = 1, environment = {}) {
-    if (level !== null) {
-      const surface = WATER_SURFACE_Y(level);
+    const surface = level !== null ? WATER_SURFACE_Y(level) : null;
+    if (surface !== null) {
       this.water.position.y = surface;
       this.shore.position.y = surface + 0.025;
       this.buildWater(level);
     }
     const ground = heightAt(body.x, body.z),
-      depth = body.y - ground;
-    this.contact.visible = ground > -0.1 && depth < 1.5;
+      depth = Math.max(0, body.y - ground),
+      speed = Math.hypot(body.vx, body.vz),
+      submerged =
+        surface !== null && ground < surface && body.y <= surface + 0.12,
+      lift = THREE.MathUtils.clamp(depth / 1.5, 0, 1),
+      slideStretch =
+        body.mode === "slide"
+          ? THREE.MathUtils.clamp(1 + speed * 0.08, 1, 1.45)
+          : 1,
+      shadowScale = 1 - lift * 0.28;
+    this.contact.visible = !submerged && ground > -0.1 && depth < 1.5;
     this.contact.position.set(body.x, ground + 0.025, body.z);
-    this.contact.material.opacity = Math.max(0, 1 - depth * 0.5);
+    this.contact.rotation.set(-Math.PI / 2, 0, body.yaw);
+    this.contact.scale.set(
+      0.9 * slideStretch * shadowScale,
+      0.9 * shadowScale,
+      1,
+    );
+    this.contact.material.opacity =
+      (body.mode === "slide" ? 0.78 : 0.58) * (1 - lift) ** 1.5;
     this.particleTime += dt;
     this.leafUniforms.time.value = this.particleTime;
     this.leafUniforms.wind.value = THREE.MathUtils.clamp(

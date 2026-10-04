@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { MovementScenery } from "../src/player/movement-scenery.js";
 import { createBody } from "../src/player/body-state.js";
+import { WATER_BASE, WATER_SURFACE_Y } from "../src/simulation/water-level.js";
+import { heightAt } from "../src/worldgen.js";
 
 const makeStreaming = () => ({
   chunks: {
@@ -77,5 +79,34 @@ test("weather presentation drives foliage wind and pond surface response without
     before,
     "presentation response may not mutate authoritative body state",
   );
+  scenery.dispose();
+});
+
+test("contact grounding stretches with shell speed, fades with height, and disappears underwater", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const x = -10,
+    z = 18,
+    ground = heightAt(x, z),
+    body = createBody(x, z, ground);
+
+  body.mode = "slide";
+  body.vx = 4;
+  body.vz = 0;
+  body.yaw = 0.8;
+  scenery.update(body, 1 / 60, null, 1);
+  assert.equal(scenery.contact.visible, true);
+  assert.ok(scenery.contact.scale.x > scenery.contact.scale.y);
+  const groundedOpacity = scenery.contact.material.opacity;
+
+  body.y = ground + 1.1;
+  scenery.update(body, 1 / 60, null, 1);
+  assert.ok(scenery.contact.material.opacity < groundedOpacity);
+
+  body.x = 0;
+  body.z = 0;
+  body.y = WATER_SURFACE_Y(WATER_BASE) - 0.05;
+  scenery.update(body, 1 / 60, WATER_BASE, 1);
+  assert.equal(scenery.contact.visible, false, "submerged bodies must not cast a ground decal through water");
   scenery.dispose();
 });

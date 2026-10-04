@@ -169,6 +169,43 @@ test("shell slide retracts all extremities and responds to impacts", () => {
   presentation.dispose();
 });
 
+test("fast shell slide visibly spins the shell without changing body yaw", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.mode = "slide";
+  b.grounded = true;
+  b.vx = 4;
+  b.yaw = 0.7;
+
+  const yawBefore = b.yaw;
+  for (let i = 0; i < 20; i++) presentation.present(b, 1 / 60);
+
+  assert.ok(presentation.shellSpin > 0.5, "shell spin phase must advance with speed");
+  assert.ok(
+    Math.abs(presentation.visual.rotation.y) > 0.5,
+    "presentation wrapper must visibly rotate during slide",
+  );
+  assert.equal(b.yaw, yawBefore, "visual spin may not mutate authoritative body yaw");
+  presentation.dispose();
+});
+
+test("physical impact gives Squirtle a bounded squash response", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.mode = "land";
+  b.grounded = true;
+  b.impact = 0.24;
+
+  for (let i = 0; i < 6; i++) presentation.present(b, 1 / 60);
+  assert.ok(presentation.visual.scale.y < 0.99, "impact must compress vertical presentation");
+  assert.ok(presentation.visual.scale.x > 1, "impact must widen presentation slightly");
+  assert.ok(
+    presentation.visual.scale.y > 0.84,
+    "squash must remain bounded rather than distorting the creature",
+  );
+  presentation.dispose();
+});
+
 test("attention target orients gaze yaw and pitch within physiological clamping bounds", () => {
   const { presentation } = createMockSquirtle();
   const b = createBody(0, 0, 0);

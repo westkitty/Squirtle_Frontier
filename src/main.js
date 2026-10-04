@@ -49,7 +49,12 @@ import {
   DEBRIS_SITE,
 } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
-import { HabitatView, labRegion, labHeight } from "./player/habitat-view.js";
+import {
+  HabitatView,
+  WETLAND,
+  labRegion,
+  labHeight,
+} from "./player/habitat-view.js";
 import { placeAction } from "./simulation/place-interaction.js";
 import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
@@ -61,6 +66,10 @@ import {
   presentationSignals,
   worldTransition,
 } from "./presentation-signals.js";
+import {
+  followedReachTraces,
+  rememberedLandmarkMarkers,
+} from "./map-overlay.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading"),
   recordReadout = document.querySelector("#record-readout");
@@ -402,6 +411,37 @@ async function boot() {
           r.setAttribute("fill", "#96bbaa");
           return r;
         }),
+        reachTraces = followedReachTraces(state.memory).map((trace) => {
+          const line = document.createElementNS(svg, "polyline");
+          line.setAttribute(
+            "points",
+            trace.points.map((point) => `${point.x},${point.y}`).join(" "),
+          );
+          line.setAttribute("fill", "none");
+          line.setAttribute("stroke", "#6fb6d8");
+          line.setAttribute("stroke-width", "1.4");
+          line.setAttribute("stroke-linecap", "round");
+          line.setAttribute("stroke-linejoin", "round");
+          line.setAttribute("opacity", "0.82");
+          line.setAttribute("data-map-reach", trace.id);
+          return line;
+        }),
+        landmarkMarkers = rememberedLandmarkMarkers(state.memory).map(
+          (marker) => {
+            const dot = document.createElementNS(svg, "circle"),
+              title = document.createElementNS(svg, "title");
+            dot.setAttribute("cx", String(marker.x));
+            dot.setAttribute("cy", String(marker.y));
+            dot.setAttribute("r", "2.1");
+            dot.setAttribute("fill", "#e6c978");
+            dot.setAttribute("stroke", "#193c35");
+            dot.setAttribute("stroke-width", "0.8");
+            dot.setAttribute("data-map-landmark", marker.id);
+            title.textContent = marker.name;
+            dot.append(title);
+            return dot;
+          },
+        ),
         mapBody =
           state.place === "frontier"
             ? { x: body.x, z: body.z }
@@ -416,7 +456,12 @@ async function boot() {
       player.setAttribute("stroke", "#193c35");
       player.setAttribute("stroke-width", "1");
       player.setAttribute("data-map-player", "");
-      const mapChildren = [...cells, player],
+      const mapChildren = [
+          ...cells,
+          ...reachTraces,
+          ...landmarkMarkers,
+          player,
+        ],
         facing = compassTo(Math.sin(body.yaw), Math.cos(body.yaw));
       if (state.place === "frontier") {
         const heading = document.createElementNS(svg, "line");
@@ -434,8 +479,8 @@ async function boot() {
       survey.setAttribute(
         "aria-label",
         state.place === "frontier"
-          ? `Visited five-metre survey cells. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
-          : `Visited five-metre survey cells. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
+          ? `Visited five-metre survey cells with ${landmarkMarkers.length} remembered places and ${reachTraces.length} followed waterways. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
+          : `Visited five-metre survey cells with ${landmarkMarkers.length} remembered places and ${reachTraces.length} followed waterways. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
       );
     };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
@@ -890,8 +935,21 @@ async function boot() {
             wildlife,
             state.settlement,
             dt,
+            presentation,
           );
-        lab?.update(state.ecosystem, body, state.elapsed, state.memory.notable);
+        lab?.update(
+          state.ecosystem,
+          body,
+          state.elapsed,
+          state.memory.notable,
+          null,
+          null,
+          dt,
+          {
+            windStrength: 0.08,
+            wetness: state.ecosystem.labWater,
+          },
+        );
         const signal = controls.sense
           ? senseWater(
               state.watershed,
@@ -1014,6 +1072,25 @@ async function boot() {
             effectScale,
             presentation,
           );
+        const faunaSource =
+            state.place === "lab"
+              ? { x: 0, z: 0 }
+              : WETLAND,
+          wildlifeDistance =
+            state.place === "record"
+              ? 999
+              : Math.hypot(body.x - faunaSource.x, body.z - faunaSource.z),
+          wildlifeLevel =
+            state.place === "lab"
+              ? state.ecosystem.labFrogs
+              : state.place === "frontier"
+                ? THREE.MathUtils.clamp(
+                    state.ecosystem.prey * 0.55 +
+                      state.ecosystem.reeds * 0.25,
+                    0,
+                    1,
+                  )
+                : 0;
         audio.update(body, Settings.values, {
           water: currentWater,
           isShaking: creature?.isShaking ?? false,
@@ -1026,6 +1103,8 @@ async function boot() {
           rain: state.place === "frontier" ? presentation.rain : 0,
           waterQuality: presentation.waterQuality,
           waterWetness: presentation.wetness,
+          wildlifeLevel,
+          wildlifeDistance,
         });
         // A transient notice hands the caption back once it has had its moment, and only
         // if nothing else has spoken in the meantime.

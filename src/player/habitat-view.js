@@ -70,8 +70,16 @@ export class HabitatView {
     // Warm umber against pale bank and green reeds: the herd has to read as
     // animals first and vegetation never.
     this.animalMat = this.own(
-      new THREE.MeshStandardMaterial({ color: 0x8b6a45, roughness: 0.9 }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }),
     );
+    this.preyColors = Object.freeze({
+      forage: new THREE.Color(0x8b6a45),
+      "seek-water": new THREE.Color(0x9b7549),
+      drink: new THREE.Color(0x66594b),
+      parched: new THREE.Color(0xb69a6c),
+      evade: new THREE.Color(0xa55f45),
+      flee: new THREE.Color(0xa55f45),
+    });
     // The basin visitors are frogs among reeds, so they keep the reed tone.
     this.frogMat = this.own(
       new THREE.MeshStandardMaterial({ color: 0x768e46, roughness: 1 }),
@@ -192,8 +200,14 @@ export class HabitatView {
     this.preyHeads = this.pool(this.sphere, this.animalMat, 12, this.wetland);
     this.preyLegs = this.pool(this.sphere, this.animalMat, 24, this.wetland);
     this.predatorMat = this.own(
-      new THREE.MeshStandardMaterial({ color: 0x2f2a33, roughness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 }),
     );
+    this.predatorColors = Object.freeze({
+      stalk: new THREE.Color(0x38303b),
+      ambush: new THREE.Color(0x241f29),
+      watch: new THREE.Color(0x4a414a),
+      evade: new THREE.Color(0x57404a),
+    });
     this.predators = this.pool(this.sphere, this.predatorMat, 3, this.wetland);
     this.predatorHeads = this.pool(
       this.sphere,
@@ -369,6 +383,7 @@ export class HabitatView {
     wildlife = null,
     settlement = null,
     dt = 1 / 60,
+    environment = {},
   ) {
     if (this.visitor) {
       this.visitor.visible = !!notable;
@@ -387,6 +402,24 @@ export class HabitatView {
     }
     const amount = this.lab ? ecosystem.labReeds : ecosystem.reeds;
     const life = this.lab ? ecosystem.labFrogs : ecosystem.prey;
+    const windStrength = THREE.MathUtils.clamp(
+        Number(environment.windStrength) || (this.lab ? 0.08 : 0.18),
+        0.04,
+        1,
+      ),
+      habitatWetness = THREE.MathUtils.clamp(
+        Number(
+          environment.wetness ??
+            (this.lab ? ecosystem.labWater : ecosystem.reeds),
+        ) || 0,
+        0,
+        1,
+      );
+    this.green.color.setHSL(
+      0.27 + habitatWetness * 0.035,
+      0.32 + habitatWetness * 0.12,
+      0.26 - habitatWetness * 0.035,
+    );
     const center = this.lab ? { x: 0, z: 0 } : WETLAND;
     const nearby =
       this.lab || Math.hypot(body.x - center.x, body.z - center.z) < 28;
@@ -449,9 +482,17 @@ export class HabitatView {
         z = center.z + Math.sin(angle) * radius;
       const h = 0.25 + (i % 5) * 0.12,
         y = this.lab ? labHeight(x, z) : heightAt(x, z);
+      const sway =
+        Math.sin(time * 1.65 + i * 0.71) *
+        windStrength *
+        (0.08 + h * 0.12);
       this.dummy.position.set(x, y + h / 2, z);
-      this.dummy.rotation.set(0, 0, 0);
-      this.dummy.scale.set(0.025, h, 0.025);
+      this.dummy.rotation.set(sway * 0.35, angle, sway);
+      this.dummy.scale.set(
+        0.025,
+        h * (0.9 + habitatWetness * 0.16),
+        0.025,
+      );
       this.dummy.updateMatrix();
       this.reeds.setMatrixAt(i, this.dummy.matrix);
     }
@@ -476,7 +517,12 @@ export class HabitatView {
       };
       prey.forEach((a, i) => {
         // Drinking lowers the muzzle to the water; a herd that cannot drink paces.
-        const drinking = a.mode === "drink";
+        const drinking = a.mode === "drink",
+          color = this.preyColors[a.mode] || this.preyColors.forage;
+        this.animals.setColorAt(i, color);
+        this.preyHeads.setColorAt(i, color);
+        this.preyLegs.setColorAt(i * 2, color);
+        this.preyLegs.setColorAt(i * 2 + 1, color);
         const hop =
           a.mode === "forage" || drinking
             ? 0
@@ -519,6 +565,12 @@ export class HabitatView {
           );
       });
       predators.forEach((a, i) => {
+        const color =
+          this.predatorColors[a.mode] || this.predatorColors.watch;
+        this.predators.setColorAt(i, color);
+        this.predatorHeads.setColorAt(i, color);
+        for (let j = 0; j < 4; j++)
+          this.predatorLegs.setColorAt(i * 4 + j, color);
         part(this.predators, i, a, 0, 0.38, 0, 0.23, 0.2, 0.48);
         part(this.predatorHeads, i, a, 0, 0.48, 0.4, 0.17, 0.15, 0.22);
         for (let j = 0; j < 4; j++)
@@ -541,8 +593,10 @@ export class HabitatView {
         this.predators,
         this.predatorHeads,
         this.predatorLegs,
-      ])
+      ]) {
         mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      }
     } else {
       this.animals.count = nearby ? Math.floor(life * 12) : 0;
       for (let i = 0; i < this.animals.count; i++) {

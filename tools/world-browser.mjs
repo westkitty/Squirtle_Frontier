@@ -133,9 +133,22 @@ try {
     facingMarker: !!document.querySelector("[data-map-facing]"),
     mapLabel: document.querySelector("#survey").getAttribute("aria-label"),
     waterQuality: document.querySelector("#water-quality-note").textContent,
+    landmarkMarkers: document.querySelectorAll("[data-map-landmark]").length,
+    reachTraces: document.querySelectorAll("[data-map-reach]").length,
+    rememberedPlaces: window.__SF.state.memory.places.length,
   }));
   assert.equal(evidence.memoryInstrument.playerMarker, true);
   assert.equal(evidence.memoryInstrument.facingMarker, true);
+  assert.equal(
+    evidence.memoryInstrument.reachTraces,
+    2,
+    "the two followed waterways must be drawn on the survey",
+  );
+  assert.equal(
+    evidence.memoryInstrument.landmarkMarkers,
+    evidence.memoryInstrument.rememberedPlaces,
+    "survey landmark markers must reveal remembered places only",
+  );
   assert.match(evidence.memoryInstrument.mapLabel, /facing/);
   assert.match(
     evidence.memoryInstrument.waterQuality,
@@ -384,7 +397,10 @@ try {
     const s = await page.evaluate(() => window.__SF.stats());
     assert.equal(s.chunks.active, 0);
     assert.equal(s.assets.references, 1);
-    assert.ok(s.memory.geometries <= 20);
+    assert.ok(
+      s.memory.geometries <= 21,
+      "room cycling includes one persistent atmosphere geometry and must remain bounded",
+    );
     evidence.cycles.push(s.memory);
   }
   await page.evaluate(() => window.__SF.dispose());

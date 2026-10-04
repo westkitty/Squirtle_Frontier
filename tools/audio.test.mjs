@@ -106,6 +106,7 @@ test("audio initializes master bus and sub-voices with single AudioContext", () 
   assert.ok(audio.flutterGain !== null, "flutter voice must exist");
   assert.ok(audio.streamGain !== null, "stream voice must exist");
   assert.ok(audio.rainGain !== null, "rain weather bed must exist");
+  assert.ok(audio.wildGain !== null, "nearby fauna voice must exist");
 
   // Re-unlocking must NOT recreate or proliferate AudioContext
   const ctx = audio.context;
@@ -293,6 +294,64 @@ test("rain ambience and stream timbre follow real environmental signals", () => 
     audio.streamFilter.frequency.value < clearFreq,
     "fouled/sluggish water must sound duller than clear running water",
   );
+  audio.dispose();
+});
+
+test("nearby fauna becomes audible without per-call source allocation", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0);
+  audio.context.currentTime = 1;
+
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { wildlifeLevel: 0.9, wildlifeDistance: 0 },
+  );
+  assert.ok(
+    audio.wildGain.gain.value > 0,
+    "standing at the habitat source must count as zero metres, not missing distance",
+  );
+  const osc = audio.wildOsc;
+
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { wildlifeLevel: 0.9, wildlifeDistance: 40 },
+  );
+  assert.equal(audio.wildGain.gain.value, 0, "distant habitat must not leak ambience");
+  assert.equal(audio.wildOsc, osc, "updates must reuse one fauna oscillator");
+  audio.dispose();
+});
+
+test("diving occludes weather, stream, and fauna ambience", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0);
+  audio.context.currentTime = 1;
+  const context = {
+    rain: 1,
+    channelStage: 2,
+    channelDist: 1,
+    waterQuality: 1,
+    waterWetness: 1,
+    wildlifeLevel: 1,
+    wildlifeDistance: 1,
+  };
+
+  audio.update(b, { muted: false, volume: 1.0 }, context);
+  const surface = {
+    rain: audio.rainGain.gain.value,
+    stream: audio.streamGain.gain.value,
+    wild: audio.wildGain.gain.value,
+  };
+  b.mode = "dive";
+  audio.update(b, { muted: false, volume: 1.0 }, context);
+  assert.ok(audio.rainGain.gain.value < surface.rain * 0.1);
+  assert.ok(audio.streamGain.gain.value < surface.stream * 0.2);
+  assert.ok(audio.wildGain.gain.value < surface.wild * 0.1);
   audio.dispose();
 });
 

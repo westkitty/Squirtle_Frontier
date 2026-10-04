@@ -2,6 +2,7 @@ import { channelHeight, CHANNEL_DEPTH } from "../simulation/channel-terrain.js";
 import * as THREE from "three";
 import { fireSite, traceChannel } from "../simulation/frontier-systems.js";
 import { heightAt } from "../worldgen.js";
+import { WETLAND } from "./habitat-view.js";
 export class WorldEffects {
   constructor(parent) {
     this.group = new THREE.Group();
@@ -96,6 +97,19 @@ export class WorldEffects {
     this.streamFoam.count = 0;
     this.streamFoam.visible = false;
     this.group.add(this.streamFoam);
+
+    this.mistMat = new THREE.MeshBasicMaterial({
+      color: 0xb8ccc3,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+    });
+    this.wetlandMist = new THREE.InstancedMesh(this.geo, this.mistMat, 14);
+    this.wetlandMist.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.wetlandMist.frustumCulled = false;
+    this.wetlandMist.count = 0;
+    this.wetlandMist.visible = false;
+    this.group.add(this.wetlandMist);
 
     this.route = traceChannel();
     this.channelGeo = new THREE.BufferGeometry();
@@ -345,7 +359,44 @@ export class WorldEffects {
       this.slideDust.visible = false;
     }
 
-    // 5. Stream foam rapids: churning white water along active flowing channel
+    // 5. Saturated wetland mist. It reuses the shared low-poly effect geometry,
+    // so atmosphere polish does not widen the renderer's geometry budget.
+    const wetlandWetness = THREE.MathUtils.clamp(
+        Number(state.watershed?.nodes?.[2]?.wetness) || 0,
+        0,
+        1,
+      ),
+      wetlandDistance = Math.hypot(body.x - WETLAND.x, body.z - WETLAND.z),
+      mistStrength =
+        wetlandDistance < 30 && wetlandWetness > 0.52
+          ? (wetlandWetness - 0.52) / 0.48
+          : 0,
+      mistBase = Math.round(14 * mistStrength * effectScale);
+    this.wetlandMist.count = mistBase;
+    this.wetlandMist.visible = mistBase > 0;
+    this.mistMat.opacity =
+      0.06 +
+      mistStrength * 0.1 * (1 - state.frontier.weather.rain * 0.45);
+    for (let i = 0; i < this.wetlandMist.count; i++) {
+      const angle = i * 2.39996 + state.elapsed * 0.025,
+        radius = 1.4 + (i % 5) * 0.92,
+        drift = Math.sin(state.elapsed * 0.22 + i * 1.71) * 0.28,
+        x = WETLAND.x + Math.cos(angle) * (radius + drift),
+        z = WETLAND.z + Math.sin(angle) * (radius + drift),
+        y = heightAt(x, z) + 0.16 + (i % 4) * 0.07;
+      this.dummy.position.set(x, y, z);
+      this.dummy.rotation.set(Math.PI / 2, angle, 0);
+      this.dummy.scale.set(
+        0.7 + (i % 3) * 0.35,
+        0.08 + (i % 2) * 0.03,
+        0.45 + ((i + 1) % 3) * 0.27,
+      );
+      this.dummy.updateMatrix();
+      this.wetlandMist.setMatrixAt(i, this.dummy.matrix);
+    }
+    this.wetlandMist.instanceMatrix.needsUpdate = true;
+
+    // 6. Stream foam rapids: churning white water along active flowing channel
     if (state.frontier.stage >= 2 && this.route.length > 1) {
       const channelFlow = Math.max(
         0,
@@ -394,6 +445,7 @@ export class WorldEffects {
       fire: this.fire.count,
       smoke: this.fireSmoke.count,
       dust: this.slideDust.count,
+      mist: this.wetlandMist.count,
       jet: this.jet.count,
       wake: this.wake.count,
       splash: this.splash.count,
@@ -414,6 +466,8 @@ export class WorldEffects {
     this.smokeMat.dispose();
     this.streamFoam.dispose();
     this.foamMat.dispose();
+    this.wetlandMist.dispose();
+    this.mistMat.dispose();
 
     this.rain.dispose();
     this.rainMat.dispose();

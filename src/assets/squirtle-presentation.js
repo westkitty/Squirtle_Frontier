@@ -21,6 +21,7 @@ export class SquirtlePresentation extends PlayableCreature {
     this.shakeTime = 0;
     this.wasAquatic = false;
     this.shell = 0;
+    this.shellSpin = 0;
     this.lookYaw = 0;
     this.lookPitch = 0;
     this.attentionTime = 0;
@@ -127,6 +128,9 @@ export class SquirtlePresentation extends PlayableCreature {
     const breathRate = 2.2 * (1 - this.restProgress * 0.65);
     this.breathPhase += dt * breathRate;
     this.shell += (Number(inShell) - this.shell) * (1 - Math.exp(-14 * dt));
+    if (inShell)
+      this.shellSpin =
+        (this.shellSpin + speed * dt * 4.6) % (Math.PI * 2);
 
     this.root.position.set(b.x, b.y, b.z);
     this.root.rotation.y = b.yaw;
@@ -368,6 +372,31 @@ export class SquirtlePresentation extends PlayableCreature {
       this.visual.rotation.x,
       targetTilt,
       8,
+      dt,
+    );
+    this.visual.rotation.y = inShell ? this.shellSpin : 0;
+
+    // Physical impacts compress the presentation wrapper only. The body/collider stays
+    // authoritative, but a landing no longer reads as a rigid model teleporting to rest.
+    const compression = THREE.MathUtils.clamp((b.impact || 0) * 0.55, 0, 0.14),
+      targetWide = 1 + compression * 0.65,
+      targetTall = 1 - compression;
+    this.visual.scale.x = THREE.MathUtils.damp(
+      this.visual.scale.x,
+      targetWide,
+      16,
+      dt,
+    );
+    this.visual.scale.z = THREE.MathUtils.damp(
+      this.visual.scale.z,
+      targetWide,
+      16,
+      dt,
+    );
+    this.visual.scale.y = THREE.MathUtils.damp(
+      this.visual.scale.y,
+      targetTall,
+      16,
       dt,
     );
 

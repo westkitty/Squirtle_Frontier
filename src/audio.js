@@ -19,6 +19,9 @@ export class Audio {
     this.streamFilter = null;
     this.rainGain = null;
     this.rainFilter = null;
+    this.wildGain = null;
+    this.wildFilter = null;
+    this.wildOsc = null;
   }
   get gain() {
     return this.masterGain;
@@ -131,6 +134,21 @@ export class Audio {
       this.rainFilter.connect(this.rainGain);
       this.rainGain.connect(this.masterGain);
 
+      // 8. Nearby fauna tone. One persistent oscillator is modulated by the frame loop;
+      // no timers or per-call source allocation are allowed.
+      this.wildOsc = this.context.createOscillator();
+      this.wildOsc.type = "triangle";
+      this.wildOsc.frequency.value = 320;
+      this.wildFilter = this.context.createBiquadFilter();
+      this.wildFilter.type = "bandpass";
+      this.wildFilter.Q.value = 2.6;
+      this.wildFilter.frequency.value = 760;
+      this.wildGain = this.context.createGain();
+      this.wildGain.gain.value = 0;
+      this.wildOsc.connect(this.wildFilter);
+      this.wildFilter.connect(this.wildGain);
+      this.wildGain.connect(this.masterGain);
+
       // Connect shared noise source to noise-driven filter paths
       this.noiseSource.connect(this.jetFilter);
       this.noiseSource.connect(this.surfFilter);
@@ -142,6 +160,7 @@ export class Audio {
       // Start continuous audio generators
       this.noiseSource.start();
       this.subOsc.start();
+      this.wildOsc.start();
     }
     void this.resume();
   }
@@ -248,19 +267,59 @@ export class Audio {
         500 + quality * 220 + Math.sin(now * 2.8) * 70 - (1 - wetness) * 35;
       this.streamFilter.frequency.setTargetAtTime(freq, now, 0.06);
     }
+    const submerged = body.mode === "dive";
+    streamLevel *= submerged ? 0.14 : 1;
     this.streamGain.gain.setTargetAtTime(streamLevel, now, 0.05);
 
-    const rain = Math.max(0, Math.min(1, Number(contextInfo.rain) || 0));
-    this.rainGain.gain.setTargetAtTime(rain * 0.12, now, 0.12);
-    this.rainFilter.frequency.setTargetAtTime(2200 + rain * 1900, now, 0.18);
+    const rain = Math.max(0, Math.min(1, Number(contextInfo.rain) || 0)),
+      rainLevel = rain * 0.12 * (submerged ? 0.03 : 1);
+    this.rainGain.gain.setTargetAtTime(rainLevel, now, 0.12);
+    this.rainFilter.frequency.setTargetAtTime(
+      submerged ? 700 : 2200 + rain * 1900,
+      now,
+      0.18,
+    );
+
+    const wildlifeLevel = Math.max(
+        0,
+        Math.min(1, Number(contextInfo.wildlifeLevel) || 0),
+      ),
+      rawWildlifeDistance = Number(contextInfo.wildlifeDistance),
+      wildlifeDistance = Number.isFinite(rawWildlifeDistance)
+        ? Math.max(0, rawWildlifeDistance)
+        : 999,
+      wildlifeProximity = Math.max(0, 1 - wildlifeDistance / 18),
+      wildlifePulse = Math.max(
+        0,
+        Math.sin(now * 2.1) + Math.sin(now * 3.7) * 0.35 - 0.45,
+      ),
+      wildLevel =
+        wildlifeLevel *
+        wildlifeProximity *
+        wildlifePulse *
+        0.055 *
+        (submerged ? 0.08 : 1);
+    this.wildGain.gain.setTargetAtTime(wildLevel, now, 0.08);
+    this.wildOsc.frequency.setTargetAtTime(
+      280 + wildlifeLevel * 150 + Math.sin(now * 0.7) * 28,
+      now,
+      0.08,
+    );
+    this.wildFilter.frequency.setTargetAtTime(
+      submerged ? 260 : 620 + wildlifeLevel * 280,
+      now,
+      0.12,
+    );
   }
   dispose() {
     try {
       this.noiseSource?.stop();
       this.subOsc?.stop();
+      this.wildOsc?.stop();
     } catch {}
     this.noiseSource?.disconnect();
     this.subOsc?.disconnect();
+    this.wildOsc?.disconnect();
     this.jetFilter?.disconnect();
     this.jetGain?.disconnect();
     this.surfFilter?.disconnect();
@@ -275,6 +334,8 @@ export class Audio {
     this.streamGain?.disconnect();
     this.rainFilter?.disconnect();
     this.rainGain?.disconnect();
+    this.wildFilter?.disconnect();
+    this.wildGain?.disconnect();
     this.masterGain?.disconnect();
     this.context?.close();
     this.context = null;

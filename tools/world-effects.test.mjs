@@ -222,6 +222,28 @@ test("active fires trail smoke and dry shell slides kick up bounded dust", () =>
   fx.dispose();
 });
 
+test("saturated nearby wetland grows bounded mist without adding geometry", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  state.watershed = {
+    nodes: [{}, {}, { wetness: 0.95 }],
+  };
+  const body = createBody(-6, -15, 0);
+
+  fx.update(state, body, { effectScale: 1 });
+  assert.ok(fx.wetlandMist.count >= 10);
+  assert.equal(fx.wetlandMist.visible, true);
+  assert.equal(fx.wetlandMist.geometry, fx.geo, "mist must reuse shared effect geometry");
+  assert.equal(fx.stats().mist, fx.wetlandMist.count);
+
+  body.x = 60;
+  body.z = 60;
+  fx.update(state, body, { effectScale: 1 });
+  assert.equal(fx.wetlandMist.count, 0, "distant wetland must cost no mist instances");
+  fx.dispose();
+});
+
 test("WorldEffects teardown cleanly disposes all resources without throwing", () => {
   const parent = new THREE.Group();
   const fx = new WorldEffects(parent);
@@ -290,6 +312,7 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
     fx.wake,
     fx.splash,
     fx.slideDust,
+    fx.wetlandMist,
     fx.streamFoam,
   ])
     assert.equal(
