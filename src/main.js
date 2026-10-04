@@ -1,5 +1,7 @@
 import { AdaptiveScale } from "./adaptive-quality.js";
 import { NearWildlife } from "./simulation/near-wildlife.js";
+import { NearConspecifics } from "./simulation/near-squirtles.js";
+import { NearSquirtleView } from "./assets/near-squirtle-view.js";
 import {
   settlementObstacles,
   settlementDialogue,
@@ -128,6 +130,8 @@ async function boot() {
       habitat = new HabitatView(frontierGroup),
       effects = new WorldEffects(frontierGroup),
       wildlife = new NearWildlife(state.seed),
+      squirtles = new NearConspecifics(state.seed),
+      squirtleView = new NearSquirtleView(frontierGroup, assets),
       collisionBuffer = [],
       settlementCollision = settlementObstacles.map((obstacle) => ({
         ...obstacle,
@@ -196,6 +200,8 @@ async function boot() {
       recenterHeld = false;
     const enterPlace = (place, relocate = true) => {
       wildlife.clear();
+      squirtles.leaveLocal();
+      squirtleView.releaseAll();
       record?.dispose();
       record = null;
       if (place === "record") {
@@ -286,12 +292,15 @@ async function boot() {
       watershedView.dispose();
       habitat.dispose();
       wildlife.clear();
+      squirtles.leaveLocal();
       effects.dispose();
       atmosphere.dispose();
       record?.dispose();
       lab?.dispose();
       audio.dispose();
-      disposePromise = assets.disposeAll().finally(() => renderer.dispose());
+      disposePromise = Promise.resolve(squirtleView.dispose())
+        .then(() => assets.disposeAll())
+        .finally(() => renderer.dispose());
       return disposePromise;
     };
     addEventListener(
@@ -1014,6 +1023,15 @@ async function boot() {
         }
         const previousTick = state.frontier.tick;
         state.update(dt);
+        if (state.place === "frontier")
+          squirtles.step(
+            dt,
+            body,
+            state.place,
+            state.squirtleEcology,
+            state.memory,
+            liveRegion,
+          );
         if (state.frontier.tick !== previousTick) {
           state.memory.observe(
             body,
@@ -1023,8 +1041,10 @@ async function boot() {
           );
           state.memory.noteDrinks(body, wildlife.drinkers);
         }
-        if (state.frontier.tick !== previousTick)
+        if (state.frontier.tick !== previousTick) {
           state.settlement.observe(body, state.place, state.frontier.tick);
+          squirtles.observe(body, state.memory, state.frontier.tick);
+        }
         presentationSignals(state, presentation);
         shared.uTime.value = state.elapsed;
         shared.uWet.value = presentation.wetGround;
@@ -1057,7 +1077,8 @@ async function boot() {
           effectsOptions.channelFlow = state.watershed.nodes[2].flow;
           effects.update(state, body, effectsOptions);
         }
-        if (state.place === "frontier")
+        if (state.place === "frontier") {
+          squirtleView.update(squirtles, liveRegion, state.elapsed);
           habitat.update(
             state.ecosystem,
             body,
@@ -1068,6 +1089,7 @@ async function boot() {
             dt,
             presentation,
           );
+        }
         if (lab) {
           labEnvironment.wetness = state.ecosystem.labWater;
           lab.update(
@@ -1082,14 +1104,18 @@ async function boot() {
           );
         }
         const signal =
-          controls.sense && state.place === "frontier"
-            ? senseWater(
-                state.watershed,
-                body,
-                !!liveRegion.water(body.x, body.z) && body.y < 0.3,
-                state.frontier,
-              )
-            : null;
+            controls.sense && state.place === "frontier"
+              ? senseWater(
+                  state.watershed,
+                  body,
+                  !!liveRegion.water(body.x, body.z) && body.y < 0.3,
+                  state.frontier,
+                )
+              : null,
+          speciesSignal =
+            controls.sense && state.place === "frontier"
+              ? squirtles.sense(body, state.squirtleEcology)
+              : null;
         if (state.place === "frontier")
           watershedView.update(
             state.watershed,
@@ -1133,14 +1159,17 @@ async function boot() {
               ? "Fresh water carries reed seeds into the basin."
               : "The basin waits for water from the wetland.";
         else if (controls.sense) {
-          const reach = reachAt(body.x, body.z),
+          const primarySense =
+              signal?.message ||
+              speciesSignal?.message ||
+              "Touch the water to listen to its current.",
+            speciesSuffix = signal && speciesSignal ? ` ${speciesSignal.message}` : "",
+            reach = reachAt(body.x, body.z),
             flow = reach ? readReachWater()[reach.id] : null,
             above = reach
               ? state.sampleHeight(body.x, body.z) - state.waterLevel
               : 0;
-          status.textContent = `${
-            signal?.message || "Touch the water to listen to its current."
-          }${
+          status.textContent = `${primarySense}${speciesSuffix}${
             reach
               ? ` You are on the ${reach.name}${
                   reach.cut && state.frontier.stage === 0
@@ -1196,6 +1225,8 @@ async function boot() {
           place: state.place,
           state,
           wildlife,
+          squirtles,
+          squirtleEcology: state.squirtleEcology,
           settlement: state.settlement,
           previous: creature?.attention ?? null,
         });
@@ -1489,6 +1520,8 @@ async function boot() {
       // Journeys assert what the Lab actually renders; the frontier view is `habitat`.
       labView: () => lab,
       wildlife,
+      squirtles,
+      squirtleView,
       dispose: cleanup,
       stats: () => ({
         chunks: streaming.stats(),
@@ -1505,6 +1538,10 @@ async function boot() {
           scenery: scenery.performanceStats(),
           habitat: habitat.performanceStats(),
           wildlife: wildlife.performanceStats(),
+          squirtles: {
+            simulation: squirtles.performanceStats(),
+            view: squirtleView.performanceStats(),
+          },
           effects: effects.stats(),
         },
         effects: {

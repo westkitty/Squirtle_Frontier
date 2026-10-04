@@ -58,7 +58,7 @@ test("bad topology, cyclic links and invalid scalars reject atomically; version 
     true,
   );
   assert.equal(state.elapsed, 10);
-  assert.equal(state.version, 6);
+  assert.equal(state.version, 7);
 });
 test("bounded steps and deterministic semantic snapshots", () => {
   const a = new Watershed(),

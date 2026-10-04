@@ -92,6 +92,7 @@ test("semantic save roundtrip excludes scenes; damaged original and live state r
     "savedAt",
     "seed",
     "settlement",
+    "squirtles",
     "version",
     "watershed",
   ]);

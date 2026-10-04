@@ -59,6 +59,16 @@ export class Settlement {
           ? "welcome"
           : "watch";
   }
+  // Conspecifics are illegal in settled territory, but illegality is not universal hostility.
+  // This semantic response feeds pressure into ConspecificEcology without spawning combatants.
+  get legalResponse() {
+    if (this.fear > 0.65) return "report";
+    if (this.familiarity >= 0.55 && this.fear < 0.15) return "protect";
+    if (this.bowl > 0.05 && this.familiarity >= 0.25 && this.fear < 0.3) return "feed";
+    if (this.familiarity >= 0.12 && this.fear < 0.35) return "tolerate";
+    if (this.visits === 0 && !this.present) return "ignore";
+    return "watch";
+  }
   snapshot() {
     return {
       familiarity: this.familiarity,

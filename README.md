@@ -76,3 +76,7 @@ Original Phase 0 evidence/tool remains historical; use the current movement brow
 [Test authority](docs/qa/TEST_AUTHORITY.md) · [Architecture/provenance](docs/architecture/BASELINE.md) · [Phase 0 baseline](docs/performance/BASELINE.md) · [Movement QA](docs/qa/PHASE1.md) · [Asset intake](docs/assets/SQUIRTLE_INTAKE.md)
 
 Living Frontier remains the technical foundation; Squirtle Lab supplies character source and creature-centered requirements. Both source repositories remain untouched. Supplied fan-project assets do not imply permissive distribution rights. No prototype completion or deployment is claimed.
+
+## Hidden Squirtle population
+
+Stillwater now has a bounded same-species ecology: Marsh and Urban Squirtles can project into valid current-slice habitat, Freshwater remains rarer, while Saltwater and Deepwater are implemented but intentionally habitat-ineligible until the world contains a real coast/estuary or naturally deep flooded region. Nearby Squirtles are behavioral actors, not quests or enemies; meaningful individuals can become remembered, Current Sense can read genuine same-species traces, ordinary humans range from ignoring to protecting despite the law, and rare Shucker pressure creates a distinct species-level danger signal. The player remains the existing untyped Squirtle; no canonical player ecotype is assigned.

@@ -86,6 +86,7 @@ jobs:
           run_check "Recovery" npm run browser:recovery
           run_check "Channel" npm run browser:channel
           run_check "Wildlife" npm run browser:wildlife
+          run_check "Squirtle population" npm run browser:squirtles
           run_check "Accessibility" npm run browser:a11y
           run_check "Gamepad" npm run browser:gamepad
           run_check "Multitab" npm run browser:multitab

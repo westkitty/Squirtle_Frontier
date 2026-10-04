@@ -1,6 +1,8 @@
 import { hash2i, clamp } from "../rng.js";
 import { RECORD_BANDS } from "./deep-history.js";
 import { REACHES, reachAt } from "./reaches.js";
+import { ECOTYPE_IDS, HABITATS } from "./squirtle-ecology.js";
+export const MAX_NOTABLE_CONSPECIFICS = 4;
 export const LANDMARKS = [
   { id: "bank", name: "The first bank", x: -10, z: 18 },
   { id: "debris", name: "The broken tributary", x: -6, z: 12 },
@@ -15,6 +17,7 @@ export class PlaceMemory {
     this.cells = {};
     this.places = [];
     this.notable = null;
+    this.squirtles = [];
     this.lastEncounter = -1000;
     this.drinks = {};
     this.reaches = [];
@@ -35,6 +38,37 @@ export class PlaceMemory {
     this.strata.push(index);
     this.strata.sort((a, b) => a - b);
     return true;
+  }
+  findNotableConspecific(id) {
+    return this.squirtles.find((record) => record.id === id) ?? null;
+  }
+  rememberConspecific(actor, tick) {
+    if (!actor?.id || !ECOTYPE_IDS.includes(actor.ecotype)) return null;
+    if (!HABITATS.some((habitat) => habitat.id === actor.habitatId)) return null;
+    let record = this.findNotableConspecific(actor.id);
+    if (!record) {
+      if (this.squirtles.length >= MAX_NOTABLE_CONSPECIFICS) return null;
+      record = {
+        id: actor.id,
+        ecotype: actor.ecotype,
+        marking: actor.marking,
+        encounters: 0,
+        familiarity: 0,
+        fear: 0,
+        trust: 0,
+        lastSeen: tick,
+        home: actor.habitatId,
+        state: "alive",
+      };
+      this.squirtles.push(record);
+    }
+    record.encounters = Math.min(10000, Math.max(record.encounters, actor.encounters || 0));
+    record.familiarity = clamp(actor.familiarity ?? record.familiarity, 0, 1);
+    record.fear = clamp(actor.fear ?? record.fear, 0, 1);
+    record.trust = clamp(actor.trust ?? record.trust, 0, 1);
+    record.lastSeen = tick;
+    record.state = "alive";
+    return record;
   }
   // Where the herd was seen drinking, as observed from here. Behavior, not
   // population: it never changes how many animals exist.
@@ -104,6 +138,7 @@ export class PlaceMemory {
       reaches: [...this.reaches],
       strata: [...this.strata],
       places: [...this.places],
+      squirtles: this.squirtles.map((record) => ({ ...record })),
       notable: this.notable ? { ...this.notable } : null,
       lastEncounter: this.lastEncounter,
     };
@@ -174,6 +209,36 @@ export class PlaceMemory {
         )
           throw new Error("Invalid drink track");
         r.drinks[k] = v;
+      }
+    }
+    if (s.squirtles !== undefined) {
+      if (
+        !Array.isArray(s.squirtles) ||
+        s.squirtles.length > MAX_NOTABLE_CONSPECIFICS ||
+        new Set(s.squirtles.map((record) => record.id)).size !== s.squirtles.length
+      )
+        throw new Error("Invalid notable conspecifics");
+      for (const record of s.squirtles) {
+        if (
+          typeof record.id !== "string" ||
+          !/^sq-[a-z0-9-]{5,96}$/.test(record.id) ||
+          !ECOTYPE_IDS.includes(record.ecotype) ||
+          !Number.isInteger(record.marking) ||
+          record.marking < 0 ||
+          record.marking > 4095 ||
+          !Number.isInteger(record.encounters) ||
+          record.encounters < 0 ||
+          record.encounters > 10000 ||
+          !Number.isSafeInteger(record.lastSeen) ||
+          record.lastSeen < 0 ||
+          !HABITATS.some((habitat) => habitat.id === record.home) ||
+          !["alive", "unknown"].includes(record.state) ||
+          ["familiarity", "fear", "trust"].some(
+            (key) => !Number.isFinite(record[key]) || record[key] < 0 || record[key] > 1,
+          )
+        )
+          throw new Error("Invalid notable conspecific");
+        r.squirtles.push({ ...record });
       }
     }
     if (!Number.isSafeInteger(s.lastEncounter) || s.lastEncounter < -1000)
