@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 30
+revision: 31
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -675,3 +675,53 @@ R/contextual button near the wooden platform advances the existing regional simu
   - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
 - GitHub Pages build/deployment run `37168039113`: PASS.
 - No new runtime dependency and no save-schema change were introduced. Simulation authority, watershed causality, locomotion rules, save identity, reduced-motion behavior, bounded near/distant ecology, asset ownership/disposal and the no-quest design thesis remain protected.
+
+
+## Ten-way water-guidance, aquatic-response and environmental-contact uplift closure — 2026-10-03
+
+- Continues from the verified creature/habitat/remembered-world uplift at revision 30.
+- Primary ten-way implementation commit: `b9df93e3d2bc6b159daa52c65f55e5191f48e021` (`Deepen water guidance and aquatic response`).
+- Focused proof repair / fully verified runtime head: `48228e4bd41dbec771993ce459d673a180428b10` (`Repair Current Sense flow guidance`).
+- Exact ten improvements:
+  1. Current Sense now animates bounded downstream flow motes along the active named reach near Squirtle instead of communicating current direction only through text.
+  2. The Memory survey now encodes revisit intensity from existing observation counts, so repeatedly observed terrain reads differently from a single pass without widening the save contract.
+  3. Observed wildlife drinking sites now appear as bounded Memory-map markers derived only from `state.memory.drinks`.
+  4. Followed waterways now expose their downstream mouth on the Memory survey, while unwalked reaches remain absent.
+  5. Squirtle's visible body now banks into aquatic and shell-slide turns using presentation-only yaw-rate response; authoritative body yaw is untouched.
+  6. Squirtle's aquatic body attitude now pitches with ascent/descent velocity inside a bounded visual range.
+  7. The creature camera now adds restrained aquatic/slide turn bank and vertical swim look-ahead; reduced-motion mode removes both additions.
+  8. Rain now visibly contacts nearby water with bounded surface ripples rather than visually ending before the water surface.
+  9. Diving now reveals suspended particulate density/tint derived from the real wetland sediment and contamination state; surface swimming does not render the dive field.
+  10. Local wildlife now communicates alarm, thirst-seeking and predator stalk/ambush through posture as well as colour: prey lift into alert motion while stalking/ambushing predators crouch.
+- Resource/scope discipline:
+  - Current-Sense motes reuse the existing watershed icosahedron geometry.
+  - Rain-contact ripples and underwater particulate motes reuse the existing shared effect geometry.
+  - No new runtime dependency was added.
+  - No save version or save-schema change was introduced; revisit intensity, drink sites and followed-water mouths are presentations of existing memory.
+  - Existing body physics, hydrology, ecology population authority, current-water rules and player-input authority remain unchanged.
+- External precedent was used only as an advisory design lens: environmental/diegetic guidance should carry more navigation burden when it can do so clearly, while explicit map/log surfaces remain the accessibility fallback. The implementation preserves that split: world-space water motion for Current Sense, Memory for explicit learned-state recall.
+- First full verification run for `b9df93e3...`, GitHub Actions `37169035303`, correctly BLOCKED in the Watershed browser journey while assets, architecture/unit, mutation, production build and built-bundle proof were otherwise green.
+  - Failure: the new downstream motes were keyed to `!!signal`, which means "touching water produced a Current Sense water signal", while the established named-reach readout also works when the player holds Sense while standing on a reach that contains water in patches.
+  - This made the text correctly report "North run, water in patches" while the new visual current remained absent.
+  - Repair: the watershed presentation now keeps the original touch-water signal for the debris ripple but receives held-Sense state separately for named-reach flow guidance. A focused regression test proves held Sense can animate active-reach motes without weakening the old ripple gate.
+- Final verification run `37169569412`: PASS.
+  - asset validation PASS;
+  - architecture/source checks PASS;
+  - unit suite **222/222 PASS**;
+  - mutation suite **58/58 injected defects killed**;
+  - production Vite build PASS;
+  - core movement PASS;
+  - habitat PASS;
+  - world / Memory / Deep Record PASS;
+  - recovery PASS;
+  - channel PASS;
+  - wildlife PASS;
+  - accessibility PASS;
+  - synthetic standard-gamepad PASS;
+  - multitab conflict/adoption/pose-resume PASS;
+  - watershed PASS, including real held-Sense downstream-mote proof after a flooded named reach develops;
+  - renderer performance/teardown PASS;
+  - shoreline capture PASS with **1.50 m** measured low-to-full long-axis movement;
+  - built production bundle PASS from static hosting with movement, persistence, cached asset and zero-resource teardown.
+- Final GitHub Pages build/deployment run `37169569429`: PASS.
+- Human feel, representative hardware/mobile GPU performance and final production visual acceptance remain separate evidence questions; this closure proves the automated/browser contract, not those unmeasured claims.
