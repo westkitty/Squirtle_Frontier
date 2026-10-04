@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 33
+revision: 34
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -861,4 +861,47 @@ R/contextual button near the wooden platform advances the existing regional simu
   - Deploy GitHub Pages run `37198633472`: **PASS**;
   - live Pages JavaScript contains the Shucker evidence path plus Urban `water-house-drain` and Freshwater `spring-gully` habitat literals.
 - Evidence boundary remains unchanged: software-rendered browser timing is not representative Mac/mobile GPU FPS, and human gameplay feel/visual acceptance remain separate evidence questions.
+
+## Transformative social-legibility and authored-world uplift closure — 2026-10-04
+
+- Continues from the verified persistent Squirtle population ecology closure. Runtime implementation commit: `54e16d30de2ba248cb036f1c3bbcd8398fd691e1` (`Make Squirtle society legible and consequential`).
+- The pass deliberately optimized for leverage rather than feature count: it makes already-simulated Squirtle society, human legality, and Shucker danger legible through existing world-memory, transition, and ambient-dialogue channels instead of adding a quest system, generic HUD meters, a combat faction, or fabricated habitat.
+- Same-species consequence layer:
+  - `Places remembered` now reports real Freshwater/Marsh/Urban Squirtle signs plus bounded remembered-individual state from the existing ecology and memory models.
+  - Real Shucker pressure entering or leaving the reach can surface as a high-priority world transition; no Shucker evidence is invented without the actual pressure/tick state.
+  - Meaningful individual recognition and material same-species abundance changes can surface through the existing transition channel without taking player control.
+  - Saltwater and Deepwater remain valid ecotypes but still receive no fabricated Stillwater habitat.
+- Human/legal consequence layer:
+  - Existing `ignore/watch/tolerate/feed/protect/report` semantics remain authoritative.
+  - The caretaker now visibly distinguishes `protect` from ordinary welcome by watching the road and offering cover.
+  - `report` visibly escalates as a message being sent beyond the reeds rather than spawning a hunter/combat system.
+  - Existing drought/check-water and withdrawal behavior remains higher-priority where its real state requires it.
+- Interface-as-world cleanup:
+  - public-facing `movement proving ground`, `Early watershed study`, and `MOVEMENT STUDY / 01` prototype language was removed;
+  - the same interface now presents Stillwater as a persistent watershed reach and uses `STILLWATER REACH / FIELD CURRENT` field language without changing layout, controls, or accessibility structure.
+- Scope discipline:
+  - no new runtime dependency;
+  - no save-version or save-schema change;
+  - no player ecotype assignment;
+  - no new renderer, locomotion, hydrology, ecology-authority, combat, or quest architecture;
+  - no invented Saltwater/Deepwater habitat;
+  - no claimed performance uplift from this pass.
+- Focused pre-merge proof:
+  - same-species/transition presentation checks **5/5 PASS**;
+  - caretaker legal-dialogue and drought-priority checks **2/2 PASS**;
+  - Web Authorship deterministic audit on the changed public HTML: **PASS with zero findings**;
+  - public-copy lint on the changed interface copy and technical README population copy: **PASS with zero findings**.
+- Full implementation-head proof at `54e16d30de2ba248cb036f1c3bbcd8398fd691e1`:
+  - Verify Squirtle Frontier run `37208882641`: **PASS**;
+  - Deploy GitHub Pages run `37208882626`: **PASS**;
+  - architecture/source/unit suite **256/256 PASS**;
+  - mutation suite **80/80 injected defects killed by named tests**, including the new Shucker-transition, remembered-Squirtle-summary, and caretaker-protection mutations;
+  - production Vite build PASS;
+  - Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab, and Watershed browser journeys PASS;
+  - renderer performance/stability/teardown PASS with final teardown at **0 geometries / 0 textures**;
+  - shoreline capture PASS with **1.50 m** low-to-full long-axis movement preserved;
+  - built production bundle PASS from static hosting with direct movement, persistence, cached asset, and zero-resource teardown;
+  - validation evidence artifact upload PASS.
+- This revision-34 state update is documentation-only. Before declaring closure, the containing final `main` revision must itself pass the repository's Verify and Pages workflows so SOURCE / VALIDATION / DELIVERY refer to the same final revision.
+- Evidence boundary remains unchanged: automated Chromium/software-renderer proof does not establish representative Mac/mobile real-GPU FPS or human gameplay/visual acceptance. Those remain separate evidence questions.
 
