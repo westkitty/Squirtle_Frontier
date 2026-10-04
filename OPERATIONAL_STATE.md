@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 32
+revision: 33
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -830,3 +830,35 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Scope discipline: no new dependency, no save-version change, no authoritative hydrology/body/ecology rule change, no effect deletion used as a performance shortcut.
 - Verdict: **PASS — material software-browser frame-time uplift with stable long-session resource ownership and no measured regression.**
 - Remaining evidence boundary: this does **not** claim representative Mac, mobile or real-GPU FPS. Hardware/mobile performance and final human visual/feel acceptance remain separate evidence questions.
+
+## Persistent Squirtle population ecology closure — 2026-10-04
+
+- Production integration is merged on `main` at `7aae61fae4c24aaac3664424336760065b55068b` after the performance-proof repair merge.
+- The player remains the existing untyped playable Squirtle. Nearby same-species actors are ecology projections, not alternate player controllers, quest NPCs, or a combat faction.
+- Five ecotypes are implemented: Freshwater, Saltwater, Marsh, Deepwater, and Urban.
+  - Freshwater is rarer and weaker.
+  - Saltwater is tougher.
+  - Current Stillwater habitat supports Freshwater, Marsh, and Urban only.
+  - Saltwater and Deepwater remain valid system types but are deliberately absent from this world slice rather than inventing false coastal/deep habitat.
+- Distant Squirtle population state remains aggregate simulation. Nearby projection is hard-capped at three actors; only meaningful repeated/calm contact can promote an individual into bounded persistent memory, capped at four records.
+- Save schema is version 7. Versions 1–6 migrate with empty conspecific history; malformed v7 ecology rejects rather than partially applying. Offline regional ticks advance aggregate Squirtle ecology without replaying local actors.
+- Ordinary human/legal response is separate from predation: ignore/watch/tolerate/feed/protect/report are supported, with non-hostile behavior dominant. Reporting raises abstract pressure rather than spawning a combat system.
+- Shucking is represented as a distinct rare Shucker pressure/evidence state. It changes habitat safety and nearby Squirtle behavior. Current Sense reports Shucker evidence only when that state actually exists.
+- Current Sense also reads bounded real same-species traces such as routes, home use, safe water, human-edge movement, danger flight, and Shucker evidence without replacing hydrology as the primary water-reading system.
+- Runtime presentation reuses the existing cached Squirtle asset, lazily acquiring at most the active local actor count and releasing handles/material/skeleton ownership on departure or teardown.
+- Initial merged proof at `93e6a45cdb3d30e1648fd827599ac4e2f2f9b0aa`:
+  - unit/source suite **253/253 PASS**;
+  - mutation suite **77/77 injected defects killed by named tests**;
+  - production build PASS;
+  - core movement, habitat, world, recovery, channel, wildlife, Squirtle population, accessibility, gamepad, multitab, watershed, shoreline, and built-bundle browser journeys PASS;
+  - Pages deployment run `37197160045` PASS;
+  - full verification run `37197159977` BLOCKED only because the performance harness manually forced abundance/suitability without priming the real watershed/ecosystem/settlement causes, allowing the next ecology tick to clear the three-actor measurement scene.
+- Performance-proof repair:
+  - `cdd4ad9bbd06d6f89ec248ed55bed9ddf3079da5` primes the same real habitat causes used by the social journey before the three-nearby-Squirtles measurement; the hard **3 simulated / 3 rendered** assertions remain unchanged.
+  - Focused Mac proof on the repair branch held **3 simulated, 3 rendered, 0 pending loads** across multiple real one-second ecology ticks with Marsh suitability `0.737940725598627` and Urban suitability `0.7966182346081669`.
+- Final production proof at `7aae61fae4c24aaac3664424336760065b55068b`:
+  - Verify Squirtle Frontier run `37198633458`: **PASS**;
+  - Deploy GitHub Pages run `37198633472`: **PASS**;
+  - live Pages JavaScript contains the Shucker evidence path plus Urban `water-house-drain` and Freshwater `spring-gully` habitat literals.
+- Evidence boundary remains unchanged: software-rendered browser timing is not representative Mac/mobile GPU FPS, and human gameplay feel/visual acceptance remain separate evidence questions.
+
