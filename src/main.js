@@ -1112,6 +1112,7 @@ async function boot() {
           state,
           wildlife,
           settlement: state.settlement,
+          previous: creature?.attention ?? null,
         });
         creature.present(body, dt, attention);
         if (state.place === "frontier")
@@ -1155,6 +1156,10 @@ async function boot() {
           waterWetness: presentation.wetness,
           wildlifeLevel,
           wildlifeDistance,
+          canopyCover:
+            state.place === "frontier"
+              ? scenery.canopyCoverAt(body.x, body.z)
+              : 0,
         });
         // A transient notice hands the caption back once it has had its moment, and only
         // if nothing else has spoken in the meantime.
@@ -1398,6 +1403,7 @@ async function boot() {
           rainRipples: effects?.rainRipples?.count ?? 0,
           underwaterMotes: effects?.underwaterMotes?.count ?? 0,
           senseMotes: watershedView?.flowMotes?.count ?? 0,
+          wetTrail: scenery?.wetTrail?.count ?? 0,
         },
       }),
     };

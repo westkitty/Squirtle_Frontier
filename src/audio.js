@@ -181,6 +181,17 @@ export class Audio {
     const aquatic = body.mode === "swim" || body.mode === "dive";
     const speed = Math.hypot(body.vx, body.vz);
     const volume = settings.muted ? 0 : (settings.volume ?? 1);
+    const waterLevel = Number(contextInfo.water?.level),
+      depth =
+        body.mode === "dive"
+          ? Number.isFinite(waterLevel)
+            ? Math.max(0, Math.min(1, (waterLevel - body.y) / 2.5))
+            : 1
+          : 0,
+      canopy = Math.max(
+        0,
+        Math.min(1, Number(contextInfo.canopyCover) || 0),
+      );
 
     // Master volume target
     this.masterGain.gain.setTargetAtTime(volume, now, 0.05);
@@ -210,9 +221,15 @@ export class Audio {
     }
     this.surfGain.gain.setTargetAtTime(surfLevel, now, 0.06);
 
-    // 3. Submerged Cavern / Deep Ocean sub-drone
-    const subLevel = body.mode === "dive" ? 0.26 : 0;
+    // 3. Submerged Cavern / Deep Ocean sub-drone. Actual depth matters:
+    // a shallow duck-under is quieter than settling metres below the surface.
+    const subLevel = body.mode === "dive" ? 0.12 + depth * 0.18 : 0;
     this.subGain.gain.setTargetAtTime(subLevel, now, 0.08);
+    this.subFilter.frequency.setTargetAtTime(
+      body.mode === "dive" ? 145 - depth * 45 : 130,
+      now,
+      0.1,
+    );
 
     // 4. Locomotion: turf footsteps, shallows wading splash, shell slide friction
     let locoLevel = 0;
@@ -267,15 +284,20 @@ export class Audio {
         500 + quality * 220 + Math.sin(now * 2.8) * 70 - (1 - wetness) * 35;
       this.streamFilter.frequency.setTargetAtTime(freq, now, 0.06);
     }
-    const submerged = body.mode === "dive";
-    streamLevel *= submerged ? 0.14 : 1;
+    const submerged = body.mode === "dive",
+      underwaterTransmission = submerged ? 1 - depth * 0.86 : 1;
+    streamLevel *= underwaterTransmission;
     this.streamGain.gain.setTargetAtTime(streamLevel, now, 0.05);
 
     const rain = Math.max(0, Math.min(1, Number(contextInfo.rain) || 0)),
-      rainLevel = rain * 0.12 * (submerged ? 0.03 : 1);
+      depthRain = submerged ? 1 - depth * 0.97 : 1,
+      canopyRain = 1 - canopy * 0.55,
+      rainLevel = rain * 0.12 * depthRain * canopyRain;
     this.rainGain.gain.setTargetAtTime(rainLevel, now, 0.12);
     this.rainFilter.frequency.setTargetAtTime(
-      submerged ? 700 : 2200 + rain * 1900,
+      submerged
+        ? 1150 - depth * 450
+        : 2200 + rain * 1900 - canopy * 1400,
       now,
       0.18,
     );
@@ -298,7 +320,7 @@ export class Audio {
         wildlifeProximity *
         wildlifePulse *
         0.055 *
-        (submerged ? 0.08 : 1);
+        (submerged ? 1 - depth * 0.92 : 1);
     this.wildGain.gain.setTargetAtTime(wildLevel, now, 0.08);
     this.wildOsc.frequency.setTargetAtTime(
       280 + wildlifeLevel * 150 + Math.sin(now * 0.7) * 28,
@@ -306,7 +328,7 @@ export class Audio {
       0.08,
     );
     this.wildFilter.frequency.setTargetAtTime(
-      submerged ? 260 : 620 + wildlifeLevel * 280,
+      submerged ? 480 - depth * 220 : 620 + wildlifeLevel * 280,
       now,
       0.12,
     );

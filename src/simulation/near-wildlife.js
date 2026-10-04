@@ -205,6 +205,29 @@ export class NearWildlife {
         dz = WILDLIFE_HOME.z + Math.sin(angle) * 2.5 - old.z;
         if (a.mode === "parched") speed = 0.4;
       }
+      if (speed > 0 && a.mode !== "drink") {
+        let separateX = 0,
+          separateZ = 0;
+        for (const peer of before) {
+          if (peer.kind !== old.kind || peer.slot === old.slot) continue;
+          const px = old.x - peer.x,
+            pz = old.z - peer.z,
+            distance = Math.hypot(px, pz),
+            radius = old.kind === "prey" ? 0.72 : 0.95;
+          if (distance >= radius) continue;
+          const weight = (radius - distance) / radius;
+          if (distance > 1e-5) {
+            separateX += (px / distance) * weight;
+            separateZ += (pz / distance) * weight;
+          } else {
+            const sign = old.slot < peer.slot ? -1 : 1;
+            separateX += sign * weight;
+            separateZ -= sign * weight * 0.5;
+          }
+        }
+        dx += separateX * 0.9;
+        dz += separateZ * 0.9;
+      }
       const length = Math.hypot(dx, dz);
       if (length < 1e-6) {
         dx = Math.sin(a.phase);

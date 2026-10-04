@@ -13,6 +13,7 @@ export function resolveAttentionTarget({
   state = null,
   wildlife = null,
   settlement = null,
+  previous = null,
 }) {
   if (!body) return null;
 
@@ -49,13 +50,25 @@ export function resolveAttentionTarget({
     if (wildlife?.actors) {
       for (const actor of wildlife.actors) {
         if (!actor) continue;
+        const priority =
+          actor.kind === "predator"
+            ? actor.mode === "ambush"
+              ? 13
+              : actor.mode === "stalk"
+                ? 12
+                : 10
+            : actor.mode === "flee" || actor.mode === "evade"
+              ? 11
+              : actor.mode === "drink"
+                ? 9
+                : 10;
         addCandidate({
           id: `wildlife-${actor.kind}-${actor.slot}`,
           type: "wildlife",
           x: actor.x,
           z: actor.z,
           y: heightAt(actor.x, actor.z) + (actor.kind === "prey" ? 0.15 : 0.35),
-          priority: 10,
+          priority,
           radius: 9,
         });
       }
@@ -181,7 +194,15 @@ export function resolveAttentionTarget({
 
   // Sort by priority descending, then distance ascending
   candidates.sort((a, b) => b.priority - a.priority || a.dist - b.dist);
-  const best = candidates[0];
+  let best = candidates[0];
+  if (previous?.id && previous.id !== best.id) {
+    const held = candidates.find((candidate) => candidate.id === previous.id);
+    if (held) {
+      const score = (candidate) => candidate.priority * 10 - candidate.dist,
+        margin = 1.5;
+      if (score(held) >= score(best) - margin) best = held;
+    }
+  }
 
   return {
     id: best.id,

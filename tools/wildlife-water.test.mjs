@@ -274,3 +274,35 @@ test("drink tracks ride along in a version 6 save", () => {
   assert.equal(result.ok, true, result.message);
   assert.deepEqual(fresh.memory.snapshot(), before);
 });
+
+
+test("local herd agents preserve personal space instead of occupying one point", () => {
+  const h = herd(1337, null);
+  h.eco = { prey: 0.5, predators: 0 };
+  h.wildlife.step(1 / 60, h.body, "frontier", h.eco, h.env);
+  const prey = h.wildlife.actors.filter((a) => a.kind === "prey");
+  assert.ok(prey.length >= 2);
+
+  for (const a of prey.slice(0, 2))
+    Object.assign(a, {
+      x: WILDLIFE_HOME.x,
+      z: WILDLIFE_HOME.z,
+      phase: 0,
+      thirst: 0,
+      mode: "forage",
+    });
+
+  run(h, 120);
+  const [a, b] = h.wildlife.actors
+    .filter((actor) => actor.kind === "prey")
+    .slice(0, 2);
+  assert.ok(
+    Math.hypot(a.x - b.x, a.z - b.z) > 0.2,
+    "overlapping grazers must separate through local steering",
+  );
+  for (const actor of h.wildlife.actors)
+    assert.ok(
+      Math.hypot(actor.x - WILDLIFE_HOME.x, actor.z - WILDLIFE_HOME.z) <= 7.01,
+      "separation may not break the existing territory leash",
+    );
+});

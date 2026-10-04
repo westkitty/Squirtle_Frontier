@@ -374,6 +374,7 @@ export class HabitatView {
         this.visitor,
       );
     this.visitor.position.set(0, 0, 3.6);
+    this.visitorTarget = new THREE.Vector3(0, 0, 3.6);
   }
   update(
     ecosystem,
@@ -389,14 +390,63 @@ export class HabitatView {
       this.visitor.visible = !!notable;
       if (notable) {
         const desired =
-          notable.fear > 0.25 ? 4.5 : notable.familiarity > 0.3 ? 3.5 : 4;
-        const angle = Math.atan2(body.x, body.z);
-        this.visitor.position.set(
+            notable.fear > 0.25 ? 4.5 : notable.familiarity > 0.3 ? 3.5 : 4,
+          angle = Math.atan2(body.x, body.z),
+          approachRate =
+            notable.fear > 0.25 ? 4.5 : notable.familiarity > 0.3 ? 2.8 : 1.8,
+          hop =
+            notable.fear > 0.25
+              ? 0
+              : Math.abs(
+                  Math.sin(time * (2.2 + notable.familiarity * 2.2)),
+                ) *
+                (0.018 + notable.familiarity * 0.035),
+          crouch = notable.fear > 0.25 ? 0.72 : 1;
+        this.visitorTarget.set(
           Math.sin(angle) * desired,
-          0,
+          hop,
           Math.cos(angle) * desired,
         );
-        this.visitor.rotation.y = angle + Math.PI;
+        this.visitor.position.x = THREE.MathUtils.damp(
+          this.visitor.position.x,
+          this.visitorTarget.x,
+          approachRate,
+          dt,
+        );
+        this.visitor.position.y = THREE.MathUtils.damp(
+          this.visitor.position.y,
+          this.visitorTarget.y,
+          8,
+          dt,
+        );
+        this.visitor.position.z = THREE.MathUtils.damp(
+          this.visitor.position.z,
+          this.visitorTarget.z,
+          approachRate,
+          dt,
+        );
+        this.visitor.rotation.y = Math.atan2(
+          body.x - this.visitor.position.x,
+          body.z - this.visitor.position.z,
+        );
+        this.visitor.scale.x = THREE.MathUtils.damp(
+          this.visitor.scale.x,
+          notable.fear > 0.25 ? 1.08 : 1,
+          7,
+          dt,
+        );
+        this.visitor.scale.y = THREE.MathUtils.damp(
+          this.visitor.scale.y,
+          crouch,
+          7,
+          dt,
+        );
+        this.visitor.scale.z = THREE.MathUtils.damp(
+          this.visitor.scale.z,
+          notable.fear > 0.25 ? 1.08 : 1,
+          7,
+          dt,
+        );
         this.visitorMat.color.setHSL(0.12 + notable.marking * 0.015, 0.4, 0.55);
       }
     }
@@ -407,6 +457,15 @@ export class HabitatView {
         0.04,
         1,
       ),
+      rawWindX = Number(environment.windX),
+      rawWindZ = Number(environment.windZ),
+      windLength = Math.hypot(
+        Number.isFinite(rawWindX) ? rawWindX : 0.72,
+        Number.isFinite(rawWindZ) ? rawWindZ : 0.38,
+      ) || 1,
+      windX = (Number.isFinite(rawWindX) ? rawWindX : 0.72) / windLength,
+      windZ = (Number.isFinite(rawWindZ) ? rawWindZ : 0.38) / windLength,
+      bodySpeed = Math.hypot(body.vx || 0, body.vz || 0),
       habitatWetness = THREE.MathUtils.clamp(
         Number(
           environment.wetness ??
@@ -483,11 +542,28 @@ export class HabitatView {
       const h = 0.25 + (i % 5) * 0.12,
         y = this.lab ? labHeight(x, z) : heightAt(x, z);
       const sway =
-        Math.sin(time * 1.65 + i * 0.71) *
-        windStrength *
-        (0.08 + h * 0.12);
+          Math.sin(time * 1.65 + i * 0.71) *
+          windStrength *
+          (0.08 + h * 0.12),
+        dx = x - body.x,
+        dz = z - body.z,
+        distance = Math.hypot(dx, dz),
+        proximity = Math.max(0, 1 - distance / 1.35),
+        brushStrength =
+          proximity *
+          THREE.MathUtils.clamp(
+            bodySpeed / 2.2 + (body.mode === "slide" ? 0.32 : 0),
+            0,
+            1,
+          ),
+        awayX = distance > 1e-4 ? dx / distance : Math.cos(angle),
+        awayZ = distance > 1e-4 ? dz / distance : Math.sin(angle);
       this.dummy.position.set(x, y + h / 2, z);
-      this.dummy.rotation.set(sway * 0.35, angle, sway);
+      this.dummy.rotation.set(
+        sway * windZ * 0.7 + awayZ * brushStrength * 0.42,
+        angle,
+        -sway * windX * 0.7 - awayX * brushStrength * 0.42,
+      );
       this.dummy.scale.set(
         0.025,
         h * (0.9 + habitatWetness * 0.16),

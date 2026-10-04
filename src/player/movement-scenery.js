@@ -23,12 +23,16 @@ export class MovementScenery {
     this.leafUniforms = {
       time: { value: 0 },
       wind: { value: 0.18 },
+      player: { value: new THREE.Vector2() },
+      brush: { value: 0 },
     };
     this.leafMat.onBeforeCompile = (shader) => {
       shader.uniforms.uLeafTime = this.leafUniforms.time;
       shader.uniforms.uLeafWind = this.leafUniforms.wind;
+      shader.uniforms.uLeafPlayer = this.leafUniforms.player;
+      shader.uniforms.uLeafBrush = this.leafUniforms.brush;
       shader.vertexShader =
-        "uniform float uLeafTime;\nuniform float uLeafWind;\n" +
+        "uniform float uLeafTime;\nuniform float uLeafWind;\nuniform vec2 uLeafPlayer;\nuniform float uLeafBrush;\n" +
         shader.vertexShader.replace(
           "#include <begin_vertex>",
           `#include <begin_vertex>
@@ -40,10 +44,16 @@ export class MovementScenery {
           float leafPhase = uLeafTime * 1.7 + leafAnchor.x * 0.19 + leafAnchor.z * 0.13;
           float leafSway = sin(leafPhase + position.y * 1.8) * uLeafWind * max(0.0, position.y) * 0.055;
           transformed.x += leafSway;
-          transformed.z += leafSway * 0.55;`,
+          transformed.z += leafSway * 0.55;
+          vec2 leafDelta = leafAnchor.xz - uLeafPlayer;
+          float leafDist = length(leafDelta);
+          vec2 leafAway = leafDist > 0.001 ? leafDelta / leafDist : vec2(1.0, 0.0);
+          float leafBrush = (1.0 - smoothstep(0.0, 1.8, leafDist)) * uLeafBrush;
+          transformed.x += leafAway.x * leafBrush * 0.12 * max(0.2, position.y);
+          transformed.z += leafAway.y * leafBrush * 0.12 * max(0.2, position.y);`,
         );
     };
-    this.leafMat.customProgramCacheKey = () => "frontier-leaf-wind-v1";
+    this.leafMat.customProgramCacheKey = () => "frontier-leaf-wind-v2";
     this.rockMat = new THREE.MeshStandardMaterial({
       color: 0x71817a,
       roughness: 0.94,
@@ -97,12 +107,18 @@ export class MovementScenery {
       opacity: 0.28,
       depthWrite: false,
     });
-    this.shore = new THREE.LineLoop(
-      new THREE.BufferGeometry(),
-      this.shoreMaterial,
-    );
+    const shoreGeometry = new THREE.BufferGeometry();
+    this.shore = new THREE.LineLoop(shoreGeometry, this.shoreMaterial);
     this.shore.position.y = WATER_SURFACE_Y(WATER_BASE) + 0.025;
-    scene.add(this.water, this.shore);
+    this.shoreLapMaterial = new THREE.LineBasicMaterial({
+      color: 0xd9f3ed,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+    });
+    this.shoreLap = new THREE.LineLoop(shoreGeometry, this.shoreLapMaterial);
+    this.shoreLap.position.y = WATER_SURFACE_Y(WATER_BASE) + 0.032;
+    scene.add(this.water, this.shore, this.shoreLap);
     this.waterLevel = null;
     this.buildWater(WATER_BASE);
     this.pool = new THREE.InstancedMesh(
@@ -145,6 +161,32 @@ export class MovementScenery {
     );
     this.contact.rotation.x = -Math.PI / 2;
     scene.add(this.contact);
+
+    this.wetTrailMaterial = new THREE.MeshBasicMaterial({
+      map: this.contactTexture,
+      color: 0x456b68,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+    });
+    this.wetTrail = new THREE.InstancedMesh(
+      this.contact.geometry,
+      this.wetTrailMaterial,
+      12,
+    );
+    this.wetTrail.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.wetTrail.frustumCulled = false;
+    this.wetTrail.count = 0;
+    this.wetTrail.visible = false;
+    scene.add(this.wetTrail);
+    this.wetMarks = [];
+    this.wasSubmerged = false;
+    this.wetTrailRemaining = 0;
+    this.lastWetMark = null;
+    this.wetStep = 0;
+    this.wetTrailColor = new THREE.Color();
   }
   // Re-resolved only when the basin's level actually moves. A repair moves it by up to
   // 0.28 m, which walks the shoreline several body-lengths up or down the bank, so the
@@ -219,6 +261,7 @@ export class MovementScenery {
     this.water.geometry = geometry;
     this.shore.geometry.dispose();
     this.shore.geometry = shoreGeometry;
+    this.shoreLap.geometry = shoreGeometry;
     this.waterLevel = level;
     return true;
   }
@@ -308,6 +351,7 @@ export class MovementScenery {
         );
         group.add(mesh);
       }
+    group.userData.trees = trees;
     this.groups.set(key, group);
     this.scene.add(group);
   }
@@ -320,11 +364,26 @@ export class MovementScenery {
     group.removeFromParent();
     this.groups.delete(key);
   }
+  canopyCoverAt(x, z) {
+    let cover = 0;
+    for (const group of this.groups.values())
+      for (const tree of group.userData?.trees || []) {
+        const distance = Math.hypot(tree.x - x, tree.z - z);
+        if (distance >= 3.2) continue;
+        const heightWeight = THREE.MathUtils.clamp((tree.h || 1) / 4, 0.45, 1);
+        cover = Math.max(
+          cover,
+          (1 - distance / 3.2) * heightWeight,
+        );
+      }
+    return THREE.MathUtils.clamp(cover, 0, 1);
+  }
   update(body, dt, level = null, effectScale = 1, environment = {}) {
     const surface = level !== null ? WATER_SURFACE_Y(level) : null;
     if (surface !== null) {
       this.water.position.y = surface;
       this.shore.position.y = surface + 0.025;
+      this.shoreLap.position.y = surface + 0.032;
       this.buildWater(level);
     }
     const ground = heightAt(body.x, body.z),
@@ -348,11 +407,79 @@ export class MovementScenery {
     );
     this.contact.material.opacity =
       (body.mode === "slide" ? 0.78 : 0.58) * (1 - lift) ** 1.5;
+
+    if (submerged) {
+      this.wetTrailRemaining = 4.5;
+      this.lastWetMark = null;
+    } else {
+      this.wetTrailRemaining = Math.max(0, this.wetTrailRemaining - dt);
+    }
+    if (
+      this.wasSubmerged &&
+      !submerged &&
+      body.grounded &&
+      ground > -0.1
+    ) {
+      this.wetTrailRemaining = Math.max(this.wetTrailRemaining, 4.5);
+      this.lastWetMark = null;
+    }
+    this.wasSubmerged = submerged;
+    for (const mark of this.wetMarks) mark.age += dt;
+    this.wetMarks = this.wetMarks.filter((mark) => mark.age < mark.life);
+    if (
+      !submerged &&
+      body.grounded &&
+      ground > -0.1 &&
+      speed > 0.12 &&
+      this.wetTrailRemaining > 0
+    ) {
+      const distance = this.lastWetMark
+        ? Math.hypot(body.x - this.lastWetMark.x, body.z - this.lastWetMark.z)
+        : Infinity;
+      if (distance >= 0.34) {
+        const side = (this.wetStep++ % 2 ? 1 : -1) * 0.075,
+          x = body.x + Math.cos(body.yaw) * side,
+          z = body.z - Math.sin(body.yaw) * side;
+        this.wetMarks.push({
+          x,
+          z,
+          y: ground + 0.029,
+          yaw: body.yaw,
+          age: 0,
+          life: 4 + THREE.MathUtils.clamp(Number(environment.wetGround) || 0, 0, 1) * 2,
+        });
+        if (this.wetMarks.length > 12) this.wetMarks.shift();
+        this.lastWetMark = { x: body.x, z: body.z };
+      }
+    }
+    this.wetTrail.count = this.wetMarks.length;
+    this.wetTrail.visible = this.wetTrail.count > 0;
+    for (let i = 0; i < this.wetTrail.count; i++) {
+      const mark = this.wetMarks[i],
+        fade = THREE.MathUtils.clamp(1 - mark.age / mark.life, 0, 1);
+      this.dummy.position.set(mark.x, mark.y, mark.z);
+      this.dummy.rotation.set(-Math.PI / 2, 0, mark.yaw);
+      this.dummy.scale.set(0.34 * fade, 0.46 * fade, 1);
+      this.dummy.updateMatrix();
+      this.wetTrail.setMatrixAt(i, this.dummy.matrix);
+      this.wetTrailColor.setHSL(0.49, 0.24, 0.22 + (1 - fade) * 0.1);
+      this.wetTrail.setColorAt(i, this.wetTrailColor);
+    }
+    this.wetTrail.instanceMatrix.needsUpdate = true;
+    if (this.wetTrail.instanceColor)
+      this.wetTrail.instanceColor.needsUpdate = true;
+
     this.particleTime += dt;
     this.leafUniforms.time.value = this.particleTime;
     this.leafUniforms.wind.value = THREE.MathUtils.clamp(
       Number(environment.windStrength) || 0.18,
       0.08,
+      1,
+    );
+    this.leafUniforms.player.value.set(body.x, body.z);
+    this.leafUniforms.brush.value = THREE.MathUtils.clamp(
+      speed / 2.5 + (body.mode === "slide" ? 0.25 : 0),
+      0,
       1,
     );
     const wetGround = THREE.MathUtils.clamp(
@@ -376,6 +503,11 @@ export class MovementScenery {
       0.12,
       0.52,
     );
+    const shoreMotion = this.waterUniforms.ripple.value;
+    this.shoreLap.scale.setScalar(
+      1 + Math.sin(this.particleTime * 2.1) * 0.0018 * shoreMotion,
+    );
+    this.shoreLapMaterial.opacity = 0.06 + shoreMotion * 0.2;
     // Wake and impact water belong to WorldEffects. This particle stream is Jet-only:
     // ordinary walking/swimming must never look like Squirtle is firing Water Jet.
     const active = body.jetTime > 0,
@@ -414,16 +546,21 @@ export class MovementScenery {
       this.waterMaterial,
       this.shore.geometry,
       this.shoreMaterial,
+      this.shoreLapMaterial,
       this.pool.geometry,
       this.pool.material,
     ])
       r.dispose();
     this.pool.dispose();
     this.pool.removeFromParent();
+    this.wetTrail.dispose();
+    this.wetTrail.removeFromParent();
     this.water.removeFromParent();
     this.shore.removeFromParent();
+    this.shoreLap.removeFromParent();
     this.contact.geometry.dispose();
     this.contact.material.dispose();
+    this.wetTrailMaterial.dispose();
     this.contactTexture.dispose();
     this.contact.removeFromParent();
   }

@@ -183,3 +183,63 @@ test("Deep Record attends to central strata column", () => {
   assert.equal(target.type, "record");
   assert.equal(target.id, "record-column");
 });
+
+
+test("attention holds a nearly equal current target instead of snapping every frame", () => {
+  const body = createBody(0, 0, 0);
+  body.yaw = 0;
+  const wildlife = {
+    actors: [
+      { kind: "prey", slot: 0, x: -0.3, z: 4, mode: "forage" },
+      { kind: "prey", slot: 1, x: 0.2, z: 3.7, mode: "forage" },
+    ],
+  };
+  const previous = {
+    id: "wildlife-prey-0",
+    type: "wildlife",
+    priority: 10,
+  };
+  const held = resolveAttentionTarget({
+    body,
+    place: "frontier",
+    wildlife,
+    previous,
+  });
+  assert.equal(
+    held.id,
+    previous.id,
+    "small distance advantages must not cause visible gaze thrash",
+  );
+
+  wildlife.actors[1].z = 1.8;
+  const switched = resolveAttentionTarget({
+    body,
+    place: "frontier",
+    wildlife,
+    previous,
+  });
+  assert.equal(
+    switched.id,
+    "wildlife-prey-1",
+    "a materially stronger spatial signal must still break fixation",
+  );
+});
+
+test("behavioral salience lets an ambushing predator override ordinary nearby prey", () => {
+  const body = createBody(0, 0, 0);
+  body.yaw = 0;
+  const wildlife = {
+    actors: [
+      { kind: "prey", slot: 0, x: 0, z: 2.5, mode: "forage" },
+      { kind: "predator", slot: 0, x: 0.5, z: 6, mode: "ambush" },
+    ],
+  };
+
+  const target = resolveAttentionTarget({
+    body,
+    place: "frontier",
+    wildlife,
+  });
+  assert.equal(target.id, "wildlife-predator-0");
+  assert.equal(target.priority, 13);
+});

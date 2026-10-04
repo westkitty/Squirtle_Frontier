@@ -110,3 +110,83 @@ test("contact grounding stretches with shell speed, fades with height, and disap
   assert.equal(scenery.contact.visible, false, "submerged bodies must not cast a ground decal through water");
   scenery.dispose();
 });
+
+
+test("leaving water lays a bounded alternating wet trail that fades without save state", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const body = createBody(0, 0, WATER_SURFACE_Y(WATER_BASE) - 0.05);
+  body.mode = "swim";
+  body.grounded = false;
+  scenery.update(body, 1 / 60, WATER_BASE, 1, { wetGround: 0.6 });
+  assert.equal(scenery.wetTrail.count, 0);
+
+  body.x = -10;
+  body.z = 18;
+  body.y = heightAt(body.x, body.z);
+  body.mode = "land";
+  body.grounded = true;
+  body.vx = 1.2;
+  body.vz = 0;
+  scenery.update(body, 1 / 60, WATER_BASE, 1, { wetGround: 0.6 });
+  assert.ok(scenery.wetTrail.count > 0, "first dry steps after a swim must leave wet contact evidence");
+  const firstCount = scenery.wetTrail.count;
+
+  for (let i = 0; i < 20; i++) {
+    body.x += 0.4;
+    scenery.update(body, 1 / 60, WATER_BASE, 1, { wetGround: 0.6 });
+  }
+  assert.ok(scenery.wetTrail.count <= 12, "wet trail stays inside its fixed presentation budget");
+  assert.ok(scenery.wetTrail.count >= firstCount);
+
+  body.vx = 0;
+  for (let i = 0; i < 420; i++)
+    scenery.update(body, 1 / 60, WATER_BASE, 1, { wetGround: 0 });
+  assert.equal(scenery.wetTrail.count, 0, "old wet marks must age away");
+  scenery.dispose();
+});
+
+test("nearby foliage receives local brush input from Squirtle without changing tree geometry", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const body = createBody(3, -4, heightAt(3, -4));
+  body.vx = 2.4;
+  scenery.update(body, 1 / 60, null, 1, { windStrength: 0.4 });
+  assert.equal(scenery.leafUniforms.player.value.x, body.x);
+  assert.equal(scenery.leafUniforms.player.value.y, body.z);
+  assert.ok(scenery.leafUniforms.brush.value > 0.8);
+
+  body.vx = 0;
+  scenery.update(body, 1 / 60, null, 1, { windStrength: 0.4 });
+  assert.equal(scenery.leafUniforms.brush.value, 0);
+  scenery.dispose();
+});
+
+test("measured shoreline carries a second shared-geometry lap pulse without widening geometry count", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const body = createBody(-10, 18, heightAt(-10, 18));
+
+  scenery.update(body, 0.37, WATER_BASE, 1, { rippleStrength: 1 });
+  assert.equal(
+    scenery.shoreLap.geometry,
+    scenery.shore.geometry,
+    "lap pulse must reuse the exact measured shoreline geometry",
+  );
+  assert.ok(scenery.shoreLapMaterial.opacity > 0.2);
+  assert.notEqual(scenery.shoreLap.scale.x, 1, "lap pulse must move perceptibly over time");
+  scenery.dispose();
+});
+
+test("loaded tree positions expose bounded local canopy cover for environmental audio", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const group = new THREE.Group();
+  group.userData.trees = [{ x: 2, z: 3, h: 5 }];
+  scenery.groups.set("fixture", group);
+
+  assert.ok(scenery.canopyCoverAt(2, 3) > 0.9);
+  assert.equal(scenery.canopyCoverAt(20, 20), 0);
+  assert.ok(scenery.canopyCoverAt(4.5, 3) > 0);
+  scenery.dispose();
+});

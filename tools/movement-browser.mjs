@@ -134,6 +134,44 @@ try {
     "render scaling must not change CSS layout",
   );
   await mark("save and reload");
+
+  // Presentation-only water-exit contact proof: setup poses are explicit teleports,
+  // then the frame loop must create a wet trail from the real scenery integration.
+  await page.evaluate(() => {
+    const g = window.__SF;
+    Object.assign(g.body, {
+      x: 0,
+      z: 0,
+      y: g.state.waterLevel - 0.05,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      mode: "swim",
+      grounded: false,
+    });
+  });
+  await page.waitForTimeout(120);
+  await page.evaluate(() => {
+    const g = window.__SF,
+      x = -10,
+      z = 18;
+    Object.assign(g.body, {
+      x,
+      z,
+      y: g.region.sample(x, z).height,
+      vx: 1.4,
+      vy: 0,
+      vz: 0,
+      mode: "land",
+      grounded: true,
+    });
+  });
+  await page.waitForFunction(() => window.__SF.stats().effects.wetTrail > 0);
+  evidence.wetTrail = await page.evaluate(
+    () => window.__SF.stats().effects.wetTrail,
+  );
+  assert.ok(evidence.wetTrail <= 12, "water-exit trail must remain inside its fixed budget");
+
   // Return to matched pose for resource checks. Teleports below are explicitly lifecycle probes.
   await page.evaluate(() => {
     window.__SF.rig.yaw = Math.PI;

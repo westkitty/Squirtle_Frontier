@@ -411,3 +411,75 @@ test("an unlocked audio graph resumes after a tab returns without rebuilding nod
   audio.dispose();
   assert.equal(await audio.resume(), false, "disposed audio has nothing to resume");
 });
+
+
+test("underwater ambience changes continuously with actual depth below the surface", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, -0.2);
+  b.mode = "dive";
+  audio.context.currentTime = 1;
+
+  const context = {
+    water: { level: 0 },
+    rain: 1,
+    channelStage: 2,
+    channelDist: 1,
+    waterQuality: 1,
+    waterWetness: 1,
+    wildlifeLevel: 1,
+    wildlifeDistance: 1,
+  };
+  audio.update(b, { muted: false, volume: 1 }, context);
+  const shallow = {
+    sub: audio.subGain.gain.value,
+    rain: audio.rainGain.gain.value,
+    stream: audio.streamGain.gain.value,
+    wild: audio.wildGain.gain.value,
+  };
+
+  b.y = -2.5;
+  audio.update(b, { muted: false, volume: 1 }, context);
+  const deep = {
+    sub: audio.subGain.gain.value,
+    rain: audio.rainGain.gain.value,
+    stream: audio.streamGain.gain.value,
+    wild: audio.wildGain.gain.value,
+  };
+  assert.ok(deep.sub > shallow.sub, "deeper water must strengthen low submerged resonance");
+  assert.ok(deep.rain < shallow.rain, "surface rain must fade progressively with depth");
+  assert.ok(deep.stream < shallow.stream, "shore stream acoustics must fade progressively with depth");
+  assert.ok(deep.wild < shallow.wild, "surface fauna must fade progressively with depth");
+  audio.dispose();
+});
+
+test("tree canopy softens rain gain and high-frequency hiss without muting weather entirely", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0);
+
+  audio.update(
+    b,
+    { muted: false, volume: 1 },
+    { rain: 1, canopyCover: 0 },
+  );
+  const open = {
+    gain: audio.rainGain.gain.value,
+    frequency: audio.rainFilter.frequency.value,
+  };
+
+  audio.update(
+    b,
+    { muted: false, volume: 1 },
+    { rain: 1, canopyCover: 1 },
+  );
+  assert.ok(audio.rainGain.gain.value < open.gain);
+  assert.ok(audio.rainGain.gain.value > 0, "canopy muffles rain rather than deleting weather");
+  assert.ok(
+    audio.rainFilter.frequency.value < open.frequency,
+    "leaf cover must soften the bright rain hiss",
+  );
+  audio.dispose();
+});
