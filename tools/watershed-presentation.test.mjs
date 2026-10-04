@@ -49,3 +49,28 @@ test("Current Sense animates bounded downstream motes only on locally active wat
   assert.equal(view.flowMotes.count, 0, "flow motes belong to Current Sense only");
   view.dispose();
 });
+
+
+test("named-reach flow guidance follows held Sense without weakening touch-water ripple gating", () => {
+  const scene = new THREE.Group(),
+    view = new WatershedPresentation(scene),
+    body = createBody(SPRING_SITE.x, SPRING_SITE.z, 0),
+    watershed = { nodes: [{}, { blockage: 0.3 }] },
+    water = { "spring-gully": { flowing: true, fraction: 1 } };
+
+  view.update(watershed, body, false, 1, [], 0, water, true);
+  assert.equal(
+    view.flowMotes.count,
+    10,
+    "held Current Sense must guide along a named active reach even without a touch-water signal",
+  );
+  assert.equal(
+    view.ripple.visible,
+    false,
+    "the debris ripple must remain gated by the original touch-water signal",
+  );
+
+  view.update(watershed, body, false, 1.2, [], 0, water, false);
+  assert.equal(view.flowMotes.count, 0);
+  view.dispose();
+});

@@ -1015,6 +1015,7 @@ async function boot() {
           state.memory.reaches,
           state.frontier.stage,
           readReachWater(),
+          !!controls.sense,
         );
         const wetland = state.watershed.nodes[2],
           sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),

@@ -152,7 +152,16 @@ export class WatershedPresentation {
     }
     this.reachGeometry.attributes.color.needsUpdate = true;
   }
-  update(watershed, body, sensing, time, seen = [], stage = 0, water = {}) {
+  update(
+    watershed,
+    body,
+    sensing,
+    time,
+    seen = [],
+    stage = 0,
+    water = {},
+    senseHeld = sensing,
+  ) {
     const node = watershed.nodes[1],
       localReach = reachAt(body.x, body.z, 8),
       flows = REACHES.map(
@@ -161,7 +170,7 @@ export class WatershedPresentation {
       ).join(",");
     this.group.visible =
       Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 55 ||
-      (sensing && !!localReach);
+      (senseHeld && !!localReach);
     const signature = `${stage}|${seen.join(",")}|${flows}`;
     if (signature !== this.reachSeen) {
       this.reachSeen = signature;
@@ -176,7 +185,7 @@ export class WatershedPresentation {
     const localFlow = localReach ? water[localReach.id] : null,
       activeFlow =
         !!localReach &&
-        sensing &&
+        senseHeld &&
         (localFlow?.flowing || (localFlow?.fraction ?? 0) > 0),
       reach = activeFlow ? reachById(localReach.id) : null;
     if (reach) {
