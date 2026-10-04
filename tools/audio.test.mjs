@@ -105,6 +105,7 @@ test("audio initializes master bus and sub-voices with single AudioContext", () 
   assert.ok(audio.locoGain !== null, "locomotion voice must exist");
   assert.ok(audio.flutterGain !== null, "flutter voice must exist");
   assert.ok(audio.streamGain !== null, "stream voice must exist");
+  assert.ok(audio.rainGain !== null, "rain weather bed must exist");
 
   // Re-unlocking must NOT recreate or proliferate AudioContext
   const ctx = audio.context;
@@ -253,6 +254,45 @@ test("nearness to active watercourse activates localized stream flow acoustics",
     "stream filter frequency must remain in bubbling range",
   );
 
+  audio.dispose();
+});
+
+test("rain ambience and stream timbre follow real environmental signals", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0);
+
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    {
+      rain: 0.8,
+      channelStage: 2,
+      channelDist: 2,
+      waterQuality: 1,
+      waterWetness: 1,
+    },
+  );
+  assert.ok(audio.rainGain.gain.value > 0.08);
+  const clearFreq = audio.streamFilter.frequency.value;
+
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    {
+      rain: 0,
+      channelStage: 2,
+      channelDist: 2,
+      waterQuality: 0.1,
+      waterWetness: 0.4,
+    },
+  );
+  assert.equal(audio.rainGain.gain.value, 0);
+  assert.ok(
+    audio.streamFilter.frequency.value < clearFreq,
+    "fouled/sluggish water must sound duller than clear running water",
+  );
   audio.dispose();
 });
 

@@ -23,6 +23,7 @@ import { effectScaleFor, pixelRatioFor } from "./render-quality.js";
 import { WorldState } from "./worldstate.js";
 import { heightAt } from "./worldgen.js";
 import { Streaming } from "./streaming.js";
+import { shared } from "./terrain.js";
 import { Input } from "./input.js";
 import { Loop } from "./loop.js";
 import { Settings } from "./settings.js";
@@ -53,6 +54,13 @@ import { placeAction } from "./simulation/place-interaction.js";
 import { channelDistance } from "./simulation/channel-terrain.js";
 import { Audio } from "./audio.js";
 import { flashStatus, settleStatus } from "./status-note.js";
+import { Atmosphere } from "./player/atmosphere.js";
+import {
+  ecologySummary,
+  observationSnapshot,
+  presentationSignals,
+  worldTransition,
+} from "./presentation-signals.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading"),
   recordReadout = document.querySelector("#record-readout");
@@ -86,6 +94,7 @@ async function boot() {
     const sun = new THREE.DirectionalLight(sunClear, 2);
     sun.position.set(-18, 30, 10);
     scene.add(sun);
+    const atmosphere = new Atmosphere(scene);
     const state = new WorldState(),
       assets = new AssetManager(),
       input = new Input(renderer.domElement),
@@ -248,6 +257,7 @@ async function boot() {
       habitat.dispose();
       wildlife.clear();
       effects.dispose();
+      atmosphere.dispose();
       record?.dispose();
       lab?.dispose();
       audio.dispose();
@@ -369,6 +379,10 @@ async function boot() {
               : "running";
       document.querySelector("#water-quality-note").textContent =
         `The wetland is ${wetnessWord}; its water is ${clarityWord} and ${flowWord}.`;
+      document.querySelector("#ecology-note").textContent = ecologySummary(
+        state,
+        wildlife,
+      );
       const logged = state.memory.strata.length;
       document.querySelector("#strata-note").textContent = logged
         ? `The record is read in ${logged} of ${RECORD_BANDS} bands, down to band ${Math.max(...state.memory.strata) + 1}.`
@@ -684,7 +698,9 @@ async function boot() {
       // The step callback owns the input sample; the render callback below needs to know
       // whether the player is reading a sense line without reaching out of scope.
       senseHeld = false,
-      controllerSignature = "";
+      controllerSignature = "",
+      observedWorld = observationSnapshot(state),
+      presentation = presentationSignals(state);
     const showHint = (key, text) => {
       if (
         !Settings.get("hints") ||
@@ -834,6 +850,18 @@ async function boot() {
         }
         if (state.frontier.tick !== previousTick)
           state.settlement.observe(body, state.place, state.frontier.tick);
+        presentation = presentationSignals(state);
+        shared.uTime.value = state.elapsed;
+        shared.uWet.value = presentation.wetGround;
+        shared.uWindStrength.value = presentation.windStrength;
+        shared.uWind.value.set(presentation.windX, presentation.windZ);
+        if (state.frontier.tick !== previousTick) {
+          const nextObserved = observationSnapshot(state),
+            change = worldTransition(observedWorld, nextObserved);
+          observedWorld = nextObserved;
+          if (change && !statusFlash && !controls.sense)
+            statusFlash = flashStatus(status, change.message, statusFlash, 4.5);
+        }
         wildlife.step(dt, body, state.place, state.ecosystem, liveRegion);
         const currentWater = (state.place === "frontier"
           ? liveRegion
@@ -979,7 +1007,13 @@ async function boot() {
         });
         creature.present(body, dt, attention);
         if (state.place === "frontier")
-          scenery.update(body, dt, state.waterLevel, effectScale);
+          scenery.update(
+            body,
+            dt,
+            state.waterLevel,
+            effectScale,
+            presentation,
+          );
         audio.update(body, Settings.values, {
           water: currentWater,
           isShaking: creature?.isShaking ?? false,
@@ -989,6 +1023,9 @@ async function boot() {
             state.place === "frontier" && state.frontier.stage >= 2
               ? channelDistance(body.x, body.z)
               : 999,
+          rain: state.place === "frontier" ? presentation.rain : 0,
+          waterQuality: presentation.waterQuality,
+          waterWetness: presentation.wetness,
         });
         // A transient notice hands the caption back once it has had its moment, and only
         // if nothing else has spoken in the meantime.
@@ -1035,6 +1072,10 @@ async function boot() {
           rainEase = 1 - Math.exp(-cameraDt / 0.75);
         visualRain = THREE.MathUtils.lerp(visualRain, targetRain, rainEase);
         const rain = visualRain;
+        atmosphere.update(camera, {
+          rain,
+          visible: state.place === "frontier" && !underwater,
+        });
         if (underwater) {
           const depth = Math.max(0, cameraWater.level - camera.position.y),
             wetland = state.watershed.nodes[2],

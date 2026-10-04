@@ -12,6 +12,18 @@ export class WorldEffects {
     this.fire.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.group.add(this.fire);
     this.fire.frustumCulled = false;
+    this.smokeMat = new THREE.MeshBasicMaterial({
+      color: 0x3d4541,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+    });
+    this.fireSmoke = new THREE.InstancedMesh(this.geo, this.smokeMat, 16);
+    this.fireSmoke.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.fireSmoke.frustumCulled = false;
+    this.fireSmoke.count = 0;
+    this.fireSmoke.visible = false;
+    this.group.add(this.fireSmoke);
     this.rainMat = new THREE.MeshBasicMaterial({
       color: 0xb7dce0,
       transparent: true,
@@ -58,6 +70,19 @@ export class WorldEffects {
     this.splash.count = 0;
     this.splash.visible = false;
     this.group.add(this.splash);
+
+    this.dustMat = new THREE.MeshBasicMaterial({
+      color: 0xb9aa8a,
+      transparent: true,
+      opacity: 0.3,
+      depthWrite: false,
+    });
+    this.slideDust = new THREE.InstancedMesh(this.geo, this.dustMat, 18);
+    this.slideDust.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.slideDust.frustumCulled = false;
+    this.slideDust.count = 0;
+    this.slideDust.visible = false;
+    this.group.add(this.slideDust);
 
     this.foamMat = new THREE.MeshBasicMaterial({
       color: 0xebf7fa,
@@ -136,13 +161,26 @@ export class WorldEffects {
         0.42 + (1.8 - flicker) * 0.08,
       );
       this.dummy.updateMatrix();
-      this.fire.setMatrixAt(count++, this.dummy.matrix);
+      this.fire.setMatrixAt(count, this.dummy.matrix);
+      this.dummy.position.y += h * 1.05 + 0.35;
+      this.dummy.position.x += Math.sin(state.elapsed * 0.7 + i) * 0.12;
+      this.dummy.position.z += Math.cos(state.elapsed * 0.6 + i) * 0.09;
+      this.dummy.rotation.set(0, state.elapsed * 0.25 + i, lean * 0.25);
+      const smokeScale = 0.22 + h * 0.2;
+      this.dummy.scale.set(smokeScale, 0.3 + h * 0.55, smokeScale);
+      this.dummy.updateMatrix();
+      this.fireSmoke.setMatrixAt(count, this.dummy.matrix);
+      count++;
     }
     this.fire.count = count;
     this.fire.visible = count > 0;
+    this.fireSmoke.count =
+      count > 0 ? Math.max(1, Math.round(count * effectScale)) : 0;
+    this.fireSmoke.visible = this.fireSmoke.count > 0;
     this.rain.visible = this.rain.count > 0;
     this.channel.visible = state.frontier.stage > 0;
     this.fire.instanceMatrix.needsUpdate = true;
+    this.fireSmoke.instanceMatrix.needsUpdate = true;
     this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
     if (this.channelStage !== state.frontier.stage) {
       this.channelStage = state.frontier.stage;
@@ -275,7 +313,39 @@ export class WorldEffects {
       this.splash.visible = false;
     }
 
-    // 4. Stream foam rapids: churning white water along active flowing channel
+    // 4. Dry shell-slide dust: body-specific contact feedback, never emitted in water.
+    const drySlide = !inWater && body.mode === "slide" && speed > 0.8;
+    if (drySlide) {
+      this.slideDust.visible = true;
+      const dustBase = Math.min(18, Math.max(4, Math.round(speed * 3.2)));
+      this.slideDust.count = Math.max(3, Math.round(dustBase * effectScale));
+      const dirX = speed > 0.01 ? body.vx / speed : Math.sin(body.yaw),
+        dirZ = speed > 0.01 ? body.vz / speed : Math.cos(body.yaw);
+      for (let i = 0; i < this.slideDust.count; i++) {
+        const phase =
+            (((state.elapsed * 2.1 + i / this.slideDust.count) % 1) + 1) % 1,
+          side = Math.sin(i * 5.31) * 0.22 * phase,
+          behind = 0.18 + phase * 1.15;
+        this.dummy.position.set(
+          body.x - dirX * behind - dirZ * side,
+          heightAt(body.x - dirX * behind, body.z - dirZ * behind) +
+            0.03 +
+            phase * 0.18,
+          body.z - dirZ * behind + dirX * side,
+        );
+        const size = 0.06 + phase * 0.1;
+        this.dummy.rotation.set(0, i * 1.7, 0);
+        this.dummy.scale.set(size * 1.5, size * 0.55, size * 1.5);
+        this.dummy.updateMatrix();
+        this.slideDust.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.slideDust.instanceMatrix.needsUpdate = true;
+    } else {
+      this.slideDust.count = 0;
+      this.slideDust.visible = false;
+    }
+
+    // 5. Stream foam rapids: churning white water along active flowing channel
     if (state.frontier.stage >= 2 && this.route.length > 1) {
       const channelFlow = Math.max(
         0,
@@ -322,6 +392,8 @@ export class WorldEffects {
     return {
       rain: this.rain.count,
       fire: this.fire.count,
+      smoke: this.fireSmoke.count,
+      dust: this.slideDust.count,
       jet: this.jet.count,
       wake: this.wake.count,
       splash: this.splash.count,
@@ -336,6 +408,10 @@ export class WorldEffects {
     this.wakeMat.dispose();
     this.splash.dispose();
     this.splashMat.dispose();
+    this.slideDust.dispose();
+    this.dustMat.dispose();
+    this.fireSmoke.dispose();
+    this.smokeMat.dispose();
     this.streamFoam.dispose();
     this.foamMat.dispose();
 

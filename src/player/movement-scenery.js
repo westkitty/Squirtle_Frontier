@@ -20,6 +20,30 @@ export class MovementScenery {
       color: 0x315d42,
       roughness: 0.92,
     });
+    this.leafUniforms = {
+      time: { value: 0 },
+      wind: { value: 0.18 },
+    };
+    this.leafMat.onBeforeCompile = (shader) => {
+      shader.uniforms.uLeafTime = this.leafUniforms.time;
+      shader.uniforms.uLeafWind = this.leafUniforms.wind;
+      shader.vertexShader =
+        "uniform float uLeafTime;\nuniform float uLeafWind;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+#ifdef USE_INSTANCING
+          vec3 leafAnchor = vec3(instanceMatrix[3].x, instanceMatrix[3].y, instanceMatrix[3].z);
+#else
+          vec3 leafAnchor = vec3(0.0);
+#endif
+          float leafPhase = uLeafTime * 1.7 + leafAnchor.x * 0.19 + leafAnchor.z * 0.13;
+          float leafSway = sin(leafPhase + position.y * 1.8) * uLeafWind * max(0.0, position.y) * 0.055;
+          transformed.x += leafSway;
+          transformed.z += leafSway * 0.55;`,
+        );
+    };
+    this.leafMat.customProgramCacheKey = () => "frontier-leaf-wind-v1";
     this.rockMat = new THREE.MeshStandardMaterial({
       color: 0x71817a,
       roughness: 0.94,
@@ -44,6 +68,25 @@ export class MovementScenery {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
+    this.waterUniforms = {
+      time: { value: 0 },
+      ripple: { value: 0.32 },
+    };
+    this.waterMaterial.onBeforeCompile = (shader) => {
+      shader.uniforms.uPondTime = this.waterUniforms.time;
+      shader.uniforms.uPondRipple = this.waterUniforms.ripple;
+      shader.vertexShader =
+        "uniform float uPondTime;\nuniform float uPondRipple;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          float pondWave =
+            sin(position.x * 0.72 + uPondTime * 1.45) *
+            cos(position.z * 0.58 - uPondTime * 1.1);
+          transformed.y += pondWave * 0.018 * uPondRipple;`,
+        );
+    };
+    this.waterMaterial.customProgramCacheKey = () => "frontier-pond-ripple-v1";
     // The mesh owns no geometry until the first measurement, because the geometry *is*
     // the measurement: a silhouette resolved through the predicate the body swims by.
     this.water = new THREE.Mesh(new THREE.BufferGeometry(), this.waterMaterial);
@@ -277,7 +320,7 @@ export class MovementScenery {
     group.removeFromParent();
     this.groups.delete(key);
   }
-  update(body, dt, level = null, effectScale = 1) {
+  update(body, dt, level = null, effectScale = 1, environment = {}) {
     if (level !== null) {
       const surface = WATER_SURFACE_Y(level);
       this.water.position.y = surface;
@@ -290,6 +333,33 @@ export class MovementScenery {
     this.contact.position.set(body.x, ground + 0.025, body.z);
     this.contact.material.opacity = Math.max(0, 1 - depth * 0.5);
     this.particleTime += dt;
+    this.leafUniforms.time.value = this.particleTime;
+    this.leafUniforms.wind.value = THREE.MathUtils.clamp(
+      Number(environment.windStrength) || 0.18,
+      0.08,
+      1,
+    );
+    const wetGround = THREE.MathUtils.clamp(
+      Number(environment.wetGround) || 0,
+      0,
+      1,
+    );
+    this.leafMat.color.setHSL(
+      0.34 - wetGround * 0.012,
+      0.31 + wetGround * 0.08,
+      0.28 - wetGround * 0.055,
+    );
+    this.waterUniforms.time.value = this.particleTime;
+    this.waterUniforms.ripple.value = THREE.MathUtils.clamp(
+      Number(environment.rippleStrength) || 0.32,
+      0.12,
+      1,
+    );
+    this.waterMaterial.roughness = THREE.MathUtils.clamp(
+      Number(environment.waterRoughness) || 0.18,
+      0.12,
+      0.52,
+    );
     // Wake and impact water belong to WorldEffects. This particle stream is Jet-only:
     // ordinary walking/swimming must never look like Squirtle is firing Water Jet.
     const active = body.jetTime > 0,

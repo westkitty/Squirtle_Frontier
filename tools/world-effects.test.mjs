@@ -23,10 +23,12 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.group.parent, parent);
   assert.ok(fx.geo instanceof THREE.BufferGeometry);
   assert.equal(fx.fire.geometry, fx.geo);
+  assert.equal(fx.fireSmoke.geometry, fx.geo);
   assert.equal(fx.rain.geometry, fx.geo);
   assert.equal(fx.jet.geometry, fx.geo);
   assert.equal(fx.wake.geometry, fx.geo);
   assert.equal(fx.splash.geometry, fx.geo);
+  assert.equal(fx.slideDust.geometry, fx.geo);
   assert.equal(fx.streamFoam.geometry, fx.geo);
 
   fx.dispose();
@@ -200,6 +202,26 @@ test("Stream foam rapids particles travel down running channel when stage >= 2",
   fx.dispose();
 });
 
+test("active fires trail smoke and dry shell slides kick up bounded dust", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  const p = fireSite(0);
+  const body = createBody(p.x, p.z, 0);
+  state.frontier.heat[0] = 0.8;
+  fx.update(state, body, { water: null, effectScale: 1 });
+  assert.ok(fx.fireSmoke.count > 0, "visible fire must carry smoke");
+
+  body.mode = "slide";
+  body.vx = 4;
+  body.vz = 0;
+  fx.update(state, body, { water: null, effectScale: 1 });
+  assert.ok(fx.slideDust.count >= 4, "fast dry shell slide must kick up dust");
+  fx.update(state, body, { water: { level: 0.4 }, effectScale: 1 });
+  assert.equal(fx.slideDust.count, 0, "shell dust must stop in water");
+  fx.dispose();
+});
+
 test("WorldEffects teardown cleanly disposes all resources without throwing", () => {
   const parent = new THREE.Group();
   const fx = new WorldEffects(parent);
@@ -262,10 +284,12 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
   const fx = new WorldEffects(parent);
   for (const mesh of [
     fx.fire,
+    fx.fireSmoke,
     fx.rain,
     fx.jet,
     fx.wake,
     fx.splash,
+    fx.slideDust,
     fx.streamFoam,
   ])
     assert.equal(

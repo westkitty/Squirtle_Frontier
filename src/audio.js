@@ -17,6 +17,8 @@ export class Audio {
     this.flutterFilter = null;
     this.streamGain = null;
     this.streamFilter = null;
+    this.rainGain = null;
+    this.rainFilter = null;
   }
   get gain() {
     return this.masterGain;
@@ -119,12 +121,23 @@ export class Audio {
       this.streamFilter.connect(this.streamGain);
       this.streamGain.connect(this.masterGain);
 
+      // 7. Weather bed. The shared noise becomes broad rain rather than
+      // creating one short-lived source per drop.
+      this.rainFilter = this.context.createBiquadFilter();
+      this.rainFilter.type = "highpass";
+      this.rainFilter.frequency.value = 2400;
+      this.rainGain = this.context.createGain();
+      this.rainGain.gain.value = 0;
+      this.rainFilter.connect(this.rainGain);
+      this.rainGain.connect(this.masterGain);
+
       // Connect shared noise source to noise-driven filter paths
       this.noiseSource.connect(this.jetFilter);
       this.noiseSource.connect(this.surfFilter);
       this.noiseSource.connect(this.locoFilter);
       this.noiseSource.connect(this.flutterFilter);
       this.noiseSource.connect(this.streamFilter);
+      this.noiseSource.connect(this.rainFilter);
 
       // Start continuous audio generators
       this.noiseSource.start();
@@ -221,12 +234,25 @@ export class Audio {
       contextInfo.channelDist < 8.0
     ) {
       const prox = Math.max(0, 1 - contextInfo.channelDist / 8.0);
-      const bubble = 0.85 + Math.sin(now * 4.2) * 0.15;
-      streamLevel = 0.18 * prox * prox * bubble;
-      const freq = 620 + Math.sin(now * 2.8) * 120;
+      const bubble = 0.85 + Math.sin(now * 4.2) * 0.15,
+        quality = Math.max(
+          0,
+          Math.min(1, Number(contextInfo.waterQuality ?? 1)),
+        ),
+        wetness = Math.max(
+          0,
+          Math.min(1, Number(contextInfo.waterWetness ?? 1)),
+        );
+      streamLevel = 0.18 * prox * prox * bubble * (0.7 + wetness * 0.3);
+      const freq =
+        500 + quality * 220 + Math.sin(now * 2.8) * 70 - (1 - wetness) * 35;
       this.streamFilter.frequency.setTargetAtTime(freq, now, 0.06);
     }
     this.streamGain.gain.setTargetAtTime(streamLevel, now, 0.05);
+
+    const rain = Math.max(0, Math.min(1, Number(contextInfo.rain) || 0));
+    this.rainGain.gain.setTargetAtTime(rain * 0.12, now, 0.12);
+    this.rainFilter.frequency.setTargetAtTime(2200 + rain * 1900, now, 0.18);
   }
   dispose() {
     try {
@@ -247,6 +273,8 @@ export class Audio {
     this.flutterGain?.disconnect();
     this.streamFilter?.disconnect();
     this.streamGain?.disconnect();
+    this.rainFilter?.disconnect();
+    this.rainGain?.disconnect();
     this.masterGain?.disconnect();
     this.context?.close();
     this.context = null;

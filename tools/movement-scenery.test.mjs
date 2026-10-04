@@ -55,3 +55,27 @@ test("Jet trail density follows presentation budget while remaining Jet-only", (
   assert.equal(scenery.pool.count, 0);
   scenery.dispose();
 });
+
+test("weather presentation drives foliage wind and pond surface response without changing body state", () => {
+  const parent = new THREE.Group();
+  const scenery = new MovementScenery(parent, makeStreaming());
+  const body = createBody(0, 0, 0);
+  const before = { x: body.x, y: body.y, z: body.z, mode: body.mode };
+
+  scenery.update(body, 1 / 60, null, 1, {
+    windStrength: 0.92,
+    wetGround: 0.8,
+    rippleStrength: 0.9,
+    waterRoughness: 0.42,
+  });
+
+  assert.equal(scenery.leafUniforms.wind.value, 0.92);
+  assert.equal(scenery.waterUniforms.ripple.value, 0.9);
+  assert.equal(scenery.waterMaterial.roughness, 0.42);
+  assert.deepEqual(
+    { x: body.x, y: body.y, z: body.z, mode: body.mode },
+    before,
+    "presentation response may not mutate authoritative body state",
+  );
+  scenery.dispose();
+});
