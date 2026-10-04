@@ -41,8 +41,74 @@ export function presentationSignals(state, out = {}) {
   return out;
 }
 
+const supportedConspecifics = ["freshwater", "marsh", "urban"];
+
+const conspecificBand = (state) =>
+  band(
+    Math.max(
+      0,
+      ...supportedConspecifics.map((id) =>
+        clamp01(state?.squirtleEcology?.abundance?.[id]),
+      ),
+    ),
+    [0.08, 0.28, 0.55],
+  );
+
+const shuckerActive = (state) =>
+  (state?.squirtleEcology?.shuckerTicks ?? 0) > 0 &&
+  clamp01(state?.squirtleEcology?.shuckerPressure) >= 0.35;
+
+const ecotypeName = Object.freeze({
+  freshwater: "freshwater",
+  marsh: "marsh",
+  urban: "urban",
+  saltwater: "saltwater",
+  deepwater: "deepwater",
+});
+
+const naturalList = (items) =>
+  items.length <= 1
+    ? items[0] || ""
+    : items.length === 2
+      ? `${items[0]} and ${items[1]}`
+      : `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+
+export function conspecificMemorySummary(state) {
+  const ecology = state?.squirtleEcology,
+    records = Array.isArray(state?.memory?.squirtles)
+      ? state.memory.squirtles
+      : [],
+    visibleEcotypes = supportedConspecifics.filter(
+      (id) =>
+        clamp01(ecology?.abundance?.[id]) >= 0.12 &&
+        clamp01(ecology?.suitability?.[id]) >= 0.08,
+    ),
+    rememberedTypes = [
+      ...new Set(records.map((record) => ecotypeName[record.ecotype]).filter(Boolean)),
+    ],
+    unknown = records.filter((record) => record.state === "unknown").length,
+    signs = visibleEcotypes.length
+      ? `Squirtle signs persist around ${naturalList(
+          visibleEcotypes.map((id) => `${ecotypeName[id]} water`),
+        )}.`
+      : "Squirtle signs are scarce in the reaches you know.",
+    remembered = records.length
+      ? ` You remember ${records.length} individual${records.length === 1 ? "" : "s"}${rememberedTypes.length ? ` across ${naturalList(rememberedTypes)} habitat${rememberedTypes.length === 1 ? "" : "s"}` : ""}.`
+      : " No individual Squirtle has become familiar yet.",
+    missing = unknown
+      ? ` ${unknown} remembered individual${unknown === 1 ? " is" : "s are"} currently missing from the usual reach.`
+      : "",
+    threat = shuckerActive(state)
+      ? " Current routes are disturbed by Shucker pressure."
+      : "";
+  return `${signs}${remembered}${missing}${threat}`;
+}
+
 export function observationSnapshot(state) {
-  const signals = presentationSignals(state);
+  const signals = presentationSignals(state),
+    records = Array.isArray(state?.memory?.squirtles)
+      ? state.memory.squirtles
+      : [];
   return {
     wetness: band(signals.wetness, [0.22, 0.58]),
     clarity: band(
@@ -50,12 +116,55 @@ export function observationSnapshot(state) {
       [0.16, 0.45],
     ),
     settlement: state?.settlement?.response || "watch",
+    legal: state?.settlement?.legalResponse || "watch",
     frogs: band(clamp01(state?.ecosystem?.labFrogs), [0.08, 0.35]),
+    conspecifics: conspecificBand(state),
+    rememberedSquirtles: records.length,
+    shucker: shuckerActive(state) ? 1 : 0,
   };
 }
 
 export function worldTransition(previous, next) {
   if (!previous || !next) return null;
+  if (previous.shucker !== next.shucker) {
+    return {
+      kind: "shucker",
+      message: next.shucker
+        ? "The known Squirtle routes go quiet. Fresh shell-scrapes break toward cover; Shucker pressure is in the reach."
+        : "Webbed tracks begin crossing the reach again. The immediate Shucker pressure has passed.",
+    };
+  }
+  if (previous.legal !== next.legal && ["report", "protect"].includes(next.legal)) {
+    return {
+      kind: "legal",
+      message:
+        next.legal === "report"
+          ? "The water house stops merely watching. The caretaker withdraws and sends word beyond the reeds."
+          : "The caretaker watches the road now, not you. The water house has become a place of cover.",
+    };
+  }
+  if (previous.rememberedSquirtles !== next.rememberedSquirtles) {
+    return {
+      kind: "conspecific-memory",
+      message:
+        next.rememberedSquirtles > previous.rememberedSquirtles
+          ? "This is no longer only a route through other Squirtles' country. One individual has become familiar enough to remember."
+          : "A remembered Squirtle is no longer part of the memory you carry.",
+    };
+  }
+  if (previous.conspecifics !== next.conspecifics) {
+    return {
+      kind: "conspecifics",
+      message:
+        next.conspecifics > previous.conspecifics
+          ? next.conspecifics >= 2
+            ? "Repeated webbed tracks cross the same wet routes. Stillwater is not solitary."
+            : "Fresh webbed tracks begin crossing the wet reaches."
+          : next.conspecifics === 0
+            ? "The webbed tracks thin until the reach feels solitary again."
+            : "Same-species traffic has thinned through the wet reaches.",
+    };
+  }
   if (previous.settlement !== next.settlement) {
     return {
       kind: "settlement",
@@ -124,6 +233,7 @@ export function ecologySummary(state, wildlife = null) {
       ? " Nearby grazers are pacing for drinkable water."
       : wildlife?.drinkers?.length
         ? " Nearby grazers are drinking at the shore."
-        : "";
-  return `Life now: reeds ${reeds}; grazers ${prey}; predators ${predators}; basin frogs ${frogs}.${herd}`;
+        : "",
+    conspecifics = conspecificMemorySummary(state);
+  return `Life now: reeds ${reeds}; grazers ${prey}; predators ${predators}; basin frogs ${frogs}.${herd} ${conspecifics}`;
 }
