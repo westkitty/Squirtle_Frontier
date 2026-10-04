@@ -13,6 +13,7 @@ export const shared = {
   uWorldHalf: { value: WORLD.half },
   uSnow: { value: 0 },
   uWet: { value: 0 },
+  uWaterLevel: { value: 0 },
 };
 
 export function makeGroundTexture(state) {
@@ -27,6 +28,7 @@ export function makeGroundTexture(state) {
 
 const GROUND_CHUNK_VERT = /* glsl */`
   vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+  vWNorm = normalize(mat3(modelMatrix) * normal);
 `;
 
 const GROUND_FRAG_HEAD = /* glsl */`
@@ -34,7 +36,27 @@ const GROUND_FRAG_HEAD = /* glsl */`
   uniform float uWorldHalf;
   uniform float uWet;
   uniform float uSnow;
+  uniform float uTime;
+  uniform float uWaterLevel;
   varying vec3 vWPos;
+  varying vec3 vWNorm;
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+
+  float groundNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  }
 `;
 
 const GROUND_FRAG_BODY = /* glsl */`
@@ -42,11 +64,54 @@ const GROUND_FRAG_BODY = /* glsl */`
   vec4 gs = texture2D(uGround, gUv);
   float burn = gs.r, trail = gs.g, lush = gs.b, dev = gs.a;
   vec3 col = diffuseColor.rgb;
+
+  // Procedural micro-surface texture detail (pebbles, sand grain, humus)
+  float microDetail = (groundNoise(vWPos.xz * 9.5) - 0.5) * 0.12 + (groundNoise(vWPos.xz * 28.0) - 0.5) * 0.06;
+  col = clamp(col + microDetail * (1.0 - burn), 0.0, 1.0);
+
+  // Rock stratification on steep slopes
+  float slopeFactor = 1.0 - clamp(vWNorm.y, 0.0, 1.0);
+  if (slopeFactor > 0.18) {
+    float strata = sin(vWPos.y * 6.8 + groundNoise(vWPos.xz * 1.2) * 3.5) * 0.08;
+    col = clamp(col + strata * smoothstep(0.18, 0.45, slopeFactor), 0.0, 1.0);
+  }
+
   col = mix(col, col * vec3(1.06, 1.12, 0.92), lush * 0.5);
   col = mix(col, vec3(0.33, 0.27, 0.20), clamp(trail * 1.15, 0.0, 0.88));
   col = mix(col, vec3(0.055, 0.048, 0.05), clamp(burn * 1.25, 0.0, 0.94));
   col = mix(col, vec3(0.42, 0.36, 0.28), dev * 0.55);
   col = mix(col, col * 0.72, uWet * 0.55);
+
+  // Wind-swept grass wave shimmer across open meadows
+  if (slopeFactor < 0.25 && vWPos.y > 0.6) {
+    float grassWind = sin(vWPos.x * 0.35 + vWPos.z * 0.28 + uTime * 1.7) * cos(vWPos.x * 0.22 - vWPos.z * 0.32 + uTime * 1.1);
+    float grassWave = smoothstep(0.25, 0.82, grassWind) * (1.0 - slopeFactor * 3.5) * (1.0 - burn);
+    col += vec3(0.035, 0.065, 0.02) * grassWave * (0.6 + lush * 0.55);
+  }
+
+  // Shoreline capillary moisture and wet sand sheen
+  float waterDist = vWPos.y - uWaterLevel;
+  if (waterDist > -0.15 && waterDist < 0.75) {
+    float wetShore = smoothstep(0.75, 0.02, waterDist);
+    col = mix(col, col * vec3(0.74, 0.71, 0.65), wetShore * 0.55);
+    float sandGlint = pow(groundNoise(vWPos.xz * 24.0), 3.5) * wetShore * 0.15;
+    col += vec3(sandGlint * 0.9, sandGlint, sandGlint * 1.05);
+  }
+
+  // Underwater riverbed sunlight caustics & aquatic depth grading
+  if (waterDist < 0.04) {
+    float depth = max(0.0, -waterDist);
+    float sandRipples = sin(vWPos.x * 4.2 + vWPos.z * 2.8 + groundNoise(vWPos.xz * 1.5) * 2.0) * 0.035;
+    col += vec3(sandRipples * 0.8, sandRipples * 0.9, sandRipples * 0.6);
+    vec2 cUv = vWPos.xz * 1.6 + vec2(sin(uTime * 1.2 + vWPos.z * 0.7), cos(uTime * 1.0 + vWPos.x * 0.7)) * 0.22;
+    float c1 = sin(cUv.x * 3.2 + uTime * 1.7) * cos(cUv.y * 3.2 - uTime * 1.4);
+    float c2 = sin(cUv.x * 4.8 - uTime * 2.1 + 1.2) * cos(cUv.y * 4.8 + uTime * 1.8 + 2.3);
+    float caustics = max(0.0, (c1 + c2) * 0.5);
+    float causticFade = smoothstep(3.8, 0.0, depth) * smoothstep(-0.35, 0.02, -waterDist);
+    col += vec3(0.48, 0.78, 0.86) * pow(caustics, 2.0) * 0.38 * causticFade;
+    col = mix(col, vec3(0.14, 0.26, 0.25), smoothstep(0.4, 4.0, depth) * 0.38);
+  }
+
   float snowMask = smoothstep(0.55, 1.0, uSnow) * smoothstep(60.0, 120.0, vWPos.y) * (1.0 - burn);
   col = mix(col, vec3(0.92, 0.94, 0.99), snowMask * 0.85);
   diffuseColor.rgb = col;
@@ -58,12 +123,14 @@ export function applyGroundShader(mat) {
     sh.uniforms.uWorldHalf = shared.uWorldHalf;
     sh.uniforms.uWet = shared.uWet;
     sh.uniforms.uSnow = shared.uSnow;
-    sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace(
+    sh.uniforms.uTime = shared.uTime;
+    sh.uniforms.uWaterLevel = shared.uWaterLevel;
+    sh.vertexShader = 'varying vec3 vWPos;\nvarying vec3 vWNorm;\n' + sh.vertexShader.replace(
       '#include <begin_vertex>', '#include <begin_vertex>\n' + GROUND_CHUNK_VERT);
     sh.fragmentShader = GROUND_FRAG_HEAD + sh.fragmentShader.replace(
       '#include <color_fragment>', '#include <color_fragment>\n' + GROUND_FRAG_BODY);
   };
-  mat.customProgramCacheKey = () => 'groundshader';
+  mat.customProgramCacheKey = () => 'groundshader-v3';
   return mat;
 }
 

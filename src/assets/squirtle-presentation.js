@@ -19,6 +19,7 @@ export class SquirtlePresentation extends PlayableCreature {
     this.breathPhase = 0;
     this.idleTime = 0;
     this.shakeTime = 0;
+    this.wetness = 0;
     this.wasAquatic = false;
     this.shell = 0;
     this.shellSpin = 0;
@@ -126,6 +127,19 @@ export class SquirtlePresentation extends PlayableCreature {
     }
     this.wasAquatic = aquatic;
     this.shakeTime = Math.max(0, this.shakeTime - dt);
+
+    // Aquatic wetness tracking: in water or recently emerged, skin and shell glisten
+    const targetWetness = aquatic ? 1.0 : this.shakeTime > 0 ? this.shakeTime / 0.6 : 0.0;
+    this.wetness = THREE.MathUtils.damp(this.wetness, targetWetness, 3, dt);
+    if (this.materials.length > 0) {
+      for (let i = 0; i < this.materials.length; i++) {
+        const m = this.materials[i];
+        if (m.roughness !== undefined) {
+          m.userData.baseRoughness ??= m.roughness;
+          m.roughness = THREE.MathUtils.lerp(m.userData.baseRoughness, 0.22, this.wetness);
+        }
+      }
+    }
 
     // Idle duration and rest/sleep tracking on dry land
     if (!isMoving && b.grounded && !aquatic && !inShell) {

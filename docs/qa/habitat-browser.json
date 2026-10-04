@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 19,
+        "geometries": 21,
         "textures": 6
       },
       "assets": {
@@ -156,15 +156,15 @@
   "frontierReedsBefore": 3,
   "blockageCleared": 0,
   "absence": {
-    "wetness": 0.8869196151124955,
-    "labFrogs": 0.725114508402452,
-    "labWater": 0.9604101869633395
+    "wetness": 0.8676930643138767,
+    "labFrogs": 0.7262669385219189,
+    "labWater": 0.9525868898291894
   },
   "frontierReedsAfter": 46,
   "labAfter": {
     "labReeds": 40,
     "labFrogs": 8,
-    "basinOpacity": 0.6809914779012849
+    "basinOpacity": 0.6775291826684944
   },
   "restSeconds": 300,
   "teardown": {
@@ -179,7 +179,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 166,
+      "frame": 149,
       "calls": 13,
       "triangles": 11312,
       "points": 0,
@@ -192,26 +192,71 @@
       "records": 0
     },
     "mode": "land",
-    "attention": {
-      "id": "lab-basin",
-      "type": "water",
-      "x": 0,
-      "y": -0.2,
-      "z": 0,
-      "priority": 5,
-      "distance": 5
-    },
+    "attention": null,
     "gaze": {
       "yaw": 0,
-      "pitch": -0.032669980221032485
+      "pitch": 0
     },
-    "sleeping": false,
-    "sleepProgress": 0.0000015700247004729203,
+    "sleeping": true,
+    "sleepProgress": 0.8775437511680124,
+    "performance": {
+      "scenery": {
+        "canopyScans": 66,
+        "wetMarks": 0
+      },
+      "habitat": {
+        "reeds": 38,
+        "animals": 8,
+        "visiblePools": 7
+      },
+      "wildlife": {
+        "actors": 0,
+        "snapshots": 0,
+        "reconcileRuns": 13,
+        "drinkers": 0
+      },
+      "squirtles": {
+        "simulation": {
+          "actors": 2,
+          "active": 0,
+          "traces": 2,
+          "reconcileRuns": 3
+        },
+        "view": {
+          "active": 0,
+          "pooled": 0,
+          "pending": 0,
+          "loadError": null
+        }
+      },
+      "effects": {
+        "rain": 0,
+        "fire": 0,
+        "smoke": 0,
+        "dust": 0,
+        "mist": 7,
+        "rainRipples": 0,
+        "underwaterMotes": 0,
+        "jet": 0,
+        "wake": 0,
+        "splash": 0,
+        "foam": 0,
+        "terrainSamples": 108,
+        "rainGroundRefreshes": 0,
+        "mistGroundRefreshes": 11,
+        "foamRebuilds": 1
+      }
+    },
     "effects": {
       "jet": 0,
+      "spray": 0,
       "wake": 0,
       "splash": 0,
-      "foam": 0
+      "foam": 0,
+      "rainRipples": 0,
+      "underwaterMotes": 0,
+      "senseMotes": 0,
+      "wetTrail": 0
     }
   }
 }

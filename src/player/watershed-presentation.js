@@ -30,6 +30,29 @@ export class WatershedPresentation {
       color: 0x88745a,
       roughness: 1,
     });
+    this.material.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vBldPos;\nvarying vec3 vBldNorm;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vBldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+          vBldNorm = normalize(mat3(modelMatrix) * normal);`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vBldPos;\nvarying vec3 vBldNorm;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float bldGrain = (sin(vBldPos.x * 14.0 + vBldPos.z * 11.0) * cos(vBldPos.y * 16.0)) * 0.04;
+          diffuseColor.rgb += vec3(bldGrain * 0.9, bldGrain * 0.8, bldGrain * 0.6);
+          float mudBase = smoothstep(0.35, -0.1, vBldPos.y) * 0.45;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.36, 0.28, 0.20), mudBase);
+          float mossTop = smoothstep(0.45, 0.85, vBldNorm.y) * 0.35;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.34, 0.44, 0.30), mossTop);`,
+        );
+    };
+    this.material.customProgramCacheKey = () => "frontier-debris-boulder-v1";
     this.debris = new THREE.InstancedMesh(this.geometry, this.material, 9);
     this.group.add(this.debris);
     const dummy = new THREE.Object3D();
@@ -98,12 +121,37 @@ export class WatershedPresentation {
       this.reachMaterial,
     );
     this.group.add(this.reachLines);
+    this.flowUniforms = {
+      time: { value: 0 },
+    };
     this.flowMaterial = new THREE.MeshBasicMaterial({
       color: 0x9fdcff,
       transparent: true,
       opacity: 0.78,
       depthWrite: false,
     });
+    this.flowMaterial.onBeforeCompile = (shader) => {
+      shader.uniforms.uFlowTime = this.flowUniforms.time;
+      shader.vertexShader =
+        "varying vec3 vFlowPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vFlowPos = position;`,
+        );
+      shader.fragmentShader =
+        "uniform float uFlowTime;\nvarying vec3 vFlowPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float coreDist = length(vFlowPos);
+          float luminousCore = pow(clamp(1.0 - coreDist * 2.5, 0.0, 1.0), 2.0);
+          float fluidPulse = sin(uFlowTime * 6.0) * 0.12 + 0.88;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 1.0, 1.0), luminousCore * 0.85);
+          diffuseColor.a *= (fluidPulse * (0.6 + luminousCore * 0.4));`,
+        );
+    };
+    this.flowMaterial.customProgramCacheKey = () => "frontier-flow-mote-v1";
     this.flowMotes = new THREE.InstancedMesh(
       this.geometry,
       this.flowMaterial,
@@ -200,6 +248,7 @@ export class WatershedPresentation {
           : THREE.MathUtils.clamp(localFlow?.fraction ?? 0, 0.2, 1);
       this.flowMotes.count = count;
       this.flowMotes.visible = true;
+      this.flowUniforms.time.value = time;
       this.flowMaterial.opacity = 0.42 + flowStrength * 0.42;
       for (let i = 0; i < count; i++) {
         const phase =

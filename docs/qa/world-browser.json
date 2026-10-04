@@ -2,51 +2,51 @@
   "errors": [],
   "cycles": [
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 18,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 18,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 18,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 21,
       "textures": 6
     },
     {
-      "geometries": 19,
+      "geometries": 18,
       "textures": 6
     }
   ],
@@ -59,9 +59,20 @@
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
   "reachCounts": "drainage-groove,spring-gully",
   "drinkNote": "No drink tracks yet. Animals drink where the shallows run clean.",
+  "memoryInstrument": {
+    "playerMarker": true,
+    "facingMarker": true,
+    "mapLabel": "Visited five-metre survey cells with revisit intensity, 2 remembered places, 2 followed waterways and 0 observed drinking sites. You are at -10, 10, facing N.",
+    "waterQuality": "The wetland is drying; its water is clear and moving slowly.",
+    "landmarkMarkers": 2,
+    "reachTraces": 2,
+    "reachMouths": 2,
+    "drinkMarkers": 0,
+    "rememberedPlaces": 2
+  },
   "waterNote": "Water followed: Drainage groove (3 m) · Spring gully (27 m). 2 of 6 reaches, 1 holding water.",
   "reachGeometry": {
-    "geometries": 21,
+    "geometries": 23,
     "followed": 2
   },
   "record": {
@@ -87,11 +98,11 @@
     },
     {
       "label": "basin clock",
-      "value": "9 ticks · ledger empty"
+      "value": "10 ticks · ledger empty"
     },
     {
       "label": "water moved",
-      "value": "0.8 units of wear · 0.01 of sediment in the shallows"
+      "value": "0.9 units of wear · 0.01 of sediment in the shallows"
     },
     {
       "label": "your cut",
@@ -111,7 +122,7 @@
       7
     ],
     "band": 8,
-    "y": -21.41
+    "y": -21.45
   },
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
@@ -126,9 +137,9 @@
       "textures": 0
     },
     "render": {
-      "frame": 702,
-      "calls": 11,
-      "triangles": 9488,
+      "frame": 687,
+      "calls": 5,
+      "triangles": 4844,
       "points": 0,
       "lines": 0
     },
@@ -140,25 +151,78 @@
     },
     "mode": "land",
     "attention": {
-      "id": "lab-basin",
-      "type": "water",
+      "id": "record-column",
+      "type": "record",
       "x": 0,
-      "y": -0.2,
+      "y": -0.2848471838383851,
       "z": 0,
       "priority": 5,
-      "distance": 5
+      "distance": 0
     },
     "gaze": {
-      "yaw": -0.32000009385494704,
-      "pitch": -0.20767362322032007
+      "yaw": -0.4205297961704103,
+      "pitch": -0.2403602693081824
     },
     "sleeping": false,
     "sleepProgress": 0,
+    "performance": {
+      "scenery": {
+        "canopyScans": 31,
+        "wetMarks": 0
+      },
+      "habitat": {
+        "reeds": 3,
+        "animals": 1,
+        "visiblePools": 4
+      },
+      "wildlife": {
+        "actors": 0,
+        "snapshots": 0,
+        "reconcileRuns": 2,
+        "drinkers": 0
+      },
+      "squirtles": {
+        "simulation": {
+          "actors": 0,
+          "active": 0,
+          "traces": 0,
+          "reconcileRuns": 6
+        },
+        "view": {
+          "active": 0,
+          "pooled": 0,
+          "pending": 0,
+          "loadError": null
+        }
+      },
+      "effects": {
+        "rain": 0,
+        "fire": 3,
+        "smoke": 3,
+        "dust": 0,
+        "mist": 0,
+        "rainRipples": 0,
+        "underwaterMotes": 0,
+        "jet": 0,
+        "wake": 0,
+        "splash": 0,
+        "foam": 0,
+        "terrainSamples": 16,
+        "rainGroundRefreshes": 0,
+        "mistGroundRefreshes": 0,
+        "foamRebuilds": 2
+      }
+    },
     "effects": {
       "jet": 0,
+      "spray": 0,
       "wake": 0,
       "splash": 0,
-      "foam": 0
+      "foam": 0,
+      "rainRipples": 0,
+      "underwaterMotes": 0,
+      "senseMotes": 0,
+      "wetTrail": 0
     }
   }
 }

@@ -1,0 +1,51 @@
+{
+  "errors": [],
+  "ecotypes": [
+    "marsh",
+    "urban"
+  ],
+  "modes": {
+    "calmUrban": "rest",
+    "alarmedMarsh": "flee"
+  },
+  "persistence": {
+    "version": 7,
+    "record": {
+      "id": "sq-urban-water-house-drain-0-949",
+      "ecotype": "urban",
+      "marking": 1882,
+      "encounters": 1,
+      "familiarity": 0.025,
+      "fear": 0,
+      "trust": 0.785,
+      "lastSeen": 3,
+      "home": "water-house-drain",
+      "state": "alive"
+    }
+  },
+  "hydrology": {
+    "before": 0.047039534944558384,
+    "after": 0.7832718905204328
+  },
+  "shucker": {
+    "status": "A cut-metal scent crosses frightened shell-scrapes. Shucker evidence; nearby conspecific routes have gone quiet.",
+    "pressure": 0.9,
+    "modes": [
+      "hide",
+      "flee"
+    ]
+  },
+  "sense": "Faint webbed tracks form a repeated route through the ground cover.",
+  "teardown": {
+    "memory": {
+      "geometries": 0,
+      "textures": 0
+    },
+    "assets": {
+      "cached": 0,
+      "referencedIds": 0,
+      "references": 0,
+      "records": 0
+    }
+  }
+}

@@ -40,6 +40,26 @@ export class WorldEffects {
       transparent: true,
       opacity: 0.85,
     });
+    this.jetMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vJetPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vJetPos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vJetPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float core = clamp(1.0 - length(vJetPos.xz) * 1.5, 0.0, 1.0);
+          float froth = sin(vJetPos.y * 22.0) * 0.12;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.96, 1.0, 1.0), core * 0.75 + froth);`,
+        );
+    };
+    this.jetMat.customProgramCacheKey = () => "frontier-jet-stream-v1";
+
     this.jet = new THREE.InstancedMesh(this.geo, this.jetMat, 24);
     this.jet.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.jet.frustumCulled = false;
@@ -53,6 +73,28 @@ export class WorldEffects {
       opacity: 0.55,
       side: THREE.DoubleSide,
     });
+    this.wakeMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vWakePos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vWakePos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vWakePos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float wakeDist = length(vWakePos.xy);
+          float ring = sin(wakeDist * 20.0) * 0.5 + 0.5;
+          float edgeFade = smoothstep(1.0, 0.25, wakeDist);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.94, 0.98, 1.0), ring * 0.42);
+          diffuseColor.a *= edgeFade;`,
+        );
+    };
+    this.wakeMat.customProgramCacheKey = () => "frontier-wake-ripple-v1";
+
     this.wake = new THREE.InstancedMesh(this.geo, this.wakeMat, 16);
     this.wake.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.wake.frustumCulled = false;
@@ -65,6 +107,25 @@ export class WorldEffects {
       transparent: true,
       opacity: 0.75,
     });
+    this.splashMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vSplashPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vSplashPos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vSplashPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float dropletGlint = pow(clamp(1.0 - length(vSplashPos), 0.0, 1.0), 2.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 1.0, 1.0), dropletGlint * 0.85);`,
+        );
+    };
+    this.splashMat.customProgramCacheKey = () => "frontier-splash-glint-v1";
+
     this.splash = new THREE.InstancedMesh(this.geo, this.splashMat, 20);
     this.splash.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.splash.frustumCulled = false;
@@ -78,6 +139,28 @@ export class WorldEffects {
       opacity: 0.3,
       depthWrite: false,
     });
+    this.dustMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vDustPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vDustPos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vDustPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float dDist = length(vDustPos);
+          float puff = smoothstep(0.9, 0.15, dDist);
+          float swirl = sin(vDustPos.x * 14.0 + vDustPos.y * 16.0) * 0.08;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.74, 0.58), swirl + 0.5);
+          diffuseColor.a *= puff;`,
+        );
+    };
+    this.dustMat.customProgramCacheKey = () => "frontier-dust-puff-v1";
+
     this.slideDust = new THREE.InstancedMesh(this.geo, this.dustMat, 18);
     this.slideDust.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.slideDust.frustumCulled = false;
@@ -91,6 +174,27 @@ export class WorldEffects {
       opacity: 0.75,
       depthWrite: false,
     });
+    this.foamMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vFoamPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vFoamPos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vFoamPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float bubble = sin(vFoamPos.x * 24.0) * cos(vFoamPos.y * 20.0 + vFoamPos.z * 18.0);
+          diffuseColor.rgb += vec3(0.08, 0.12, 0.14) * max(0.0, bubble);
+          float aerate = smoothstep(0.1, 0.8, 1.0 - length(vFoamPos.xy));
+          diffuseColor.a *= aerate;`,
+        );
+    };
+    this.foamMat.customProgramCacheKey = () => "frontier-stream-foam-v1";
+
     this.streamFoam = new THREE.InstancedMesh(this.geo, this.foamMat, 16);
     this.streamFoam.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.streamFoam.frustumCulled = false;
@@ -135,6 +239,26 @@ export class WorldEffects {
       opacity: 0.18,
       depthWrite: false,
     });
+    this.underwaterMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vMotePos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vMotePos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vMotePos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float moteCore = clamp(1.0 - length(vMotePos) * 1.8, 0.0, 1.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 1.0, 0.95), moteCore * 0.6);
+          diffuseColor.a *= (moteCore * 0.8 + 0.2);`,
+        );
+    };
+    this.underwaterMat.customProgramCacheKey = () => "frontier-mote-shimmer-v1";
+
     this.underwaterMotes = new THREE.InstancedMesh(
       this.geo,
       this.underwaterMat,
@@ -182,6 +306,40 @@ export class WorldEffects {
       roughness: 0.7,
       side: THREE.DoubleSide,
     });
+    this.channelUniforms = {
+      time: { value: 0 },
+      stage: { value: 0 },
+    };
+    this.channelMat.onBeforeCompile = (shader) => {
+      shader.uniforms.uChanTime = this.channelUniforms.time;
+      shader.uniforms.uChanStage = this.channelUniforms.stage;
+      shader.vertexShader =
+        "varying vec3 vChanWPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vChanWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;`,
+        );
+      shader.fragmentShader =
+        "uniform float uChanTime;\nuniform float uChanStage;\nvarying vec3 vChanWPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          if (uChanStage >= 2.0) {
+            float flowTime = uChanTime * 3.2;
+            float streamWave = sin(vChanWPos.x * 2.8 + vChanWPos.z * 2.8 + flowTime) * cos(vChanWPos.x * 1.8 - vChanWPos.z * 1.8 - flowTime * 0.7);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.28, 0.62, 0.60), 0.55);
+            float glint = pow(max(0.0, streamWave * 0.6 + 0.4), 4.2) * 0.38;
+            diffuseColor.rgb += vec3(glint * 0.85, glint * 0.95, glint);
+            float edgeFoam = pow(max(0.0, sin(vChanWPos.x * 7.5 + flowTime * 1.8) * cos(vChanWPos.z * 7.5 - flowTime * 1.4)), 3.2);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.98, 1.0), edgeFoam * 0.42);
+          } else {
+            float soilGrain = sin(vChanWPos.x * 18.0) * cos(vChanWPos.z * 18.0) * 0.04;
+            diffuseColor.rgb += vec3(soilGrain * 0.9, soilGrain * 0.8, soilGrain * 0.6);
+          }`,
+        );
+    };
+    this.channelMat.customProgramCacheKey = () => "frontier-channel-water-v1";
     this.channel = new THREE.Mesh(this.channelGeo, this.channelMat);
     this.group.add(this.channel);
     this.channel.frustumCulled = false;
@@ -352,6 +510,9 @@ export class WorldEffects {
       this.fireSmoke.instanceMatrix.needsUpdate = true;
     }
     this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
+    this.channelMat.roughness = state.frontier.stage < 2 ? 0.88 : 0.22;
+    this.channelUniforms.time.value = state.elapsed;
+    this.channelUniforms.stage.value = state.frontier.stage;
     if (this.channelStage !== state.frontier.stage)
       this.rebuildChannel(state.frontier.stage);
 

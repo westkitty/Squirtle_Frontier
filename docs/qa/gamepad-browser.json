@@ -1,0 +1,17 @@
+{
+  "errors": [],
+  "move": {
+    "modality": "gamepad",
+    "distance": 0.4678900446023988,
+    "jetKey": "A"
+  },
+  "lookYawDelta": 0.08404024388722897,
+  "jet": {
+    "cooldown": 1.0666666666666669,
+    "jetTime": 0.32666666666666666
+  },
+  "recenter": {
+    "yaw": 3.141592653589793,
+    "bodyYaw": 3.141592653589793
+  }
+}

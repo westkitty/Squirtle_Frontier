@@ -483,3 +483,75 @@ test("tree canopy softens rain gain and high-frequency hiss without muting weath
   );
   audio.dispose();
 });
+
+test("regional biome environmental ambience adapts frequency by location and muffles during dive", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+
+  assert.ok(audio.ambientGain, "ambientGain must be initialized");
+  assert.ok(audio.ambientFilter, "ambientFilter must be initialized");
+
+  const b = createBody(30, -30, 0);
+  audio.update(b, { muted: false, volume: 1 }, { place: "frontier" });
+  const openGain = audio.ambientGain.gain.value;
+  const openFreq = audio.ambientFilter.frequency.value;
+  assert.ok(openGain > 0, "open frontier must have audible ambient air presence");
+  assert.equal(openFreq, 520, "open frontier uses balanced 520 Hz breeze center");
+
+  // Move near wetland reeds (x: -6, z: -15)
+  b.x = -6;
+  b.z = -15;
+  audio.update(b, { muted: false, volume: 1 }, { place: "frontier" });
+  assert.ok(
+    audio.ambientFilter.frequency.value > openFreq,
+    "wetland reeds must shift ambient sound to brighter reed rustle",
+  );
+
+  // Move near rocky landslide gorge (x: 6, z: -4)
+  b.x = 6;
+  b.z = -4;
+  audio.update(b, { muted: false, volume: 1 }, { place: "frontier" });
+  assert.ok(
+    audio.ambientFilter.frequency.value < openFreq,
+    "rocky canyon gorge must shift ambient sound to lower hollow resonance",
+  );
+
+  // Submerged dive mode attenuates and muffles ambient sound
+  b.mode = "dive";
+  b.y = -2;
+  audio.update(b, { muted: false, volume: 1 }, { place: "frontier", water: { level: 0 } });
+  assert.ok(
+    audio.ambientGain.gain.value < openGain,
+    "diving must attenuate surface atmospheric ambience",
+  );
+
+  audio.dispose();
+  assert.equal(audio.ambientGain, null, "dispose must nullify ambientGain");
+  assert.equal(audio.ambientFilter, null, "dispose must nullify ambientFilter");
+});
+
+test("water entry slaps and emergence sheds droplets, then both settle", () => {
+  setupMockAudioContext();
+  const audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0);
+  b.mode = "land";
+  audio.context.currentTime = 1;
+  audio.update(b, { muted: false, volume: 1 });
+  b.mode = "swim";
+  audio.context.currentTime = 1.05;
+  audio.update(b, { muted: false, volume: 1 });
+  const entry = audio.surfGain.gain.value;
+  audio.context.currentTime = 2;
+  audio.update(b, { muted: false, volume: 1 });
+  assert.ok(entry > audio.surfGain.gain.value, "entry slap must decay to the swim level");
+  b.mode = "land";
+  audio.context.currentTime = 2.1;
+  audio.update(b, { muted: false, volume: 1 });
+  assert.ok(audio.flutterGain.gain.value > 0.03, "emergence sheds droplets");
+  audio.context.currentTime = 3;
+  audio.update(b, { muted: false, volume: 1 });
+  assert.equal(audio.flutterGain.gain.value, 0);
+  audio.dispose();
+});

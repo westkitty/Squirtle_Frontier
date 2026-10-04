@@ -99,11 +99,13 @@ async function boot() {
       underwaterFog = new THREE.Color("#1d5d62"),
       underwaterMurkyFog = new THREE.Color("#52604b"),
       sunClear = new THREE.Color("#ffdfb0"),
-      sunRain = new THREE.Color("#c7d4cf");
+      sunRain = new THREE.Color("#c7d4cf"),
+      sunUnderwater = new THREE.Color("#6ad2cb");
     scene.background = frontierFogClear.clone();
     scene.fog = new THREE.FogExp2(frontierFogClear.clone(), 0.018);
     const camera = new THREE.PerspectiveCamera(55, 1, 0.04, 120);
-    scene.add(new THREE.HemisphereLight(0xd9f0e2, 0x344b43, 2.2));
+    const hemiLight = new THREE.HemisphereLight(0xd9f0e2, 0x344b43, 2.2);
+    scene.add(hemiLight);
     const sun = new THREE.DirectionalLight(sunClear, 2);
     sun.position.set(-18, 30, 10);
     scene.add(sun);
@@ -166,6 +168,7 @@ async function boot() {
       },
       rig = new CreatureCamera(camera, liveRegion);
     let visualRain = THREE.MathUtils.clamp(state.frontier.weather.rain, 0, 1);
+    const regionAtmosphereBias = { wetland: 0, canyon: 0 };
     const waterTargetColor = scenery.water.material.color.clone();
     // Water in the named inflows is read through the predicate the body swims by, and only
     // re-read when the basin's level or the player's cut changes. Nothing here pretends to
@@ -852,6 +855,7 @@ async function boot() {
         wildlifeLevel: 0,
         wildlifeDistance: 999,
         canopyCover: 0,
+        place: "frontier",
       },
       cameraSettings = {
         sensitivity: Settings.values.sensitivity,
@@ -1033,6 +1037,7 @@ async function boot() {
             liveRegion,
           );
         if (state.frontier.tick !== previousTick) {
+          const placesBefore = state.memory.places.length;
           state.memory.observe(
             body,
             state.place,
@@ -1040,6 +1045,19 @@ async function boot() {
             state.ecosystem,
           );
           state.memory.noteDrinks(body, wildlife.drinkers);
+          if (state.memory.places.length > placesBefore) {
+            const newlyDiscoveredId =
+              state.memory.places[state.memory.places.length - 1];
+            const landmark = LANDMARKS.find((l) => l.id === newlyDiscoveredId);
+            if (landmark && !controls.sense) {
+              statusFlash = flashStatus(
+                status,
+                `${landmark.name} — place remembered.`,
+                statusFlash,
+                5.0,
+              );
+            }
+          }
         }
         if (state.frontier.tick !== previousTick) {
           state.settlement.observe(body, state.place, state.frontier.tick);
@@ -1050,6 +1068,7 @@ async function boot() {
         shared.uWet.value = presentation.wetGround;
         shared.uWindStrength.value = presentation.windStrength;
         shared.uWind.value.set(presentation.windX, presentation.windZ);
+        shared.uWaterLevel.value = state.waterLevel;
         if (state.frontier.tick !== previousTick) {
           const nextObserved = observationSnapshot(state),
             change = worldTransition(observedWorld, nextObserved);
@@ -1279,6 +1298,7 @@ async function boot() {
           state.place === "frontier"
             ? scenery.canopyCoverAt(body.x, body.z)
             : 0;
+        audioContext.place = state.place;
         audio.update(body, Settings.values, audioContext);
         // A transient notice hands the caption back once it has had its moment, and only
         // if nothing else has spoken in the meantime.
@@ -1325,9 +1345,28 @@ async function boot() {
           rainEase = 1 - Math.exp(-cameraDt / 0.75);
         visualRain = THREE.MathUtils.lerp(visualRain, targetRain, rainEase);
         const rain = visualRain;
+        if (state.place === "frontier") {
+          const wetlandDist = Math.hypot(body.x + 6, body.z + 15),
+            canyonDist = Math.hypot(body.x + 10, body.z - 12);
+          regionAtmosphereBias.wetland = THREE.MathUtils.clamp(
+            1 - wetlandDist / 30,
+            0,
+            1,
+          );
+          regionAtmosphereBias.canyon = THREE.MathUtils.clamp(
+            1 - canyonDist / 28,
+            0,
+            1,
+          );
+        } else {
+          regionAtmosphereBias.wetland = 0;
+          regionAtmosphereBias.canyon = 0;
+        }
         atmosphere.update(camera, {
           rain,
           visible: state.place === "frontier" && !underwater,
+          time: state.elapsed,
+          regionBias: regionAtmosphereBias,
         });
         if (underwater) {
           const depth = Math.max(0, cameraWater.level - camera.position.y),
@@ -1348,16 +1387,48 @@ async function boot() {
           scene.fog.density =
             0.095 + Math.min(0.08, depth * 0.025) + murk * 0.055;
         } else if (state.place === "frontier") {
-          scene.fog.color
-            .copy(frontierFogClear)
-            .lerp(frontierFogRain, rain * 0.78);
-          scene.fog.density = 0.016 + rain * 0.016;
+          scene.fog.color.copy(frontierFogClear);
+          if (regionAtmosphereBias.wetland > 0)
+            scene.fog.color.lerp(shelteredFog, regionAtmosphereBias.wetland * 0.42);
+          scene.fog.color.lerp(frontierFogRain, rain * 0.78);
+          scene.fog.density =
+            0.016 + rain * 0.016 + regionAtmosphereBias.wetland * 0.005;
         } else {
           scene.fog.color.copy(shelteredFog);
           scene.fog.density = 0.025;
         }
-        sun.intensity = 2 - rain * 0.65;
-        sun.color.copy(sunClear).lerp(sunRain, rain * 0.82);
+        if (state.place === "frontier") {
+          if (underwater) {
+            const depth = Math.max(0, cameraWater.level - camera.position.y);
+            sun.intensity = Math.max(0.42, (2 - rain * 0.65) * Math.exp(-depth * 0.28));
+            sun.color
+              .copy(sunClear)
+              .lerp(sunRain, rain * 0.82)
+              .lerp(sunUnderwater, Math.min(0.85, depth * 0.35));
+            hemiLight.intensity = Math.max(0.65, 2.2 * Math.exp(-depth * 0.22));
+            hemiLight.color.set(0x7ed8d0);
+            hemiLight.groundColor.set(0x1e3532);
+          } else {
+            sun.intensity = 2 - rain * 0.65;
+            sun.color.copy(sunClear).lerp(sunRain, rain * 0.82);
+            hemiLight.intensity = 2.2;
+            hemiLight.color.set(0xd9f0e2);
+            hemiLight.groundColor.set(0x344b43);
+          }
+        } else if (state.place === "record") {
+          const depth = Math.max(0, -camera.position.y);
+          sun.intensity = Math.max(0.12, 1.4 * Math.exp(-depth * 0.16));
+          sun.color.copy(sunUnderwater);
+          hemiLight.intensity = Math.max(0.45, 1.5 * Math.exp(-depth * 0.12));
+          hemiLight.color.set(0x569692);
+          hemiLight.groundColor.set(0x1a2624);
+        } else {
+          sun.intensity = 0.85;
+          sun.color.copy(sunRain);
+          hemiLight.intensity = 1.6;
+          hemiLight.color.set(0x8bc3be);
+          hemiLight.groundColor.set(0x233633);
+        }
         scene.background.copy(scene.fog.color);
         renderer.render(scene, camera);
         const previousFrame = loop.frames.at(-1);

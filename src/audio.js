@@ -22,6 +22,8 @@ export class Audio {
     this.wildGain = null;
     this.wildFilter = null;
     this.wildOsc = null;
+    this.ambientGain = null;
+    this.ambientFilter = null;
   }
   get gain() {
     return this.masterGain;
@@ -149,6 +151,16 @@ export class Audio {
       this.wildFilter.connect(this.wildGain);
       this.wildGain.connect(this.masterGain);
 
+      // 9. Regional Biome Environmental Ambience voice (subtle airy/reed/canyon presence)
+      this.ambientFilter = this.context.createBiquadFilter();
+      this.ambientFilter.type = "bandpass";
+      this.ambientFilter.Q.value = 1.0;
+      this.ambientFilter.frequency.value = 520;
+      this.ambientGain = this.context.createGain();
+      this.ambientGain.gain.value = 0;
+      this.ambientFilter.connect(this.ambientGain);
+      this.ambientGain.connect(this.masterGain);
+
       // Connect shared noise source to noise-driven filter paths
       this.noiseSource.connect(this.jetFilter);
       this.noiseSource.connect(this.surfFilter);
@@ -156,6 +168,7 @@ export class Audio {
       this.noiseSource.connect(this.flutterFilter);
       this.noiseSource.connect(this.streamFilter);
       this.noiseSource.connect(this.rainFilter);
+      this.noiseSource.connect(this.ambientFilter);
 
       // Start continuous audio generators
       this.noiseSource.start();
@@ -208,6 +221,16 @@ export class Audio {
     }
 
     // 2. Aquatic surf & surface swimming displacement
+    // Amphibious transitions: a soft surface slap on entry, a droplet shed on exit.
+    if (this.wasAquatic === false && aquatic) this.entryAt = now;
+    if (this.wasAquatic === true && !aquatic) this.exitAt = now;
+    this.wasAquatic = aquatic;
+    const entryAge = now - (this.entryAt ?? -10),
+      exitAge = now - (this.exitAt ?? -10),
+      entryAccent =
+        entryAge >= 0 && entryAge < 0.4 ? 0.14 * (1 - entryAge / 0.4) : 0,
+      exitAccent =
+        exitAge >= 0 && exitAge < 0.35 ? 0.07 * (1 - exitAge / 0.35) : 0;
     let surfLevel = 0;
     if (aquatic) {
       if (body.mode === "dive") {
@@ -219,7 +242,7 @@ export class Audio {
         this.surfFilter.frequency.setTargetAtTime(650, now, 0.08);
       }
     }
-    this.surfGain.gain.setTargetAtTime(surfLevel, now, 0.06);
+    this.surfGain.gain.setTargetAtTime(surfLevel + entryAccent, now, 0.06);
 
     // 3. Submerged Cavern / Deep Ocean sub-drone. Actual depth matters:
     // a shallow duck-under is quieter than settling metres below the surface.
@@ -259,7 +282,7 @@ export class Audio {
 
     // 5. Water-exit droplet shake flutter
     const isShaking = !!contextInfo.isShaking;
-    const flutterLevel = isShaking ? 0.16 : 0;
+    const flutterLevel = (isShaking ? 0.16 : 0) + exitAccent;
     this.flutterGain.gain.setTargetAtTime(flutterLevel, now, 0.03);
 
     // 6. Running stream / watercourse flow acoustics
@@ -332,6 +355,42 @@ export class Audio {
       now,
       0.12,
     );
+
+    // 9. Regional Biome Environmental Ambience
+    let ambientLevel = 0.024;
+    let targetFreq = 520;
+    let targetQ = 1.0;
+    if (contextInfo.place === "frontier") {
+      const px = Number(body.x) || 0,
+        pz = Number(body.z) || 0;
+      const distWetland = Math.hypot(px - (-6), pz - (-15));
+      const distGorge = Math.hypot(px - 6, pz - (-4));
+      const distLab = Math.hypot(px - (-11), pz - 5);
+
+      if (distWetland < 16) {
+        const wFactor = 1 - distWetland / 16;
+        targetFreq = 520 + wFactor * 900;
+        targetQ = 0.8;
+        ambientLevel += wFactor * 0.018;
+      } else if (distGorge < 18) {
+        const gFactor = 1 - distGorge / 18;
+        targetFreq = 520 - gFactor * 240;
+        targetQ = 2.2;
+        ambientLevel += gFactor * 0.022;
+      } else if (distLab < 12) {
+        const lFactor = 1 - distLab / 12;
+        targetFreq = 520 - lFactor * 280;
+        targetQ = 1.6;
+        ambientLevel += lFactor * 0.015;
+      }
+    }
+    if (body.mode === "dive") {
+      ambientLevel *= (1 - depth * 0.9);
+      targetFreq = Math.max(160, targetFreq * 0.4);
+    }
+    this.ambientGain.gain.setTargetAtTime(ambientLevel, now, 0.1);
+    this.ambientFilter.frequency.setTargetAtTime(targetFreq, now, 0.12);
+    this.ambientFilter.Q.setTargetAtTime(targetQ, now, 0.1);
   }
   dispose() {
     try {
@@ -358,9 +417,13 @@ export class Audio {
     this.rainGain?.disconnect();
     this.wildFilter?.disconnect();
     this.wildGain?.disconnect();
+    this.ambientFilter?.disconnect();
+    this.ambientGain?.disconnect();
     this.masterGain?.disconnect();
     this.context?.close();
     this.context = null;
     this.masterGain = null;
+    this.ambientFilter = null;
+    this.ambientGain = null;
   }
 }

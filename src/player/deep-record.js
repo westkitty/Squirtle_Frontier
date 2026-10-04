@@ -23,6 +23,25 @@ export class DeepRecord {
         side: THREE.BackSide,
         roughness: 1,
       });
+      mat.onBeforeCompile = (shader) => {
+        shader.vertexShader =
+          "varying vec3 vStrataPos;\n" +
+          shader.vertexShader.replace(
+            "#include <begin_vertex>",
+            `#include <begin_vertex>
+            vStrataPos = position;`,
+          );
+        shader.fragmentShader =
+          "varying vec3 vStrataPos;\n" +
+          shader.fragmentShader.replace(
+            "#include <color_fragment>",
+            `#include <color_fragment>
+            float layerBands = sin(vStrataPos.y * 28.0 + sin(vStrataPos.x * 5.0) * 1.2) * 0.055;
+            float microLam = sin(vStrataPos.y * 72.0 + vStrataPos.z * 8.0) * 0.025;
+            diffuseColor.rgb += vec3(layerBands * 0.85, layerBands * 0.75, layerBands * 0.6) + vec3(microLam);`,
+          );
+      };
+      mat.customProgramCacheKey = () => `frontier-strata-${e.material}-v1`;
       this.materials.push(mat);
       const m = new THREE.Mesh(this.geo, mat);
       m.position.y = -e.depth;
@@ -31,6 +50,24 @@ export class DeepRecord {
     this.floorGeo = new THREE.CircleGeometry(4, 16);
     const floorMat = this.materials[0].clone();
     floorMat.side = THREE.DoubleSide;
+    floorMat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        "varying vec3 vStrataPos;\n" +
+        shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          vStrataPos = position;`,
+        );
+      shader.fragmentShader =
+        "varying vec3 vStrataPos;\n" +
+        shader.fragmentShader.replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float sedimentDep = sin(length(vStrataPos.xy) * 16.0) * 0.035;
+          diffuseColor.rgb += vec3(sedimentDep * 0.8, sedimentDep * 0.75, sedimentDep * 0.55);`,
+        );
+    };
+    floorMat.customProgramCacheKey = () => "frontier-strata-floor-v1";
     this.materials.push(floorMat);
     this.floor = new THREE.Mesh(this.floorGeo, floorMat);
     this.floor.rotation.x = -Math.PI / 2;

@@ -157,11 +157,11 @@
       104
     ]
   },
-  "touchKeyboardMoveMeters": 1.155,
+  "touchKeyboardMoveMeters": 1.009,
   "stickDrag": {
     "stick": {
       "x": 0,
-      "z": 0.7142857142857143
+      "z": 0.869281045751634
     },
     "pointers": 1
   },
@@ -170,7 +170,17 @@
       "x": 0,
       "z": 0
     },
-    "drifted": 0.007
+    "drifted": 0.018
   },
-  "stickMovedMeters": 1.169
+  "stickMovedMeters": 1.011,
+  "landscape": {
+    "overflow": false,
+    "stick": [
+      96,
+      96
+    ],
+    "smallestAction": 44,
+    "controlsClearFooter": true,
+    "notesClearControls": true
+  }
 }
