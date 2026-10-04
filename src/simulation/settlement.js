@@ -113,11 +113,16 @@ export function settlementDialogue(settlement, body) {
   if (!settlement) return null;
   const d = Math.hypot(body.x - WATER_HOUSE.x, body.z - WATER_HOUSE.z);
   if (d > 8.0) return null;
-  const mode = settlement.response;
+  const mode = settlement.response,
+    legal = settlement.legalResponse;
+  if (legal === "report")
+    return "The caretaker sees you and shuts the door. Inside, a message is being sent beyond the reeds.";
   if (mode === "withdraw")
     return "A cautious stillness from inside the water house. The door remains barred.";
   if (mode === "check-water")
     return "The caretaker murmurs softly, looking down at the dry trough: 'If only the springs ran true...'";
+  if (legal === "protect")
+    return "The caretaker keeps the door open but watches the road instead of you: 'Stay near the water house.'";
   if (mode === "welcome") {
     if (settlement.bowl > 0.05)
       return "The caretaker waves warmly: 'Fresh water for you, little friend. Rest your paws.'";
