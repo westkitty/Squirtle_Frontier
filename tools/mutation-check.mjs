@@ -85,13 +85,13 @@ const MUTATIONS = [
     what: "remembered Squirtle ecology disappears from the memory summary",
     file: "src/presentation-signals.js",
     from: "  return \`${signs}${remembered}${missing}${threat}\`;",
-    to: "  return \\"Squirtle signs are unavailable.\\";",
+    to: '  return "Squirtle signs are unavailable.";',
   },
   {
     what: "protective caretaker legality collapses back to generic welcome",
     file: "src/simulation/settlement.js",
-    from: "  if (legal === \\"protect\\")",
-    to: "  if (false && legal === \\"protect\\")",
+    from: '  if (legal === "protect")',
+    to: '  if (false && legal === "protect")',
   },
   {
     what: "depth leaf keeps two decimals while the screen shows one",
