@@ -44,6 +44,9 @@ export class CreatureCamera {
     this.pitch = 0.26;
     this.initial = true;
     this.impactRecoil = 0;
+    this.lastBodyYaw = null;
+    this.roll = 0;
+    this.verticalLead = 0;
     this.target = new THREE.Vector3();
     this.desired = new THREE.Vector3();
     this.probe = new THREE.Vector3();
@@ -103,8 +106,22 @@ export class CreatureCamera {
 
     const speed = Math.hypot(body.vx, body.vz);
     const inSlide = body.mode === "slide";
+    const aquatic = body.mode === "swim" || body.mode === "dive";
     const inDive = body.mode === "dive" || body.y < -0.45;
     const inJet = body.jetTime > 0;
+    const yawDelta =
+        this.lastBodyYaw === null
+          ? 0
+          : Math.atan2(
+              Math.sin(body.yaw - this.lastBodyYaw),
+              Math.cos(body.yaw - this.lastBodyYaw),
+            ),
+      turnRate = yawDelta / Math.max(dt, 1 / 240);
+    this.lastBodyYaw = body.yaw;
+    this.verticalLead =
+      !settings.reducedMotion && aquatic
+        ? THREE.MathUtils.clamp(body.vy * 0.055, -0.16, 0.16)
+        : 0;
 
     // Tactical micro-recoil on hard impacts (falling or collision)
     if (!settings.reducedMotion) {
@@ -132,7 +149,7 @@ export class CreatureCamera {
 
     this.target.set(
       body.x + leadX,
-      body.y + 0.32 - this.impactRecoil,
+      body.y + 0.32 - this.impactRecoil + this.verticalLead,
       body.z + leadZ,
     );
     this.desired.set(
@@ -151,6 +168,16 @@ export class CreatureCamera {
     // Collision authority comes AFTER smoothing. A safe desired point alone isn't enough.
     this.constrain(this.target, this.camera.position, blockers);
     this.camera.lookAt(this.target);
+
+    const rollTarget =
+      !settings.reducedMotion && (aquatic || inSlide) && speed > 0.25
+        ? THREE.MathUtils.clamp(-turnRate * 0.02, -0.1, 0.1)
+        : 0;
+    this.roll = settings.reducedMotion
+      ? 0
+      : THREE.MathUtils.damp(this.roll, rollTarget, 8, dt);
+    if (!settings.reducedMotion && Math.abs(this.roll) > 1e-5)
+      this.camera.rotateZ(this.roll);
 
     let fov = 55;
     if (settings.reducedMotion) {

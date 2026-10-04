@@ -206,6 +206,53 @@ test("physical impact gives Squirtle a bounded squash response", () => {
   presentation.dispose();
 });
 
+test("aquatic and shell turning banks the visible body without mutating body yaw", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.mode = "swim";
+  b.vx = 2.5;
+  b.vz = 0;
+  b.yaw = 0;
+  presentation.present(b, 1 / 60);
+  const yawBefore = 0.45;
+  b.yaw = yawBefore;
+  presentation.present(b, 1 / 60);
+  assert.ok(
+    Math.abs(presentation.motionBank) > 0.02,
+    "visible body must bank into a meaningful aquatic turn",
+  );
+  assert.ok(
+    Math.abs(presentation.visual.rotation.z) > 0.02,
+    "bank must reach the presentation wrapper",
+  );
+  assert.equal(b.yaw, yawBefore, "presentation may not rewrite body yaw");
+
+  b.mode = "slide";
+  b.yaw = 0.8;
+  presentation.present(b, 1 / 60);
+  assert.ok(Math.abs(presentation.motionBank) > 0.02);
+  presentation.dispose();
+});
+
+test("aquatic body pitch follows vertical travel direction within a bounded attitude", () => {
+  const { presentation } = createMockSquirtle();
+  const b = createBody(0, 0, 0);
+  b.mode = "dive";
+  b.vx = 1.2;
+  b.vz = 0;
+
+  b.vy = -3;
+  for (let i = 0; i < 20; i++) presentation.present(b, 1 / 60);
+  const descending = presentation.visual.rotation.x;
+
+  b.vy = 3;
+  for (let i = 0; i < 20; i++) presentation.present(b, 1 / 60);
+  const rising = presentation.visual.rotation.x;
+  assert.ok(descending > rising, "descending must pitch more steeply than rising");
+  assert.ok(descending < 1.15 && rising > 0.7, "aquatic attitude remains bounded");
+  presentation.dispose();
+});
+
 test("attention target orients gaze yaw and pitch within physiological clamping bounds", () => {
   const { presentation } = createMockSquirtle();
   const b = createBody(0, 0, 0);

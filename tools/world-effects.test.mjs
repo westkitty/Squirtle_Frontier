@@ -30,6 +30,8 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.splash.geometry, fx.geo);
   assert.equal(fx.slideDust.geometry, fx.geo);
   assert.equal(fx.streamFoam.geometry, fx.geo);
+  assert.equal(fx.rainRipples.geometry, fx.geo);
+  assert.equal(fx.underwaterMotes.geometry, fx.geo);
 
   fx.dispose();
   assert.equal(fx.group.parent, null);
@@ -134,6 +136,66 @@ test("Aquatic surface wake generates concentric ripples only when swimming or mo
     `wake ripple y (${pos.y}) should sit at water surface level (${water.level + 0.015})`,
   );
 
+  fx.dispose();
+});
+
+test("rain visibly meets nearby water with bounded surface ripples", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  const body = createBody(0, 0, 0.4);
+  const water = { level: 0.5 };
+
+  state.frontier.weather.rain = 0;
+  fx.update(state, body, { water });
+  assert.equal(fx.rainRipples.count, 0);
+
+  state.frontier.weather.rain = 1;
+  fx.update(state, body, { water, effectScale: 1 });
+  assert.equal(fx.rainRipples.count, 18);
+  const full = fx.rainRipples.count;
+
+  fx.update(state, body, { water, effectScale: 0.4 });
+  assert.ok(fx.rainRipples.count >= 3 && fx.rainRipples.count < full);
+
+  fx.update(state, body, { water: null, effectScale: 1 });
+  assert.equal(fx.rainRipples.count, 0, "rain over dry ground must not invent water rings");
+  fx.dispose();
+});
+
+test("dive particulates scale with real sediment and contamination without touching simulation state", () => {
+  const parent = new THREE.Group();
+  const fx = new WorldEffects(parent);
+  const state = createMockState();
+  state.watershed = {
+    nodes: [{}, {}, { sediment: 0.05, contamination: 0.02 }],
+  };
+  const body = createBody(0, 0, 0);
+  body.mode = "dive";
+  body.y = -0.5;
+  const water = { level: 0.5 },
+    before = JSON.stringify(state.watershed.nodes[2]);
+
+  fx.update(state, body, { water, effectScale: 1 });
+  const clearCount = fx.underwaterMotes.count;
+  assert.ok(clearCount >= 5);
+
+  state.watershed.nodes[2].sediment = 0.9;
+  state.watershed.nodes[2].contamination = 0.7;
+  fx.update(state, body, { water, effectScale: 1 });
+  assert.ok(
+    fx.underwaterMotes.count > clearCount,
+    "murkier water must carry more visible suspended material",
+  );
+  assert.equal(
+    JSON.stringify({ sediment: 0.9, contamination: 0.7 }),
+    JSON.stringify(state.watershed.nodes[2]),
+    "presentation may not rewrite watershed state",
+  );
+
+  body.mode = "swim";
+  fx.update(state, body, { water, effectScale: 1 });
+  assert.equal(fx.underwaterMotes.count, 0, "surface swimming must not carry the dive field");
   fx.dispose();
 });
 
@@ -313,6 +375,8 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
     fx.splash,
     fx.slideDust,
     fx.wetlandMist,
+    fx.rainRipples,
+    fx.underwaterMotes,
     fx.streamFoam,
   ])
     assert.equal(

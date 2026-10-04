@@ -618,6 +618,11 @@ footer {
   border-radius: 0;
   background: #6fb6d8;
 }
+.survey-swatch.drink {
+  border-radius: 50%;
+  background: #d7e0a3;
+  box-shadow: 0 0 0 1px #193c35;
+}
 .survey-swatch.you {
   border-radius: 50%;
   background: #f7f4de;

@@ -1,7 +1,25 @@
 import * as THREE from "three";
 import { DEBRIS_SITE } from "../simulation/water-interaction.js";
 import { heightAt } from "../worldgen.js";
-import { REACHES } from "../simulation/reaches.js";
+import { REACHES, reachAt, reachById } from "../simulation/reaches.js";
+
+function pointAlong(reach, along) {
+  if (!reach?.points?.length) return null;
+  const target = THREE.MathUtils.clamp(along, 0, reach.length);
+  for (let i = 1; i < reach.points.length; i++) {
+    const a = reach.points[i - 1],
+      b = reach.points[i];
+    if (target > b.along) continue;
+    const span = Math.max(1e-6, b.along - a.along),
+      t = THREE.MathUtils.clamp((target - a.along) / span, 0, 1);
+    return {
+      x: THREE.MathUtils.lerp(a.x, b.x, t),
+      z: THREE.MathUtils.lerp(a.z, b.z, t),
+    };
+  }
+  const last = reach.points.at(-1);
+  return { x: last.x, z: last.z };
+}
 // Fixed-size local presentation; graph remains authoritative and exists when hidden.
 export class WatershedPresentation {
   constructor(scene) {
@@ -80,6 +98,23 @@ export class WatershedPresentation {
       this.reachMaterial,
     );
     this.group.add(this.reachLines);
+    this.flowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x9fdcff,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+    });
+    this.flowMotes = new THREE.InstancedMesh(
+      this.geometry,
+      this.flowMaterial,
+      12,
+    );
+    this.flowMotes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.flowMotes.frustumCulled = false;
+    this.flowMotes.count = 0;
+    this.flowMotes.visible = false;
+    this.group.add(this.flowMotes);
+    this.flowDummy = new THREE.Object3D();
     this.reachSeen = null;
     this.paintReaches([], 0);
   }
@@ -119,12 +154,14 @@ export class WatershedPresentation {
   }
   update(watershed, body, sensing, time, seen = [], stage = 0, water = {}) {
     const node = watershed.nodes[1],
+      localReach = reachAt(body.x, body.z, 8),
       flows = REACHES.map(
         (r) =>
           `${r.id}:${water[r.id]?.flowing ? 1 : (water[r.id]?.fraction ?? 0) > 0 ? 2 : 0}`,
       ).join(",");
     this.group.visible =
-      Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 55;
+      Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 55 ||
+      (sensing && !!localReach);
     const signature = `${stage}|${seen.join(",")}|${flows}`;
     if (signature !== this.reachSeen) {
       this.reachSeen = signature;
@@ -135,11 +172,56 @@ export class WatershedPresentation {
     this.ripple.visible = sensing && node.blockage > 0.1;
     this.ripple.scale.setScalar(1 + (time % 2) * 0.8);
     this.ripple.material.opacity = 1 - (time % 2) / 2;
+
+    const localFlow = localReach ? water[localReach.id] : null,
+      activeFlow =
+        !!localReach &&
+        sensing &&
+        (localFlow?.flowing || (localFlow?.fraction ?? 0) > 0),
+      reach = activeFlow ? reachById(localReach.id) : null;
+    if (reach) {
+      const count = 10,
+        windowStart = Math.max(0, localReach.toHead - 2.2),
+        windowLength = Math.max(
+          0.5,
+          Math.min(9, reach.length - windowStart),
+        ),
+        flowStrength = localFlow?.flowing
+          ? 1
+          : THREE.MathUtils.clamp(localFlow?.fraction ?? 0, 0.2, 1);
+      this.flowMotes.count = count;
+      this.flowMotes.visible = true;
+      this.flowMaterial.opacity = 0.42 + flowStrength * 0.42;
+      for (let i = 0; i < count; i++) {
+        const phase =
+            (((time * (0.55 + flowStrength * 0.85) +
+              (i / count) * windowLength) %
+              windowLength) +
+              windowLength) %
+            windowLength,
+          p = pointAlong(reach, windowStart + phase);
+        this.flowDummy.position.set(
+          p.x,
+          heightAt(p.x, p.z) + 0.18 + Math.sin(time * 4 + i) * 0.025,
+          p.z,
+        );
+        this.flowDummy.rotation.set(0, time * 0.8 + i, 0);
+        this.flowDummy.scale.setScalar(0.09 + flowStrength * 0.035);
+        this.flowDummy.updateMatrix();
+        this.flowMotes.setMatrixAt(i, this.flowDummy.matrix);
+      }
+      this.flowMotes.instanceMatrix.needsUpdate = true;
+    } else {
+      this.flowMotes.count = 0;
+      this.flowMotes.visible = false;
+    }
   }
   dispose() {
     this.debris.dispose();
     this.reachGeometry.dispose();
     this.reachMaterial.dispose();
+    this.flowMotes.dispose();
+    this.flowMaterial.dispose();
     this.geometry.dispose();
     this.material.dispose();
     this.ripple.geometry.dispose();

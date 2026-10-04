@@ -120,6 +120,13 @@ try {
     () => document.querySelector("#drink-note").textContent,
   );
   assert.match(report.drinkNote, /Drink tracks in \d+ places?/);
+  report.drinkMarkers = await p.evaluate(
+    () => document.querySelectorAll("[data-map-drink]").length,
+  );
+  assert.ok(
+    report.drinkMarkers > 0,
+    "observed drinking must become visible evidence on the Memory survey",
+  );
   assert.match(
     report.drinkNote,
     /nearest \d+ m [NSEW]{1,2}\./,

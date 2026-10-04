@@ -135,6 +135,8 @@ try {
     waterQuality: document.querySelector("#water-quality-note").textContent,
     landmarkMarkers: document.querySelectorAll("[data-map-landmark]").length,
     reachTraces: document.querySelectorAll("[data-map-reach]").length,
+    reachMouths: document.querySelectorAll("[data-map-mouth]").length,
+    drinkMarkers: document.querySelectorAll("[data-map-drink]").length,
     rememberedPlaces: window.__SF.state.memory.places.length,
   }));
   assert.equal(evidence.memoryInstrument.playerMarker, true);
@@ -149,6 +151,17 @@ try {
     evidence.memoryInstrument.rememberedPlaces,
     "survey landmark markers must reveal remembered places only",
   );
+  assert.equal(
+    evidence.memoryInstrument.reachMouths,
+    2,
+    "every followed waterway must expose one downstream mouth marker",
+  );
+  assert.equal(
+    evidence.memoryInstrument.drinkMarkers,
+    0,
+    "the survey must not invent drinking sites before any are observed",
+  );
+  assert.match(evidence.memoryInstrument.mapLabel, /revisit intensity/);
   assert.match(evidence.memoryInstrument.mapLabel, /facing/);
   assert.match(
     evidence.memoryInstrument.waterQuality,

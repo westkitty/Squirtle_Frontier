@@ -524,20 +524,28 @@ export class HabitatView {
         this.preyLegs.setColorAt(i * 2, color);
         this.preyLegs.setColorAt(i * 2 + 1, color);
         const hop =
-          a.mode === "forage" || drinking
-            ? 0
-            : Math.abs(
-                Math.sin(time * (a.mode === "parched" ? 6 : 12) + a.phase),
-              ) * (a.mode === "parched" ? 0.03 : 0.08);
+            a.mode === "forage" || drinking
+              ? 0
+              : Math.abs(
+                  Math.sin(time * (a.mode === "parched" ? 6 : 12) + a.phase),
+                ) * (a.mode === "parched" ? 0.03 : 0.08),
+          alert =
+            a.mode === "evade" || a.mode === "flee"
+              ? 1
+              : a.mode === "parched"
+                ? 0.5
+                : a.mode === "seek-water"
+                  ? 0.2
+                  : 0;
         part(
           this.animals,
           i,
           a,
           0,
-          0.1 + hop - (drinking ? 0.025 : 0),
+          0.1 + hop + alert * 0.025 - (drinking ? 0.025 : 0),
           0,
           0.16,
-          0.1,
+          0.1 + alert * 0.018,
           0.23,
         );
         part(
@@ -545,8 +553,8 @@ export class HabitatView {
           i,
           a,
           drinking ? 0.05 : 0,
-          0.18 + hop - (drinking ? 0.075 : 0),
-          0.17 + (drinking ? 0.06 : 0),
+          0.18 + hop + alert * 0.065 - (drinking ? 0.075 : 0),
+          0.17 + (drinking ? 0.06 : 0) + alert * 0.025,
           0.14,
           0.09,
           0.12,
@@ -566,23 +574,47 @@ export class HabitatView {
       });
       predators.forEach((a, i) => {
         const color =
-          this.predatorColors[a.mode] || this.predatorColors.watch;
+            this.predatorColors[a.mode] || this.predatorColors.watch,
+          crouch =
+            a.mode === "ambush" ? 1 : a.mode === "stalk" ? 0.45 : 0;
         this.predators.setColorAt(i, color);
         this.predatorHeads.setColorAt(i, color);
         for (let j = 0; j < 4; j++)
           this.predatorLegs.setColorAt(i * 4 + j, color);
-        part(this.predators, i, a, 0, 0.38, 0, 0.23, 0.2, 0.48);
-        part(this.predatorHeads, i, a, 0, 0.48, 0.4, 0.17, 0.15, 0.22);
+        part(
+          this.predators,
+          i,
+          a,
+          0,
+          0.38 - crouch * 0.11,
+          0,
+          0.23,
+          0.2 - crouch * 0.025,
+          0.48 + crouch * 0.035,
+        );
+        part(
+          this.predatorHeads,
+          i,
+          a,
+          0,
+          0.48 - crouch * 0.1,
+          0.4 + crouch * 0.075,
+          0.17,
+          0.15 - crouch * 0.012,
+          0.22,
+        );
         for (let j = 0; j < 4; j++)
           part(
             this.predatorLegs,
             i * 4 + j,
             a,
             j % 2 ? 0.16 : -0.16,
-            0.15 + (a.mode === "stalk" ? Math.sin(time * 9 + j) * 0.025 : 0),
+            0.15 -
+              crouch * 0.075 +
+              (a.mode === "stalk" ? Math.sin(time * 9 + j) * 0.025 : 0),
             j < 2 ? 0.27 : -0.27,
             0.065,
-            0.3,
+            0.3 - crouch * 0.04,
             0.07,
           );
       });

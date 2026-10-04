@@ -111,6 +111,41 @@ export class WorldEffects {
     this.wetlandMist.visible = false;
     this.group.add(this.wetlandMist);
 
+    this.rainRippleMat = new THREE.MeshBasicMaterial({
+      color: 0xc8edf4,
+      transparent: true,
+      opacity: 0.38,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    this.rainRipples = new THREE.InstancedMesh(
+      this.geo,
+      this.rainRippleMat,
+      18,
+    );
+    this.rainRipples.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.rainRipples.frustumCulled = false;
+    this.rainRipples.count = 0;
+    this.rainRipples.visible = false;
+    this.group.add(this.rainRipples);
+
+    this.underwaterMat = new THREE.MeshBasicMaterial({
+      color: 0xb8d0c7,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    });
+    this.underwaterMotes = new THREE.InstancedMesh(
+      this.geo,
+      this.underwaterMat,
+      32,
+    );
+    this.underwaterMotes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.underwaterMotes.frustumCulled = false;
+    this.underwaterMotes.count = 0;
+    this.underwaterMotes.visible = false;
+    this.group.add(this.underwaterMotes);
+
     this.route = traceChannel();
     this.channelGeo = new THREE.BufferGeometry();
     this.channelGeo.setAttribute(
@@ -293,6 +328,90 @@ export class WorldEffects {
       this.wake.visible = false;
     }
 
+    // Rain should meet the water instead of disappearing at the surface. These
+    // presentation ripples reuse the shared effect geometry and never alter hydrology.
+    const rainStrength = THREE.MathUtils.clamp(
+      Number(state.frontier.weather.rain) || 0,
+      0,
+      1,
+    );
+    if (water && rainStrength > 0.08) {
+      this.rainRipples.visible = true;
+      this.rainRipples.count = Math.max(
+        3,
+        Math.round(18 * rainStrength * effectScale),
+      );
+      this.rainRippleMat.opacity = 0.18 + rainStrength * 0.3;
+      for (let i = 0; i < this.rainRipples.count; i++) {
+        const phase =
+            (((state.elapsed * 1.9 + i * 0.173) % 1) + 1) % 1,
+          angle = i * 2.39996,
+          radius = 0.5 + (i % 6) * 0.62,
+          x = body.x + Math.cos(angle) * radius,
+          z = body.z + Math.sin(angle) * radius,
+          size = 0.05 + phase * 0.16;
+        this.dummy.position.set(x, water.level + 0.018, z);
+        this.dummy.rotation.set(-Math.PI / 2, 0, angle);
+        this.dummy.scale.set(size, 0.006, size);
+        this.dummy.updateMatrix();
+        this.rainRipples.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.rainRipples.instanceMatrix.needsUpdate = true;
+    } else {
+      this.rainRipples.count = 0;
+      this.rainRipples.visible = false;
+    }
+
+    // Diving reveals suspended material already represented by the watershed.
+    const wetland = state.watershed?.nodes?.[2] || {},
+      sediment = THREE.MathUtils.clamp(Number(wetland.sediment) || 0, 0, 1),
+      contamination = THREE.MathUtils.clamp(
+        Number(wetland.contamination) || 0,
+        0,
+        1,
+      ),
+      particulate = THREE.MathUtils.clamp(
+        0.22 + sediment * 0.58 + contamination * 0.35,
+        0.18,
+        1,
+      );
+    if (water && body.mode === "dive") {
+      this.underwaterMotes.visible = true;
+      this.underwaterMotes.count = Math.max(
+        5,
+        Math.round(32 * particulate * effectScale),
+      );
+      this.underwaterMat.opacity = 0.08 + particulate * 0.22;
+      this.underwaterMat.color.setHSL(
+        0.45 - sediment * 0.08,
+        0.18 + contamination * 0.08,
+        0.7 - sediment * 0.18,
+      );
+      for (let i = 0; i < this.underwaterMotes.count; i++) {
+        const angle = i * 2.39996 + state.elapsed * 0.08,
+          radius = 0.45 + (i % 8) * 0.42,
+          drift = Math.sin(state.elapsed * 0.35 + i * 1.31) * 0.22,
+          y = Math.min(
+            water.level - 0.08,
+            body.y - 0.65 + ((i * 0.41 + state.elapsed * 0.07) % 1) * 1.7,
+          ),
+          size = 0.014 + (i % 4) * 0.005;
+        this.dummy.position.set(
+          body.x + Math.cos(angle) * (radius + drift),
+          y,
+          body.z + Math.sin(angle) * (radius + drift),
+        );
+        this.dummy.rotation.set(0, angle, 0);
+        this.dummy.scale.set(size, size * 1.6, size);
+        this.dummy.updateMatrix();
+        this.underwaterMotes.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.underwaterMotes.instanceMatrix.needsUpdate = true;
+    } else {
+      this.underwaterMotes.count = 0;
+      this.underwaterMotes.visible = false;
+    }
+
     // 3. Splash / water-exit shake droplets: radial scatter during shake or water impact
     const isShaking = options?.isShaking ?? false;
     const splashActive = isShaking || (inWater && body.impact > 0.06);
@@ -446,6 +565,8 @@ export class WorldEffects {
       smoke: this.fireSmoke.count,
       dust: this.slideDust.count,
       mist: this.wetlandMist.count,
+      rainRipples: this.rainRipples.count,
+      underwaterMotes: this.underwaterMotes.count,
       jet: this.jet.count,
       wake: this.wake.count,
       splash: this.splash.count,
@@ -468,6 +589,10 @@ export class WorldEffects {
     this.foamMat.dispose();
     this.wetlandMist.dispose();
     this.mistMat.dispose();
+    this.rainRipples.dispose();
+    this.rainRippleMat.dispose();
+    this.underwaterMotes.dispose();
+    this.underwaterMat.dispose();
 
     this.rain.dispose();
     this.rainMat.dispose();

@@ -269,3 +269,42 @@ test("camera accepts rate-based controller look and widens for fast travel and W
     });
   assert.ok(rig.camera.fov >= 58, "Water Jet should read as a stronger speed event");
 });
+
+
+test("aquatic camera banks with turns and looks along vertical travel while reduced motion stays quiet", () => {
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    flat,
+  );
+  const body = createBody(0, 0, 0);
+  const settings = {
+    sensitivity: 1,
+    invertY: false,
+    reducedMotion: false,
+  };
+  body.mode = "swim";
+  body.vx = 2.4;
+  body.vz = 0;
+  body.yaw = 0;
+  body.vy = 0;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+
+  body.yaw = 0.45;
+  body.vy = -2.5;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.ok(Math.abs(rig.roll) > 0.005, "turning swim must bank the camera");
+  assert.ok(rig.verticalLead < 0, "descending must lower the camera target");
+
+  body.yaw = 0.8;
+  body.vy = 2.5;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.ok(rig.verticalLead > 0, "ascending must raise the camera target");
+
+  body.yaw = 1.1;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, {
+    ...settings,
+    reducedMotion: true,
+  });
+  assert.equal(rig.roll, 0);
+  assert.equal(rig.verticalLead, 0);
+});

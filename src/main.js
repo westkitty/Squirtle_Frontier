@@ -67,8 +67,10 @@ import {
   worldTransition,
 } from "./presentation-signals.js";
 import {
+  drinkTrackMarkers,
   followedReachTraces,
   rememberedLandmarkMarkers,
+  surveyedCells,
 } from "./map-overlay.js";
 const status = document.querySelector("#status"),
   loading = document.querySelector("#loading"),
@@ -401,17 +403,25 @@ async function boot() {
         : "No familiar visitor yet. Life needs water and time.";
       const survey = document.querySelector("#survey"),
         svg = "http://www.w3.org/2000/svg",
-        cells = Object.keys(state.memory.cells).map((key) => {
-          const [x, z] = key.split(",").map(Number),
-            r = document.createElementNS(svg, "rect");
-          r.setAttribute("x", String((x + 14) * 5));
-          r.setAttribute("y", String((z + 14) * 5));
+        cells = surveyedCells(state.memory).map((cell) => {
+          const r = document.createElementNS(svg, "rect"),
+            title = document.createElementNS(svg, "title");
+          r.setAttribute("x", String(cell.x));
+          r.setAttribute("y", String(cell.y));
           r.setAttribute("width", "5");
           r.setAttribute("height", "5");
           r.setAttribute("fill", "#96bbaa");
+          r.setAttribute("fill-opacity", String(cell.opacity));
+          r.setAttribute("data-map-cell", cell.key);
+          title.textContent =
+            cell.visits === 1
+              ? "Observed once"
+              : `Observed ${cell.visits} times`;
+          r.append(title);
           return r;
         }),
-        reachTraces = followedReachTraces(state.memory).map((trace) => {
+        reachData = followedReachTraces(state.memory),
+        reachTraces = reachData.map((trace) => {
           const line = document.createElementNS(svg, "polyline");
           line.setAttribute(
             "points",
@@ -425,6 +435,43 @@ async function boot() {
           line.setAttribute("opacity", "0.82");
           line.setAttribute("data-map-reach", trace.id);
           return line;
+        }),
+        reachMouths = reachData.map((trace) => {
+          const diamond = document.createElementNS(svg, "rect"),
+            title = document.createElementNS(svg, "title");
+          diamond.setAttribute("x", String(trace.mouth.x - 1.5));
+          diamond.setAttribute("y", String(trace.mouth.y - 1.5));
+          diamond.setAttribute("width", "3");
+          diamond.setAttribute("height", "3");
+          diamond.setAttribute(
+            "transform",
+            `rotate(45 ${trace.mouth.x} ${trace.mouth.y})`,
+          );
+          diamond.setAttribute("fill", "#8dd7f0");
+          diamond.setAttribute("stroke", "#193c35");
+          diamond.setAttribute("stroke-width", "0.7");
+          diamond.setAttribute("data-map-mouth", trace.id);
+          title.textContent = `${trace.name} downstream mouth`;
+          diamond.append(title);
+          return diamond;
+        }),
+        drinkMarkers = drinkTrackMarkers(state.memory).map((marker) => {
+          const dot = document.createElementNS(svg, "circle"),
+            title = document.createElementNS(svg, "title");
+          dot.setAttribute("cx", String(marker.x));
+          dot.setAttribute("cy", String(marker.y));
+          dot.setAttribute("r", String(marker.radius));
+          dot.setAttribute("fill", "#d7e0a3");
+          dot.setAttribute("fill-opacity", String(marker.opacity));
+          dot.setAttribute("stroke", "#193c35");
+          dot.setAttribute("stroke-width", "0.65");
+          dot.setAttribute("data-map-drink", marker.key);
+          title.textContent =
+            marker.observations === 1
+              ? "One observed drink"
+              : `${marker.observations} observed drinks`;
+          dot.append(title);
+          return dot;
         }),
         landmarkMarkers = rememberedLandmarkMarkers(state.memory).map(
           (marker) => {
@@ -459,6 +506,8 @@ async function boot() {
       const mapChildren = [
           ...cells,
           ...reachTraces,
+          ...reachMouths,
+          ...drinkMarkers,
           ...landmarkMarkers,
           player,
         ],
@@ -479,8 +528,8 @@ async function boot() {
       survey.setAttribute(
         "aria-label",
         state.place === "frontier"
-          ? `Visited five-metre survey cells with ${landmarkMarkers.length} remembered places and ${reachTraces.length} followed waterways. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
-          : `Visited five-metre survey cells with ${landmarkMarkers.length} remembered places and ${reachTraces.length} followed waterways. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
+          ? `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places, ${reachTraces.length} followed waterways and ${drinkMarkers.length} observed drinking sites. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
+          : `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places, ${reachTraces.length} followed waterways and ${drinkMarkers.length} observed drinking sites. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
       );
     };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
@@ -1345,6 +1394,9 @@ async function boot() {
           wake: effects?.wake?.count ?? 0,
           splash: effects?.splash?.count ?? 0,
           foam: effects?.streamFoam?.count ?? 0,
+          rainRipples: effects?.rainRipples?.count ?? 0,
+          underwaterMotes: effects?.underwaterMotes?.count ?? 0,
+          senseMotes: watershedView?.flowMotes?.count ?? 0,
         },
       }),
     };

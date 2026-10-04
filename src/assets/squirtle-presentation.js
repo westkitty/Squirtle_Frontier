@@ -22,6 +22,8 @@ export class SquirtlePresentation extends PlayableCreature {
     this.wasAquatic = false;
     this.shell = 0;
     this.shellSpin = 0;
+    this.lastBodyYaw = null;
+    this.motionBank = 0;
     this.lookYaw = 0;
     this.lookPitch = 0;
     this.attentionTime = 0;
@@ -98,6 +100,25 @@ export class SquirtlePresentation extends PlayableCreature {
     const speed = Math.hypot(b.vx, b.vz);
     const isMoving = speed > 0.08;
     const inShell = b.mode === "slide";
+    const yawDelta =
+        this.lastBodyYaw === null
+          ? 0
+          : Math.atan2(
+              Math.sin(b.yaw - this.lastBodyYaw),
+              Math.cos(b.yaw - this.lastBodyYaw),
+            ),
+      turnRate = yawDelta / Math.max(dt, 1 / 240),
+      bankTarget =
+        (aquatic || inShell) && speed > 0.25
+          ? THREE.MathUtils.clamp(-turnRate * 0.035, -0.24, 0.24)
+          : 0;
+    this.lastBodyYaw = b.yaw;
+    this.motionBank = THREE.MathUtils.damp(
+      this.motionBank,
+      bankTarget,
+      9,
+      dt,
+    );
 
     // Water exit detection: stepping out of water triggers a brief water-shedding shake
     if (this.wasAquatic && !aquatic && b.grounded) {
@@ -361,13 +382,14 @@ export class SquirtlePresentation extends PlayableCreature {
       if (bone) bone.node.scale.multiplyScalar(shellRetract);
     }
 
-    const targetTilt = inShell
-      ? Math.PI / 2
-      : aquatic
-        ? b.mode === "dive"
-          ? 0.95
-          : 0.82
-        : 0;
+    const verticalPitch = aquatic
+        ? THREE.MathUtils.clamp(-b.vy * 0.04, -0.14, 0.14)
+        : 0,
+      targetTilt = inShell
+        ? Math.PI / 2
+        : aquatic
+          ? (b.mode === "dive" ? 0.95 : 0.82) + verticalPitch
+          : 0;
     this.visual.rotation.x = THREE.MathUtils.damp(
       this.visual.rotation.x,
       targetTilt,
@@ -400,9 +422,10 @@ export class SquirtlePresentation extends PlayableCreature {
       dt,
     );
 
-    // Tactile impact wobble in shell
-    this.visual.rotation.z =
+    // Turn-bank is continuous body language; impact wobble is a transient shell event.
+    const impactWobble =
       inShell && b.impact > 0 ? Math.sin(b.impact * 40) * 0.18 : 0;
+    this.visual.rotation.z = this.motionBank + impactWobble;
 
     this.visual.position.y = inShell
       ? 0.21

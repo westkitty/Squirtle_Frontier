@@ -100,3 +100,70 @@ test("wildlife presentation exposes behavioral state through per-instance color"
   assert.equal(color.getHex(), view.predatorColors.ambush.getHex());
   view.dispose();
 });
+
+
+test("wildlife posture exposes alarm and ambush states, not only color", () => {
+  const parent = new THREE.Group(),
+    view = new HabitatView(parent),
+    body = createBody(-6, -15, 0),
+    preyHeadForage = new THREE.Matrix4(),
+    preyHeadAlarm = new THREE.Matrix4(),
+    predatorWatch = new THREE.Matrix4(),
+    predatorAmbush = new THREE.Matrix4();
+
+  const prey = {
+      kind: "prey",
+      slot: 0,
+      x: -6,
+      z: -15,
+      yaw: 0,
+      mode: "forage",
+      phase: 0,
+    },
+    predator = {
+      kind: "predator",
+      slot: 0,
+      x: -3,
+      z: -15,
+      yaw: 0,
+      mode: "watch",
+      phase: 0,
+    },
+    wildlife = { actors: [prey, predator] };
+
+  view.update(
+    ecosystem(),
+    body,
+    1,
+    null,
+    wildlife,
+    null,
+    1 / 60,
+    { windStrength: 0.2, wetness: 0.5 },
+  );
+  view.preyHeads.getMatrixAt(0, preyHeadForage);
+  view.predators.getMatrixAt(0, predatorWatch);
+
+  prey.mode = "flee";
+  predator.mode = "ambush";
+  view.update(
+    ecosystem(),
+    body,
+    1.2,
+    null,
+    wildlife,
+    null,
+    1 / 60,
+    { windStrength: 0.2, wetness: 0.5 },
+  );
+  view.preyHeads.getMatrixAt(0, preyHeadAlarm);
+  view.predators.getMatrixAt(0, predatorAmbush);
+
+  const forageY = new THREE.Vector3().setFromMatrixPosition(preyHeadForage).y,
+    alarmY = new THREE.Vector3().setFromMatrixPosition(preyHeadAlarm).y,
+    watchY = new THREE.Vector3().setFromMatrixPosition(predatorWatch).y,
+    ambushY = new THREE.Vector3().setFromMatrixPosition(predatorAmbush).y;
+  assert.ok(alarmY > forageY + 0.04, "fleeing prey must lift its head/body posture");
+  assert.ok(ambushY < watchY - 0.06, "ambushing predators must crouch visibly");
+  view.dispose();
+});

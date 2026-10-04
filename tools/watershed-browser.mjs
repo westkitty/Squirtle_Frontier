@@ -96,8 +96,11 @@ try {
       if (text.includes("You are on the")) break;
       await page.waitForTimeout(120);
     }
+    const motes = await page.evaluate(
+      () => window.__SF.stats().effects.senseMotes,
+    );
     await page.keyboard.up("KeyF");
-    return text;
+    return { text, motes };
   };
 
   // Setup teleport onto the route; the water itself is only moved by the jet below.
@@ -109,9 +112,16 @@ try {
     evidence.levelUntouched <= WATER_BASE + 1e-9,
     "an untouched basin has to sit exactly on the line it used to",
   );
-  evidence.senseBeforeFlood = await sense();
+  const drySense = await sense();
+  evidence.senseBeforeFlood = drySense.text;
+  evidence.senseMotesBeforeFlood = drySense.motes;
+  assert.equal(
+    drySense.motes,
+    0,
+    "Current Sense must not manufacture downstream motion on a dry reach",
+  );
   assert.match(
-    evidence.senseBeforeFlood,
+    drySense.text,
     /You are on the North run, a dry channel/,
     "an inflow with nothing in it must not claim water",
   );
@@ -152,9 +162,15 @@ try {
   );
   evidence.blockageBeforeClear = nudged;
   const before = evidence.levelUntouched;
-  evidence.senseAfterFlood = await sense();
+  const wetSense = await sense();
+  evidence.senseAfterFlood = wetSense.text;
+  evidence.senseMotesAfterFlood = wetSense.motes;
+  assert.ok(
+    wetSense.motes > 0,
+    "Current Sense must carry visible downstream motion once the reach holds water",
+  );
   assert.match(
-    evidence.senseAfterFlood,
+    wetSense.text,
     /You are on the North run, water in patches/,
     "the flooded reach has to say so, in measured rather than authored words",
   );
