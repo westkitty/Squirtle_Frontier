@@ -1346,8 +1346,11 @@ async function boot() {
         visualRain = THREE.MathUtils.lerp(visualRain, targetRain, rainEase);
         const rain = visualRain;
         if (state.place === "frontier") {
-          const wetlandDist = Math.hypot(body.x + 6, body.z + 15),
-            canyonDist = Math.hypot(body.x + 10, body.z - 12);
+          const wetlandDist = Math.hypot(body.x - WETLAND.x, body.z - WETLAND.z),
+            canyonDist = Math.hypot(
+              body.x - DEBRIS_SITE.x,
+              body.z - DEBRIS_SITE.z,
+            );
           regionAtmosphereBias.wetland = THREE.MathUtils.clamp(
             1 - wetlandDist / 30,
             0,

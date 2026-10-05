@@ -306,40 +306,6 @@ export class WorldEffects {
       roughness: 0.7,
       side: THREE.DoubleSide,
     });
-    this.channelUniforms = {
-      time: { value: 0 },
-      stage: { value: 0 },
-    };
-    this.channelMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uChanTime = this.channelUniforms.time;
-      shader.uniforms.uChanStage = this.channelUniforms.stage;
-      shader.vertexShader =
-        "varying vec3 vChanWPos;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vChanWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;`,
-        );
-      shader.fragmentShader =
-        "uniform float uChanTime;\nuniform float uChanStage;\nvarying vec3 vChanWPos;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          if (uChanStage >= 2.0) {
-            float flowTime = uChanTime * 3.2;
-            float streamWave = sin(vChanWPos.x * 2.8 + vChanWPos.z * 2.8 + flowTime) * cos(vChanWPos.x * 1.8 - vChanWPos.z * 1.8 - flowTime * 0.7);
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.28, 0.62, 0.60), 0.55);
-            float glint = pow(max(0.0, streamWave * 0.6 + 0.4), 4.2) * 0.38;
-            diffuseColor.rgb += vec3(glint * 0.85, glint * 0.95, glint);
-            float edgeFoam = pow(max(0.0, sin(vChanWPos.x * 7.5 + flowTime * 1.8) * cos(vChanWPos.z * 7.5 - flowTime * 1.4)), 3.2);
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.98, 1.0), edgeFoam * 0.42);
-          } else {
-            float soilGrain = sin(vChanWPos.x * 18.0) * cos(vChanWPos.z * 18.0) * 0.04;
-            diffuseColor.rgb += vec3(soilGrain * 0.9, soilGrain * 0.8, soilGrain * 0.6);
-          }`,
-        );
-    };
-    this.channelMat.customProgramCacheKey = () => "frontier-channel-water-v1";
     this.channel = new THREE.Mesh(this.channelGeo, this.channelMat);
     this.group.add(this.channel);
     this.channel.frustumCulled = false;
@@ -511,8 +477,6 @@ export class WorldEffects {
     }
     this.channelMat.color.set(state.frontier.stage < 2 ? 0x71664a : 0x428d85);
     this.channelMat.roughness = state.frontier.stage < 2 ? 0.88 : 0.22;
-    this.channelUniforms.time.value = state.elapsed;
-    this.channelUniforms.stage.value = state.frontier.stage;
     if (this.channelStage !== state.frontier.stage)
       this.rebuildChannel(state.frontier.stage);
 

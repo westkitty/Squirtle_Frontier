@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Audio } from "../src/audio.js";
 import { createBody } from "../src/player/body-state.js";
+import { DEBRIS_SITE } from "../src/simulation/water-interaction.js";
 
 function setupMockAudioContext() {
   const nodes = [];
@@ -508,9 +509,9 @@ test("regional biome environmental ambience adapts frequency by location and muf
     "wetland reeds must shift ambient sound to brighter reed rustle",
   );
 
-  // Move near rocky landslide gorge (x: 6, z: -4)
-  b.x = 6;
-  b.z = -4;
+  // Move near the canonical rocky landslide gorge.
+  b.x = DEBRIS_SITE.x;
+  b.z = DEBRIS_SITE.z;
   audio.update(b, { muted: false, volume: 1 }, { place: "frontier" });
   assert.ok(
     audio.ambientFilter.frequency.value < openFreq,

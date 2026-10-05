@@ -1,7 +1,8 @@
 import { BYPASS_SITE, fireSite } from "./frontier-systems.js";
 import { heightAt } from "../worldgen.js";
+import { DEBRIS_SITE } from "./regional-sites.js";
 // Body-space interaction rules shared by gameplay and tests; no imported mesh names.
-export const DEBRIS_SITE = Object.freeze({ x: -6, z: 12 });
+export { DEBRIS_SITE };
 export function applyWaterJet(watershed, body, dt) {
   const dx = DEBRIS_SITE.x - body.x,
     dz = DEBRIS_SITE.z - body.z;

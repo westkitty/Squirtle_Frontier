@@ -1,8 +1,13 @@
 import * as THREE from "three";
 import { heightAt } from "../worldgen.js";
-export const LAB_ENTRY = Object.freeze({ x: -11, z: 5 });
-export const SETTLEMENT = Object.freeze({ x: -15, z: -12 });
-export const WETLAND = Object.freeze({ x: -6, z: -15 });
+import {
+  LAB_ENTRY_SITE,
+  SETTLEMENT_SITE,
+  WETLAND_SITE,
+} from "../simulation/regional-sites.js";
+export const LAB_ENTRY = LAB_ENTRY_SITE;
+export const SETTLEMENT = SETTLEMENT_SITE;
+export const WETLAND = WETLAND_SITE;
 export const labHeight = (x, z) => {
   const d = Math.hypot(x, z);
   return d < 2.5 ? -1.4 : d < 3.4 ? -1.4 + ((d - 2.5) / 0.9) * 1.4 : 0;
@@ -53,55 +58,10 @@ export class HabitatView {
     this.stone = this.own(
       new THREE.MeshStandardMaterial({ color: 0x82968e, roughness: 0.96 }),
     );
-    this.stone.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vStoneWPos;\nvarying vec3 vStoneNorm;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vStoneWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
-          vStoneNorm = normalize(mat3(modelMatrix) * normal);`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vStoneWPos;\nvarying vec3 vStoneNorm;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float grain = (sin(vStoneWPos.x * 12.0) * cos(vStoneWPos.z * 12.0) + sin(vStoneWPos.y * 14.0)) * 0.03;
-          float chiseled = sin(vStoneWPos.x * 24.0) * cos(vStoneWPos.z * 24.0) * 0.025;
-          diffuseColor.rgb += vec3(grain * 0.8 + chiseled, grain + chiseled * 1.1, grain * 0.9 + chiseled * 0.8);
-          float mossCrevice = smoothstep(0.4, -0.2, vStoneWPos.y) * 0.35;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.35, 0.44, 0.34), mossCrevice);
-          float lichen = step(0.78, sin(vStoneWPos.x * 32.0 + vStoneWPos.z * 24.0) * sin(vStoneWPos.y * 28.0)) * 0.18;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.58, 0.38), lichen);`,
-        );
-    };
-    this.stone.customProgramCacheKey = () => "frontier-stone-patina-v2";
 
     this.wood = this.own(
       new THREE.MeshStandardMaterial({ color: 0x776047, roughness: 0.92 }),
     );
-    this.wood.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vWoodPos;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vWoodPos = position;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vWoodPos;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float grain = sin(vWoodPos.y * 42.0 + sin(vWoodPos.x * 20.0) * 2.0) * 0.045;
-          float planks = sin(vWoodPos.z * 16.0) * 0.025;
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.15, 1.1, 0.95), grain + planks);
-          float weather = smoothstep(0.3, -0.4, vWoodPos.y) * 0.12;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.38, 0.32, 0.26), weather);`,
-        );
-    };
-    this.wood.customProgramCacheKey = () => "frontier-wood-timber-v2";
 
     this.green = this.own(
       new THREE.MeshStandardMaterial({ color: 0x547f40, roughness: 0.95 }),
@@ -137,26 +97,6 @@ export class HabitatView {
         roughness: 0.28,
       }),
     );
-    this.waterMat.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vHWaterPos;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vHWaterPos = position;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vHWaterPos;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float ripple = sin(vHWaterPos.x * 14.0 + vHWaterPos.z * 14.0) * cos(vHWaterPos.x * 10.0 - vHWaterPos.z * 10.0) * 0.04;
-          diffuseColor.rgb += vec3(ripple * 0.7, ripple * 0.9, ripple * 1.1);
-          float glint = pow(max(0.0, ripple * 12.0 + 0.2), 3.5) * 0.25;
-          diffuseColor.rgb += vec3(glint * 0.85, glint * 0.95, glint);`,
-        );
-    };
-    this.waterMat.customProgramCacheKey = () => "frontier-habitat-water-v2";
     // Warm umber against pale bank and green reeds: the herd has to read as
     // animals first and vegetation never.
     this.animalMat = this.own(
@@ -325,26 +265,6 @@ export class HabitatView {
     this.careTunic = this.own(
       new THREE.MeshStandardMaterial({ color: 0xd9c9a3, roughness: 1 }),
     );
-    this.careTunic.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vCarePos;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vCarePos = position;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vCarePos;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float weave = sin(vCarePos.y * 64.0) * sin(vCarePos.x * 64.0) * 0.035;
-          diffuseColor.rgb += vec3(weave);
-          float trim = smoothstep(0.48, 0.52, abs(vCarePos.y)) * 0.12;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.45, 0.38, 0.28), trim);`,
-        );
-    };
-    this.careTunic.customProgramCacheKey = () => "frontier-caretaker-tunic-v1";
     this.mesh(
       this.cylinder,
       this.careTunic,

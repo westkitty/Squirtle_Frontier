@@ -6,23 +6,11 @@
       "textures": 6
     },
     {
+      "geometries": 21,
+      "textures": 6
+    },
+    {
       "geometries": 18,
-      "textures": 6
-    },
-    {
-      "geometries": 18,
-      "textures": 6
-    },
-    {
-      "geometries": 21,
-      "textures": 6
-    },
-    {
-      "geometries": 21,
-      "textures": 6
-    },
-    {
-      "geometries": 21,
       "textures": 6
     },
     {
@@ -38,7 +26,7 @@
       "textures": 6
     },
     {
-      "geometries": 21,
+      "geometries": 18,
       "textures": 6
     },
     {
@@ -47,13 +35,25 @@
     },
     {
       "geometries": 18,
+      "textures": 6
+    },
+    {
+      "geometries": 21,
+      "textures": 6
+    },
+    {
+      "geometries": 18,
+      "textures": 6
+    },
+    {
+      "geometries": 21,
       "textures": 6
     }
   ],
   "bypass": 0.1,
   "suppression": {
-    "heat": 0.7999999999999999,
-    "soaked": 0.06666666666666667
+    "heat": 0.7861249999999999,
+    "soaked": 0.08208333333333333
   },
   "senseAtSpring": "Touch the water to listen to its current. You are on the Spring gully, a dry channel; 27 m to the shallows, 3.2 m above the water.",
   "senseAtGroove": "Touch the water to listen to its current. You are on the Drainage groove, carrying water; 3 m to the shallows, 0.8 m above the water.",
@@ -70,7 +70,7 @@
     "drinkMarkers": 0,
     "rememberedPlaces": 2
   },
-  "waterNote": "Water followed: Drainage groove (3 m) · Spring gully (27 m). 2 of 6 reaches, 1 holding water.",
+  "waterNote": "Water followed: Spring gully (27 m) · Drainage groove (3 m). 2 of 6 reaches, 1 holding water.",
   "reachGeometry": {
     "geometries": 23,
     "followed": 2
@@ -98,11 +98,11 @@
     },
     {
       "label": "basin clock",
-      "value": "10 ticks · ledger empty"
+      "value": "9 ticks · ledger empty"
     },
     {
       "label": "water moved",
-      "value": "0.9 units of wear · 0.01 of sediment in the shallows"
+      "value": "0.8 units of wear · 0.01 of sediment in the shallows"
     },
     {
       "label": "your cut",
@@ -122,7 +122,7 @@
       7
     ],
     "band": 8,
-    "y": -21.45
+    "y": -21.41
   },
   "strataNote": "The record is read in 1 of 8 bands, down to band 8.",
   "teardown": {
@@ -137,9 +137,9 @@
       "textures": 0
     },
     "render": {
-      "frame": 687,
-      "calls": 5,
-      "triangles": 4844,
+      "frame": 836,
+      "calls": 11,
+      "triangles": 9488,
       "points": 0,
       "lines": 0
     },
@@ -151,23 +151,23 @@
     },
     "mode": "land",
     "attention": {
-      "id": "record-column",
-      "type": "record",
+      "id": "lab-basin",
+      "type": "water",
       "x": 0,
-      "y": -0.2848471838383851,
+      "y": -0.2,
       "z": 0,
       "priority": 5,
-      "distance": 0
+      "distance": 5
     },
     "gaze": {
-      "yaw": -0.4205297961704103,
-      "pitch": -0.2403602693081824
+      "yaw": -0.3650928900785959,
+      "pitch": -0.22233528278287684
     },
     "sleeping": false,
     "sleepProgress": 0,
     "performance": {
       "scenery": {
-        "canopyScans": 31,
+        "canopyScans": 30,
         "wetMarks": 0
       },
       "habitat": {

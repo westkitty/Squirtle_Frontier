@@ -19,28 +19,6 @@ export class MovementScenery {
       color: 0x523f31,
       roughness: 0.96,
     });
-    this.trunkMat.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vTrunkPos;\nvarying vec3 vTrunkNorm;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vTrunkPos = position;
-          vTrunkNorm = normal;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vTrunkPos;\nvarying vec3 vTrunkNorm;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float bark = sin(vTrunkPos.y * 24.0 + atan(vTrunkNorm.x, vTrunkNorm.z) * 5.0) * 0.035;
-          diffuseColor.rgb += vec3(bark * 0.8, bark * 0.6, bark * 0.4);
-          float mossBase = smoothstep(0.1, -0.45, vTrunkPos.y);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.24, 0.34, 0.18), mossBase * 0.55);`,
-        );
-    };
-    this.trunkMat.customProgramCacheKey = () => "frontier-trunk-v1";
-
     this.leafMat = new THREE.MeshStandardMaterial({
       color: 0x315d42,
       roughness: 0.92,
@@ -57,7 +35,7 @@ export class MovementScenery {
       shader.uniforms.uLeafPlayer = this.leafUniforms.player;
       shader.uniforms.uLeafBrush = this.leafUniforms.brush;
       shader.vertexShader =
-        "uniform float uLeafTime;\nuniform float uLeafWind;\nuniform vec2 uLeafPlayer;\nuniform float uLeafBrush;\nvarying vec3 vLeafPos;\nvarying vec3 vLeafNorm;\n" +
+        "uniform float uLeafTime;\nuniform float uLeafWind;\nuniform vec2 uLeafPlayer;\nuniform float uLeafBrush;\n" +
         shader.vertexShader.replace(
           "#include <begin_vertex>",
           `#include <begin_vertex>
@@ -75,19 +53,7 @@ export class MovementScenery {
           vec2 leafAway = leafDist > 0.001 ? leafDelta / leafDist : vec2(1.0, 0.0);
           float leafBrush = (1.0 - smoothstep(0.0, 1.8, leafDist)) * uLeafBrush;
           transformed.x += leafAway.x * leafBrush * 0.12 * max(0.2, position.y);
-          transformed.z += leafAway.y * leafBrush * 0.12 * max(0.2, position.y);
-          vLeafPos = position;
-          vLeafNorm = normal;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vLeafPos;\nvarying vec3 vLeafNorm;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float canopyHeight = clamp(vLeafPos.y + 0.5, 0.0, 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb * vec3(0.78, 0.88, 0.72), diffuseColor.rgb * vec3(1.15, 1.22, 1.05), canopyHeight * 0.55);
-          float backlit = max(0.0, -vLeafNorm.z * 0.4 + vLeafNorm.y * 0.6);
-          diffuseColor.rgb += vec3(0.04, 0.09, 0.03) * backlit;`,
+          transformed.z += leafAway.y * leafBrush * 0.12 * max(0.2, position.y);`,
         );
     };
     this.leafMat.customProgramCacheKey = () => "frontier-leaf-wind-v3";
@@ -97,31 +63,6 @@ export class MovementScenery {
       roughness: 0.94,
       flatShading: true,
     });
-    this.rockMat.onBeforeCompile = (shader) => {
-      shader.vertexShader =
-        "varying vec3 vRockNorm;\nvarying vec3 vRockPos;\n" +
-        shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          vRockNorm = normal;
-          vRockPos = position;`,
-        );
-      shader.fragmentShader =
-        "varying vec3 vRockNorm;\nvarying vec3 vRockPos;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float upMoss = clamp(vRockNorm.y, 0.0, 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.38, 0.48, 0.36), smoothstep(0.35, 0.85, upMoss) * 0.52);
-          float baseContact = smoothstep(0.0, -0.6, vRockPos.y);
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.68, baseContact * 0.45);
-          float crevice = sin(vRockPos.x * 14.0 + vRockPos.z * 12.0) * cos(vRockPos.y * 16.0) * 0.035;
-          diffuseColor.rgb += vec3(crevice * 0.8, crevice * 0.9, crevice * 0.7);
-          float fleck = step(0.85, sin(vRockPos.x * 28.0) * cos(vRockPos.z * 28.0 + vRockPos.y * 24.0)) * 0.06;
-          diffuseColor.rgb += vec3(fleck * 0.7, fleck * 0.8, fleck * 0.85);`,
-        );
-    };
-    this.rockMat.customProgramCacheKey = () => "frontier-rock-moss-v2";
     const previousBuild = streaming.chunks.onChunkBuild,
       previousRemove = streaming.chunks.onChunkRemove;
     streaming.chunks.onChunkBuild = (key, rec, ring) => {
@@ -149,47 +90,16 @@ export class MovementScenery {
       shader.uniforms.uPondTime = this.waterUniforms.time;
       shader.uniforms.uPondRipple = this.waterUniforms.ripple;
       shader.vertexShader =
-        "uniform float uPondTime;\nuniform float uPondRipple;\nvarying vec3 vWP;\nvarying vec3 vWNorm;\n" +
+        "uniform float uPondTime;\nuniform float uPondRipple;\n" +
         shader.vertexShader.replace(
           "#include <begin_vertex>",
           `#include <begin_vertex>
           float pondWave =
             sin(position.x * 0.72 + uPondTime * 1.45) *
             cos(position.z * 0.58 - uPondTime * 1.1);
-          transformed.y += pondWave * 0.018 * uPondRipple;
-          vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;
-          vWNorm = normalize(mat3(modelMatrix) * normal);`,
-        );
-      shader.fragmentShader =
-        "uniform float uPondTime;\nuniform float uPondRipple;\nvarying vec3 vWP;\nvarying vec3 vWNorm;\n" +
-        shader.fragmentShader.replace(
-          "#include <color_fragment>",
-          `#include <color_fragment>
-          float distCenter = length(vWP.xz);
-          float depthFactor = smoothstep(22.0, 4.0, distCenter);
-          vec3 shallowWater = vec3(0.24, 0.58, 0.56);
-          vec3 deepWater = vec3(0.09, 0.24, 0.28);
-          diffuseColor.rgb = mix(shallowWater, deepWater, depthFactor);
-          float w1 = sin(vWP.x * 0.85 + uPondTime * 1.35) * cos(vWP.z * 0.72 - uPondTime * 1.15);
-          float w2 = sin(vWP.x * 1.75 - uPondTime * 1.8 + 1.2) * cos(vWP.z * 1.45 + uPondTime * 1.5 + 2.1);
-          float crest = max(0.0, (w1 + w2 * 0.6) * 0.65);
-          diffuseColor.rgb += vec3(0.08, 0.18, 0.22) * crest * uPondRipple;
-          float glint = pow(crest, 3.8) * 0.42 * uPondRipple;
-          diffuseColor.rgb += vec3(glint * 0.82, glint * 0.94, glint);
-          vec2 cUv = vWP.xz * 1.3 + vec2(sin(uPondTime * 1.1 + vWP.z * 0.5), cos(uPondTime * 0.9 + vWP.x * 0.5)) * 0.18;
-          float c1 = sin(cUv.x * 3.4 + uPondTime * 1.6) * cos(cUv.y * 3.4 - uPondTime * 1.3);
-          float c2 = sin(cUv.x * 5.1 - uPondTime * 1.9 + 1.1) * cos(cUv.y * 5.1 + uPondTime * 1.7 + 2.1);
-          float shallowCaustics = pow(max(0.0, (c1 + c2) * 0.5 + 0.15), 2.2) * (1.0 - depthFactor) * 0.26 * uPondRipple;
-          diffuseColor.rgb += vec3(0.32, 0.62, 0.65) * shallowCaustics;
-          vec3 viewDir = normalize(cameraPosition - vWP);
-          float fresnel = pow(1.0 - max(0.0, dot(vWNorm, viewDir)), 3.8);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.68, 0.86, 0.92), fresnel * 0.36);
-          float edgeNoise = sin(vWP.x * 1.6 + uPondTime * 2.1) * cos(vWP.z * 1.6 - uPondTime * 1.8);
-          float foamEdge = smoothstep(18.0, 24.5, distCenter) * max(0.0, edgeNoise) * 0.35 * uPondRipple;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.98, 0.99), foamEdge);`,
+          transformed.y += pondWave * 0.018 * uPondRipple;`,
         );
     };
-    this.waterMaterial.customProgramCacheKey = () => "frontier-pond-ripple-v4";
     // The mesh owns no geometry until the first measurement, because the geometry *is*
     // the measurement: a silhouette resolved through the predicate the body swims by.
     this.water = new THREE.Mesh(new THREE.BufferGeometry(), this.waterMaterial);

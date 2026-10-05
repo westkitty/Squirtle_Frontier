@@ -2,7 +2,7 @@
   "cycles": [
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -14,7 +14,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -26,7 +26,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -38,7 +38,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -50,7 +50,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -62,7 +62,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -74,7 +74,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -86,7 +86,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -98,7 +98,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -110,7 +110,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -122,7 +122,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -134,7 +134,7 @@
     },
     {
       "memory": {
-        "geometries": 21,
+        "geometries": 22,
         "textures": 6
       },
       "assets": {
@@ -150,21 +150,21 @@
     "place": "lab",
     "labReeds": 0,
     "labFrogs": 0,
-    "basinOpacity": 0.304,
-    "labWater": 0.12
+    "basinOpacity": 0.3034775843070081,
+    "labWater": 0.11883907623779585
   },
   "frontierReedsBefore": 3,
   "blockageCleared": 0,
   "absence": {
-    "wetness": 0.8676930643138767,
-    "labFrogs": 0.7262669385219189,
-    "labWater": 0.9525868898291894
+    "wetness": 0.8573009418435417,
+    "labFrogs": 0.7270423073713824,
+    "labWater": 0.9475844965652651
   },
   "frontierReedsAfter": 46,
   "labAfter": {
     "labReeds": 40,
     "labFrogs": 8,
-    "basinOpacity": 0.6775291826684944
+    "basinOpacity": 0.6753153127293579
   },
   "restSeconds": 300,
   "teardown": {
@@ -179,7 +179,7 @@
       "textures": 0
     },
     "render": {
-      "frame": 149,
+      "frame": 137,
       "calls": 13,
       "triangles": 11312,
       "points": 0,
@@ -198,10 +198,10 @@
       "pitch": 0
     },
     "sleeping": true,
-    "sleepProgress": 0.8775437511680124,
+    "sleepProgress": 0.9232089537576224,
     "performance": {
       "scenery": {
-        "canopyScans": 66,
+        "canopyScans": 67,
         "wetMarks": 0
       },
       "habitat": {
@@ -220,7 +220,7 @@
           "actors": 2,
           "active": 0,
           "traces": 2,
-          "reconcileRuns": 3
+          "reconcileRuns": 4
         },
         "view": {
           "active": 0,
@@ -241,7 +241,7 @@
         "wake": 0,
         "splash": 0,
         "foam": 0,
-        "terrainSamples": 108,
+        "terrainSamples": 107,
         "rainGroundRefreshes": 0,
         "mistGroundRefreshes": 11,
         "foamRebuilds": 1

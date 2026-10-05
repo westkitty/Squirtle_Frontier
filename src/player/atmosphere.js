@@ -31,51 +31,19 @@ export class Atmosphere {
       depthTest: false,
       fog: false,
       vertexShader: `
-        varying vec3 vWorldDir;
         varying float vSkyY;
         void main() {
-          vWorldDir = normalize(position);
-          vSkyY = vWorldDir.y;
+          vSkyY = normalize(position).y;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         uniform vec3 top;
         uniform vec3 horizon;
-        uniform vec3 sunDir;
-        uniform vec3 sunColor;
-        uniform float uTime;
-        uniform float uRain;
-        varying vec3 vWorldDir;
         varying float vSkyY;
-
         void main() {
-          float t = smoothstep(-0.25, 0.75, vSkyY);
-          vec3 skyBase = mix(horizon, top, t);
-
-          // Atmospheric horizon warm haze band
-          float horizonHaze = exp(-max(0.0, vSkyY + 0.12) * 5.0) * (1.0 - uRain * 0.7);
-          skyBase = mix(skyBase, horizon * vec3(1.08, 1.04, 0.95), horizonHaze * 0.45);
-
-          // Procedural drifting cloud wisps across the dome
-          if (vSkyY > 0.05) {
-            float cloudP1 = sin(vWorldDir.x * 3.8 + uTime * 0.035) * cos(vWorldDir.z * 3.8 - uTime * 0.028);
-            float cloudP2 = sin(vWorldDir.x * 7.5 - uTime * 0.05) * cos(vWorldDir.z * 7.5 + uTime * 0.04);
-            float clouds = smoothstep(0.2, 0.72, cloudP1 + cloudP2 * 0.4) * smoothstep(0.05, 0.4, vSkyY) * (1.0 - uRain * 0.75);
-            vec3 cloudTint = mix(vec3(0.92, 0.96, 0.98), vec3(0.58, 0.64, 0.68), uRain);
-            skyBase = mix(skyBase, cloudTint, clouds * 0.32);
-          }
-
-          // Directional solar disk, atmospheric corona & crepuscular rays
-          float sunDot = max(0.0, dot(vWorldDir, sunDir));
-          float sunCorona = pow(sunDot, 14.0) * (1.0 - uRain * 0.75);
-          float sunDisk = smoothstep(0.9982, 0.9996, sunDot) * (1.0 - uRain * 0.92);
-          float rayAngle = atan(vWorldDir.x - sunDir.x, vWorldDir.y - sunDir.y);
-          float rayNoise = sin(rayAngle * 12.0 + uTime * 0.08) * 0.5 + 0.5;
-          float sunRays = pow(sunDot, 6.0) * rayNoise * 0.22 * (1.0 - uRain * 0.85);
-
-          vec3 finalColor = skyBase + sunColor * (sunCorona * 0.42 + sunRays) + vec3(1.0, 0.98, 0.92) * sunDisk * 1.6;
-          gl_FragColor = vec4(finalColor, 1.0);
+          float t = smoothstep(-0.22, 0.72, vSkyY);
+          gl_FragColor = vec4(mix(horizon, top, t), 1.0);
         }
       `,
     });

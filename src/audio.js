@@ -1,3 +1,41 @@
+import {
+  DEBRIS_SITE,
+  LAB_ENTRY_SITE,
+  WETLAND_SITE,
+} from "./simulation/regional-sites.js";
+
+export function regionalAmbienceAt(x, z, place = "frontier", out = null) {
+  const result = out ?? { level: 0, frequency: 0, q: 0 };
+  let level = 0.024;
+  let frequency = 520;
+  let q = 1.0;
+  if (place === "frontier") {
+    const distWetland = Math.hypot(x - WETLAND_SITE.x, z - WETLAND_SITE.z);
+    const distGorge = Math.hypot(x - DEBRIS_SITE.x, z - DEBRIS_SITE.z);
+    const distLab = Math.hypot(x - LAB_ENTRY_SITE.x, z - LAB_ENTRY_SITE.z);
+    if (distWetland < 16) {
+      const factor = 1 - distWetland / 16;
+      frequency = 520 + factor * 900;
+      q = 0.8;
+      level += factor * 0.018;
+    } else if (distGorge < 18) {
+      const factor = 1 - distGorge / 18;
+      frequency = 520 - factor * 240;
+      q = 2.2;
+      level += factor * 0.022;
+    } else if (distLab < 12) {
+      const factor = 1 - distLab / 12;
+      frequency = 520 - factor * 280;
+      q = 1.6;
+      level += factor * 0.015;
+    }
+  }
+  result.level = level;
+  result.frequency = frequency;
+  result.q = q;
+  return result;
+}
+
 // One user-gesture-unlocked graph. No per-effect oscillators/timers accumulate.
 export class Audio {
   constructor() {
@@ -24,6 +62,7 @@ export class Audio {
     this.wildOsc = null;
     this.ambientGain = null;
     this.ambientFilter = null;
+    this.ambientState = { level: 0, frequency: 0, q: 0 };
   }
   get gain() {
     return this.masterGain;
@@ -357,33 +396,15 @@ export class Audio {
     );
 
     // 9. Regional Biome Environmental Ambience
-    let ambientLevel = 0.024;
-    let targetFreq = 520;
-    let targetQ = 1.0;
-    if (contextInfo.place === "frontier") {
-      const px = Number(body.x) || 0,
-        pz = Number(body.z) || 0;
-      const distWetland = Math.hypot(px - (-6), pz - (-15));
-      const distGorge = Math.hypot(px - 6, pz - (-4));
-      const distLab = Math.hypot(px - (-11), pz - 5);
-
-      if (distWetland < 16) {
-        const wFactor = 1 - distWetland / 16;
-        targetFreq = 520 + wFactor * 900;
-        targetQ = 0.8;
-        ambientLevel += wFactor * 0.018;
-      } else if (distGorge < 18) {
-        const gFactor = 1 - distGorge / 18;
-        targetFreq = 520 - gFactor * 240;
-        targetQ = 2.2;
-        ambientLevel += gFactor * 0.022;
-      } else if (distLab < 12) {
-        const lFactor = 1 - distLab / 12;
-        targetFreq = 520 - lFactor * 280;
-        targetQ = 1.6;
-        ambientLevel += lFactor * 0.015;
-      }
-    }
+    const ambience = regionalAmbienceAt(
+      Number(body.x) || 0,
+      Number(body.z) || 0,
+      contextInfo.place,
+      this.ambientState,
+    );
+    let ambientLevel = ambience.level,
+      targetFreq = ambience.frequency,
+      targetQ = ambience.q;
     if (body.mode === "dive") {
       ambientLevel *= (1 - depth * 0.9);
       targetFreq = Math.max(160, targetFreq * 0.4);

@@ -1,6 +1,10 @@
 import { launchBrowser } from "./browser-launch.mjs";
+import { readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+const timingBudget = JSON.parse(
+  readFileSync(new URL("../docs/performance/movement-budget.json", import.meta.url), "utf8"),
+);
 const browser = await launchBrowser();
 const evidence = {
   environment:
@@ -27,17 +31,25 @@ try {
     const measured = await page.evaluate(() => {
       const g = window.__SF,
         s = g.stats(),
-        f = s.frames.slice(10).sort((a, b) => a - b),
+        raw = s.frames.slice(10),
+        summarize = (values) => {
+          const f = values.slice().sort((a, b) => a - b);
+          return {
+            samples: f.length,
+            medianMs: f[Math.floor(f.length * 0.5)],
+            p95Ms: f[Math.floor(f.length * 0.95)],
+            p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+            maxMs: f.at(-1),
+          };
+        },
+        summary = summarize(raw),
         gl = g.renderer.getContext(),
         debug = gl.getExtension("WEBGL_debug_renderer_info");
       return {
-        samples: f.length,
-        medianMs: f[Math.floor(f.length * 0.5)],
-        p95Ms: f[Math.floor(f.length * 0.95)],
-        p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
-        maxMs: f.at(-1),
-        over33Pct: +(f.filter((ms) => ms > 33.4).length * 100 / f.length).toFixed(1),
-        over50Pct: +(f.filter((ms) => ms > 50).length * 100 / f.length).toFixed(1),
+        ...summary,
+        windows: [summarize(raw.slice(0, 50)), summarize(raw.slice(-50))],
+        over33Pct: +(raw.filter((ms) => ms > 33.4).length * 100 / raw.length).toFixed(1),
+        over50Pct: +(raw.filter((ms) => ms > 50).length * 100 / raw.length).toFixed(1),
         memory: s.memory,
         render: s.render,
         performance: s.performance,
@@ -136,15 +148,23 @@ try {
     const m = await page.evaluate(() => {
       const g = window.__SF,
         s = g.stats(),
-        f = s.frames.slice(10).sort((a, b) => a - b);
+        raw = s.frames.slice(10),
+        summarize = (values) => {
+          const f = values.slice().sort((a, b) => a - b);
+          return {
+            samples: f.length,
+            medianMs: f[Math.floor(f.length * 0.5)],
+            p95Ms: f[Math.floor(f.length * 0.95)],
+            p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
+            maxMs: f.at(-1),
+          };
+        },
+        summary = summarize(raw);
       return {
-        samples: f.length,
-        medianMs: f[Math.floor(f.length * 0.5)],
-        p95Ms: f[Math.floor(f.length * 0.95)],
-        p99Ms: f[Math.min(f.length - 1, Math.floor(f.length * 0.99))],
-        maxMs: f.at(-1),
-        over33Pct: +(f.filter((ms) => ms > 33.4).length * 100 / f.length).toFixed(1),
-        over50Pct: +(f.filter((ms) => ms > 50).length * 100 / f.length).toFixed(1),
+        ...summary,
+        windows: [summarize(raw.slice(0, 50)), summarize(raw.slice(-50))],
+        over33Pct: +(raw.filter((ms) => ms > 33.4).length * 100 / raw.length).toFixed(1),
+        over50Pct: +(raw.filter((ms) => ms > 50).length * 100 / raw.length).toFixed(1),
         memory: s.memory,
         render: s.render,
         performance: s.performance,
@@ -248,6 +268,34 @@ try {
     g.squirtleView.releaseAll();
     g.rig.initial = true;
   });
+
+  const timingChecks = [
+    ["high", evidence.scenarios.find((scenario) => scenario.quality === "high"), timingBudget.scenarios.high],
+    ["channelCut", evidence.channelCut, timingBudget.scenarios.channelCut],
+    ["channelDistant", evidence.channelDistant, timingBudget.scenarios.channelDistant],
+    ["squirtles", evidence.squirtles, timingBudget.scenarios.squirtles],
+  ];
+  evidence.timingGate = {};
+  for (const [label, measured, baseline] of timingChecks) {
+    const limits = {
+      medianMs: baseline.medianMs + timingBudget.toleranceMs,
+      p95Ms: baseline.p95Ms + timingBudget.toleranceMs,
+    };
+    const windows = measured.windows ?? [];
+    assert.equal(
+      windows.length,
+      timingBudget.confirmationWindows,
+      `${label} timing must have two confirmation windows`,
+    );
+    const sustainedMedian = windows.every((window) => window.medianMs > limits.medianMs);
+    const sustainedP95 = windows.every((window) => window.p95Ms > limits.p95Ms);
+    evidence.timingGate[label] = { baseline, limits, windows, sustainedMedian, sustainedP95 };
+    assert.equal(
+      sustainedMedian || sustainedP95,
+      false,
+      `${label} sustained frame-time regression exceeded the matched baseline budget`,
+    );
+  }
 
   const high = evidence.scenarios.find((scenario) => scenario.quality === "high");
   assert.ok(

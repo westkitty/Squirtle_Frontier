@@ -831,6 +831,16 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Verdict: **PASS — material software-browser frame-time uplift with stable long-session resource ownership and no measured regression.**
 - Remaining evidence boundary: this does **not** claim representative Mac, mobile or real-GPU FPS. Hardware/mobile performance and final human visual/feel acceptance remain separate evidence questions.
 
+## Uplift salvage and matched performance-gate closure — 2026-10-04
+
+- The post-`5fe6435` visual/audio uplift was salvaged without reverting the feature commit wholesale. Broad fragment paths were isolated with temporary controls and simplified: terrain procedural noise/caustics, channel animated fragment treatment, habitat stone/wood/water/caretaker treatments, scenery trunk/rock/leaf fragment treatments, and the full-screen atmosphere shader.
+- Retained presentation value includes authored material colors, leaf wind vertex motion, pond vertex ripple, pooled channel foam/flow motes, regional fog and lighting response, water readability, shoreline draw/wake effects, underwater/record lighting, environmental ambience, Current Sense, entry/emergence accents, and all authoritative gameplay systems.
+- Matched control: detached `2b2dedd2b2187f0735608e1d9e95507257506cf8`, Node `v26.9.0`, Chromium 140 / ANGLE SwiftShader, bundled dependencies, 960x640, same `BROWSER_BUNDLED=1 npm run perf` procedure. Three control runs clustered at high `33.3/50.0 ms`, channel-in-groove `33.3/50.0 ms`, distant-channel `16.7/33.4 ms`, and nearby-Squirtles `16.7/33.4 ms` median/p95.
+- Three final matched runs passed the new two-window timing gate in `tools/movement-perf.mjs` against `docs/performance/movement-budget.json`: high `33.3/50.1 ms`, channel-in-groove `33.4/50.1 ms`, distant-channel `16.7/33.4 ms`, nearby-Squirtles `16.7/33.4 ms` median/p95. Gate tolerance is 8.4 ms and a sustained extra 16.7 ms bucket in median or p95 fails.
+- Final perf teardown remained exactly 0 geometries, 0 textures, 0 active/queued chunks, and 0 asset references. SwiftShader remains relative regression evidence, not Mac/mobile hardware FPS evidence.
+- Canonical regional sites now live in `src/simulation/regional-sites.js`; visual canyon bias and acoustic gorge ambience both use `DEBRIS_SITE` (`x: -6, z: 12`). Focused test coverage prevents visual/audio coordinate drift.
+- Full repository/browser validation is complete for this revision: assets passed with one documented GLB warning; `npm run check` passed 259/259; mutation testing caught 80/80; production build passed; the core, habitat, world, recovery, channel, wildlife, Squirtle ecology/social, accessibility, gamepad, multitab, and watershed browser journeys passed; final performance passed the two-window timing gate; shoreline movement remained 1.50 m; and the built bundle passed with zero-resource teardown. Commit and remote publication are recorded separately after the final diff review.
+
 ## Persistent Squirtle population ecology closure — 2026-10-04
 
 - Production integration is merged on `main` at `7aae61fae4c24aaac3664424336760065b55068b` after the performance-proof repair merge.
@@ -904,4 +914,3 @@ R/contextual button near the wooden platform advances the existing regional simu
   - validation evidence artifact upload PASS.
 - This revision-34 state update is documentation-only. Before declaring closure, the containing final `main` revision must itself pass the repository's Verify and Pages workflows so SOURCE / VALIDATION / DELIVERY refer to the same final revision.
 - Evidence boundary remains unchanged: automated Chromium/software-renderer proof does not establish representative Mac/mobile real-GPU FPS or human gameplay/visual acceptance. Those remain separate evidence questions.
-
