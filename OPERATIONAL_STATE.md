@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 34
+revision: 35
 status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
 
 ## Purpose
@@ -914,3 +914,14 @@ R/contextual button near the wooden platform advances the existing regional simu
   - validation evidence artifact upload PASS.
 - This revision-34 state update is documentation-only. Before declaring closure, the containing final `main` revision must itself pass the repository's Verify and Pages workflows so SOURCE / VALIDATION / DELIVERY refer to the same final revision.
 - Evidence boundary remains unchanged: automated Chromium/software-renderer proof does not establish representative Mac/mobile real-GPU FPS or human gameplay/visual acceptance. Those remain separate evidence questions.
+
+
+## Same-runner CI performance-gate repair — 2026-10-04
+
+- Hosted Verify run `37249087154` on `670fbeb7b20e84966ab214796d36e3d8e3d7e7fa` exposed a proof defect rather than a functional-game regression: every non-performance validation stage passed, but the timing verdict compared absolute SwiftShader numbers captured on another machine against a GitHub-hosted runner.
+- Timing authority now uses a same-runner A/B comparison. The exact control revision remains `2b2dedd2b2187f0735608e1d9e95507257506cf8`; the harness measures that detached worktree and the candidate sequentially with the same Node process family, pinned Chromium/ANGLE SwiftShader path, dependencies, viewport, scenario logic, and runner session.
+- `docs/performance/movement-budget.json` retains the historical values for documentary context and the 8.4 ms / two-confirmation-window policy, but static cross-machine frame times no longer own the verdict. The gate fails only when candidate-minus-baseline median or p95 exceeds tolerance in every confirmation window for a protected scenario.
+- Dependency compatibility is explicit: script-only `package.json` drift is allowed, while dependency/devDependency or `package-lock.json` drift blocks the matched comparison.
+- Baseline execution is measurement-only. Candidate execution still owns adaptive-response, draw-call, geometry, texture, settled-resource, heap-growth, and zero-resource teardown assertions; none of those ceilings were weakened.
+- Protected timing scenarios remain high-quality normal view, channel cut, distant channel, and three nearby Squirtles. SwiftShader remains relative regression evidence only, never a claim of Mac/mobile hardware FPS.
+- Final closure still requires the containing `main` revision itself to pass the hosted Verify workflow and Pages deployment; no local or branch-only run may substitute for that proof.
