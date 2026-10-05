@@ -264,31 +264,6 @@ test("Stream foam rapids particles travel down running channel when stage >= 2",
   fx.dispose();
 });
 
-test("stream foam stops outside the channel detail radius and returns when nearby", () => {
-  const parent = new THREE.Group();
-  const fx = new WorldEffects(parent);
-  const state = createMockState();
-  const body = createBody(-10, 12, 0);
-  state.frontier.stage = 2;
-
-  fx.update(state, body, { channelFlow: 1, channelDist: 2 });
-  assert.equal(fx.streamFoam.visible, true);
-  assert.equal(fx.streamFoam.count, 16);
-
-  fx.update(state, body, { channelFlow: 1, channelDist: 28.3 });
-  assert.equal(
-    fx.streamFoam.count,
-    0,
-    "next-chunk channel views must not animate invisible foam detail",
-  );
-  assert.equal(fx.streamFoam.visible, false);
-
-  fx.update(state, body, { channelFlow: 1, channelDist: 2 });
-  assert.equal(fx.streamFoam.visible, true);
-  assert.equal(fx.streamFoam.count, 16);
-  fx.dispose();
-});
-
 test("active fires trail smoke and dry shell slides kick up bounded dust", () => {
   const parent = new THREE.Group();
   const fx = new WorldEffects(parent);

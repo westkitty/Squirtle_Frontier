@@ -841,7 +841,6 @@ async function boot() {
         isShaking: false,
         effectScale: 1,
         channelFlow: 0,
-        channelDist: 999,
       },
       labEnvironment = { windStrength: 0.08, wetness: 0 },
       audioContext = {
@@ -1095,10 +1094,6 @@ async function boot() {
           effectsOptions.isShaking = creature?.isShaking ?? false;
           effectsOptions.effectScale = effectScale;
           effectsOptions.channelFlow = state.watershed.nodes[2].flow;
-          effectsOptions.channelDist =
-            state.frontier.stage >= 2
-              ? readAudioChannelDistance(body.x, body.z, state.frontier.stage)
-              : 999;
           effects.update(state, body, effectsOptions);
         }
         if (state.place === "frontier") {
@@ -1286,7 +1281,13 @@ async function boot() {
         audioContext.channelStage =
           state.place === "frontier" ? state.frontier.stage : 0;
         audioContext.channelDist =
-          state.place === "frontier" ? effectsOptions.channelDist : 999;
+          state.place === "frontier" && state.frontier.stage >= 2
+            ? readAudioChannelDistance(
+                body.x,
+                body.z,
+                state.frontier.stage,
+              )
+            : 999;
         audioContext.rain =
           state.place === "frontier" ? presentation.rain : 0;
         audioContext.waterQuality = presentation.waterQuality;

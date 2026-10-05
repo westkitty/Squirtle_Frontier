@@ -757,12 +757,6 @@ export class WorldEffects {
 
     // 6. Stream foam rapids: churning white water along active flowing channel
     if (state.frontier.stage >= 2 && this.route.length > 1) {
-      const channelDist = Number(options.channelDist ?? 0);
-      if (channelDist > 20) {
-        this.streamFoam.count = 0;
-        this.streamFoam.visible = false;
-        return;
-      }
       const channelFlow = Math.max(
         0,
         Math.min(1, Number(options.channelFlow ?? 1)),
