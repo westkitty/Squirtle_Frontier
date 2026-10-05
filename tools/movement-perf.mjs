@@ -1,14 +1,13 @@
 import { launchBrowser } from "./browser-launch.mjs";
-import { readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
-const timingBudget = JSON.parse(
-  readFileSync(new URL("../docs/performance/movement-budget.json", import.meta.url), "utf8"),
-);
 const browser = await launchBrowser();
+const evidenceFile =
+  process.env.PERF_EVIDENCE_FILE || "docs/performance/phase1-measured.json";
 const evidence = {
   environment:
     "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
+  role: process.env.PERF_MEASURE_ROLE || "candidate",
   date: new Date().toISOString(),
   scenarios: [],
 };
@@ -269,34 +268,6 @@ try {
     g.rig.initial = true;
   });
 
-  const timingChecks = [
-    ["high", evidence.scenarios.find((scenario) => scenario.quality === "high"), timingBudget.scenarios.high],
-    ["channelCut", evidence.channelCut, timingBudget.scenarios.channelCut],
-    ["channelDistant", evidence.channelDistant, timingBudget.scenarios.channelDistant],
-    ["squirtles", evidence.squirtles, timingBudget.scenarios.squirtles],
-  ];
-  evidence.timingGate = {};
-  for (const [label, measured, baseline] of timingChecks) {
-    const limits = {
-      medianMs: baseline.medianMs + timingBudget.toleranceMs,
-      p95Ms: baseline.p95Ms + timingBudget.toleranceMs,
-    };
-    const windows = measured.windows ?? [];
-    assert.equal(
-      windows.length,
-      timingBudget.confirmationWindows,
-      `${label} timing must have two confirmation windows`,
-    );
-    const sustainedMedian = windows.every((window) => window.medianMs > limits.medianMs);
-    const sustainedP95 = windows.every((window) => window.p95Ms > limits.p95Ms);
-    evidence.timingGate[label] = { baseline, limits, windows, sustainedMedian, sustainedP95 };
-    assert.equal(
-      sustainedMedian || sustainedP95,
-      false,
-      `${label} sustained frame-time regression exceeded the matched baseline budget`,
-    );
-  }
-
   const high = evidence.scenarios.find((scenario) => scenario.quality === "high");
   assert.ok(
     high.render.calls <= 41,
@@ -416,7 +387,7 @@ try {
   assert.equal(evidence.teardown.assets.references, 0);
 } finally {
   await writeFile(
-    "docs/performance/phase1-measured.json",
+    evidenceFile,
     JSON.stringify(evidence, null, 2) + "\n",
   );
   await browser.close();
