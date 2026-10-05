@@ -12,7 +12,7 @@
     "assets": "node tools/asset-validate.mjs",
     "mutate": "node tools/mutation-check.mjs",
     "asset:convert": "node tools/asset-convert.mjs",
-    "perf": "node tools/movement-perf.mjs",
+    "perf": "node tools/performance-matched.mjs",
     "browser:watershed": "node tools/watershed-browser.mjs",
     "browser:habitat": "node tools/habitat-browser.mjs",
     "browser:world": "node tools/world-browser.mjs",
@@ -24,7 +24,8 @@
     "browser:gamepad": "node tools/gamepad-browser.mjs",
     "browser:dist": "node tools/dist-browser.mjs",
     "browser:multitab": "node tools/multitab-browser.mjs",
-    "app:build": "./macos/build-app.sh"
+    "app:build": "./macos/build-app.sh",
+    "perf:raw": "node tools/movement-perf.mjs"
   },
   "dependencies": {
     "three": "0.160.1"
