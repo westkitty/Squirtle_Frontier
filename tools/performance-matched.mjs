@@ -1,8 +1,9 @@
 import { execFileSync, spawn } from "node:child_process";
 import {
-  createWriteStream,
+  closeSync,
   existsSync,
   mkdirSync,
+  openSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -76,9 +77,7 @@ async function waitForServer(url, child) {
 }
 
 async function startServer(cwd, label) {
-  const log = createWriteStream(join(artifactDir, `${label}-vite.log`), {
-    flags: "w",
-  });
+  const logFd = openSync(join(artifactDir, `${label}-vite.log`), "w");
   const child = spawn(
     process.execPath,
     [
@@ -91,16 +90,16 @@ async function startServer(cwd, label) {
     {
       cwd,
       env: process.env,
-      stdio: ["ignore", log, log],
+      stdio: ["ignore", logFd, logFd],
     },
   );
   await waitForServer(`http://127.0.0.1:${port}/`, child);
-  return { child, log };
+  return { child, logFd };
 }
 
 async function stopServer(server) {
   if (!server) return;
-  const { child, log } = server;
+  const { child, logFd } = server;
   if (child.exitCode === null) {
     child.kill("SIGTERM");
     await Promise.race([
@@ -109,7 +108,7 @@ async function stopServer(server) {
     ]);
     if (child.exitCode === null) child.kill("SIGKILL");
   }
-  await new Promise((resolveClose) => log.end(resolveClose));
+  closeSync(logFd);
 }
 
 function runRaw(outputPath, role, measureOnly) {
