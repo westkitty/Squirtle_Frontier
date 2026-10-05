@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 const browser = await launchBrowser();
 const evidenceFile =
   process.env.PERF_EVIDENCE_FILE || "docs/performance/phase1-measured.json";
+const measureOnly = process.env.PERF_MEASURE_ONLY === "1";
 const evidence = {
   environment:
     "Chromium 140 / ANGLE SwiftShader; sandbox software rendering. NOT hardware or mobile performance.",
@@ -122,14 +123,16 @@ try {
     p95DeltaMs: +(adapted.p95Ms - pinned.p95Ms).toFixed(1),
     note: "Software rendering only. Triangle count is unchanged because adaptation scales pixels; hardware/mobile effect is unmeasured.",
   };
-  assert.equal(evidence.adaptiveAb.findings.layoutUnchanged, true);
-  assert.equal(
-    evidence.adaptiveAb.findings.adaptiveResponseValid,
-    true,
-    "adaptive resolution must reduce under sustained pressure or remain full-size because full detail is already healthy",
-  );
-  if (evidence.adaptiveAb.findings.scaleReduced)
-    assert.equal(evidence.adaptiveAb.findings.bufferShrank, true);
+  if (!measureOnly) {
+    assert.equal(evidence.adaptiveAb.findings.layoutUnchanged, true);
+    assert.equal(
+      evidence.adaptiveAb.findings.adaptiveResponseValid,
+      true,
+      "adaptive resolution must reduce under sustained pressure or remain full-size because full detail is already healthy",
+    );
+    if (evidence.adaptiveAb.findings.scaleReduced)
+      assert.equal(evidence.adaptiveAb.findings.bufferShrank, true);
+  }
   // A carved groove forces high tessellation on the chunk that holds it, which is
   // only one of nine streamed chunks. Both the "in it" and "looking at it from the
   // next chunk over" views are measured, because the second is where detail cost
@@ -269,16 +272,18 @@ try {
   });
 
   const high = evidence.scenarios.find((scenario) => scenario.quality === "high");
-  assert.ok(
-    high.render.calls <= 41,
-    `normal scene draw calls regressed above revision-32 baseline: ${high.render.calls}`,
-  );
-  assert.ok(
-    evidence.channelCut.render.calls <= 42,
-    `channel scene draw calls regressed above revision-32 baseline: ${evidence.channelCut.render.calls}`,
-  );
-  assert.ok(high.memory.geometries <= 25);
-  assert.ok(high.memory.textures <= 6);
+  if (!measureOnly) {
+    assert.ok(
+      high.render.calls <= 41,
+      `normal scene draw calls regressed above revision-32 baseline: ${high.render.calls}`,
+    );
+    assert.ok(
+      evidence.channelCut.render.calls <= 42,
+      `channel scene draw calls regressed above revision-32 baseline: ${evidence.channelCut.render.calls}`,
+    );
+    assert.ok(high.memory.geometries <= 25);
+    assert.ok(high.memory.textures <= 6);
+  }
 
   // Long-session stability window: same low-quality scene, no reload, enough frames for
   // adaptive/weather/wildlife systems to cycle while renderer resources must remain flat.
@@ -352,23 +357,25 @@ try {
       },
     };
   }, stabilityStart);
-  assert.equal(evidence.stability.start.chunks.active, 9);
-  assert.equal(evidence.stability.start.chunks.queued, 0);
-  assert.equal(evidence.stability.end.chunks.active, 9);
-  assert.equal(evidence.stability.end.chunks.queued, 0);
-  assert.deepEqual(
-    evidence.stability.end.memory,
-    evidence.stability.start.memory,
-    "steady play must not accumulate renderer geometries/textures after streaming settles",
-  );
-  if (
-    evidence.stability.start.heap !== null &&
-    evidence.stability.end.heap !== null
-  )
-    assert.ok(
-      evidence.stability.end.heap <= evidence.stability.start.heap + 8_000_000,
-      "steady-play JS heap grew beyond the bounded stability allowance",
+  if (!measureOnly) {
+    assert.equal(evidence.stability.start.chunks.active, 9);
+    assert.equal(evidence.stability.start.chunks.queued, 0);
+    assert.equal(evidence.stability.end.chunks.active, 9);
+    assert.equal(evidence.stability.end.chunks.queued, 0);
+    assert.deepEqual(
+      evidence.stability.end.memory,
+      evidence.stability.start.memory,
+      "steady play must not accumulate renderer geometries/textures after streaming settles",
     );
+    if (
+      evidence.stability.start.heap !== null &&
+      evidence.stability.end.heap !== null
+    )
+      assert.ok(
+        evidence.stability.end.heap <= evidence.stability.start.heap + 8_000_000,
+        "steady-play JS heap grew beyond the bounded stability allowance",
+      );
+  }
 
   await page.evaluate(async () => {
     await window.__SF.dispose();
@@ -381,10 +388,12 @@ try {
       assets: g.assets.stats(),
     };
   });
-  assert.equal(evidence.teardown.chunks.active, 0);
-  assert.equal(evidence.teardown.memory.geometries, 0);
-  assert.equal(evidence.teardown.memory.textures, 0);
-  assert.equal(evidence.teardown.assets.references, 0);
+  if (!measureOnly) {
+    assert.equal(evidence.teardown.chunks.active, 0);
+    assert.equal(evidence.teardown.memory.geometries, 0);
+    assert.equal(evidence.teardown.memory.textures, 0);
+    assert.equal(evidence.teardown.assets.references, 0);
+  }
 } finally {
   await writeFile(
     evidenceFile,
