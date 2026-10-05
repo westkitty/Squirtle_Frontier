@@ -2,7 +2,7 @@ name: Verify Squirtle Frontier
 
 on:
   push:
-    branches: [main]
+    branches: [main, repair/matched-perf-gate]
   workflow_dispatch:
 
 permissions:
