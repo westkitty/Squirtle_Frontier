@@ -59,8 +59,14 @@ export function evaluateMatchedTiming({ baseline, candidate, budget, baselineRev
         deltaP95Ms: roundMs(candidateWindow.p95Ms - baseWindow.p95Ms),
       };
     });
-    const sustainedMedian = windows.every((window) => window.deltaMedianMs > toleranceMs);
-    const sustainedP95 = windows.every((window) => window.deltaP95Ms > toleranceMs);
+    const overallDeltaMedianMs = roundMs(next.medianMs - base.medianMs);
+    const overallDeltaP95Ms = roundMs(next.p95Ms - base.p95Ms);
+    const sustainedMedian =
+      overallDeltaMedianMs > toleranceMs &&
+      windows.every((window) => window.deltaMedianMs > toleranceMs);
+    const sustainedP95 =
+      overallDeltaP95Ms > toleranceMs &&
+      windows.every((window) => window.deltaP95Ms > toleranceMs);
     const failed = sustainedMedian || sustainedP95;
     if (failed) failures.push(label);
     scenarios[label] = {
@@ -68,8 +74,8 @@ export function evaluateMatchedTiming({ baseline, candidate, budget, baselineRev
       baseline: { medianMs: base.medianMs, p95Ms: base.p95Ms },
       candidate: { medianMs: next.medianMs, p95Ms: next.p95Ms },
       delta: {
-        medianMs: roundMs(next.medianMs - base.medianMs),
-        p95Ms: roundMs(next.p95Ms - base.p95Ms),
+        medianMs: overallDeltaMedianMs,
+        p95Ms: overallDeltaP95Ms,
       },
       toleranceMs,
       windows,

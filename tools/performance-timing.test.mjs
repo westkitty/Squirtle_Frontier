@@ -98,6 +98,18 @@ test("runner-wide slowness is normalized by same-runner comparison", () => {
   assert.equal(result.scenarios.high.delta.p95Ms, 1);
 });
 
+
+test("independent window bucket order cannot fail an unchanged whole-run p95", () => {
+  const baselineDistant = sample(66.6, 100.0, [[66.6, 66.7], [66.6, 100.0]]);
+  const candidateDistant = sample(66.6, 100.1, [[50.1, 99.9], [66.6, 116.6]]);
+  const baseline = evidence(33.4, 50.1, { channelDistant: baselineDistant });
+  const candidate = evidence(33.4, 50.1, { channelDistant: candidateDistant });
+  const result = run(baseline, candidate);
+  assert.equal(result.scenarios.channelDistant.delta.p95Ms, 0.1);
+  assert.equal(result.scenarios.channelDistant.verdict, "PASS");
+  assert.equal(result.verdict, "PASS");
+});
+
 test("missing or malformed baseline windows fail explicitly", () => {
   const malformed = evidence();
   malformed.scenarios[0].windows = [{ medianMs: 33.4, p95Ms: 50.1 }];
