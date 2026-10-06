@@ -27,6 +27,9 @@ network says "beside" rather than inventing a confluence.
 
 ## What the player gets
 
+> **Phase 1 authority note — 2026-10-06:** this section describes legacy runtime behavior, not future product authority. Current Sense and named-reach diagnosis are scheduled for removal. Reach geometry, memory and hydrological state may remain useful background simulation, but future gameplay must not require this diagnostic channel.
+
+
 - Holding Current Sense anywhere on a route appends "You are on the Spring gully;
   27 m above the shallows." On the cut groove it also states whether it is actually
   carrying water, which is the honest reading of a channel the player carved.
