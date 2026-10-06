@@ -26,8 +26,10 @@ storage, symlinks `node_modules`, and **never writes the repository**. For each 
 3. breaks the copy, runs `node --test tools/*.test.mjs` there, restores the copy;
 4. requires a **named failing test**, and prints which one.
 
-Exit code is non-zero if any mutation survives, so it can gate as well as inform. The run costs
-one suite pass per mutation plus one: **14 mutations in about 56 s**, measured.
+Exit code is non-zero if any mutation survives, so it can gate as well as inform. Runtime cost
+scales with the registry because the harness executes one unmutated baseline plus one suite run
+per mutation. The original 14-mutation timing below is historical; the 2026-10-06 Phase 1
+baseline executes **80 registered mutations**.
 
 ## Why it breaks a copy instead of the working tree
 
@@ -46,8 +48,9 @@ property than "it cleans up after itself".
 
 ## The result, not a claim
 
-14/14 injected defects were caught by a named test. A sample of what the suite turned out to
-own, with the test that fired:
+At the 2026-10-06 Phase 1 baseline, **80/80 injected defects were caught by a named test**.
+The table below is the original small sample retained to explain what mutation ownership means,
+with the test that fired:
 
 | injected defect                                          | caught by                                                         |
 | -------------------------------------------------------- | ----------------------------------------------------------------- |
