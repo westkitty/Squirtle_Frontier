@@ -8,7 +8,8 @@ import {
 
 const budget = {
   toleranceMs: 8.4,
-  confirmationWindows: 2,
+  confirmationPairs: 2,
+  diagnosticWindows: 2,
   scenarios: {
     high: { medianMs: 33.4, p95Ms: 50.1 },
     channelCut: { medianMs: 33.4, p95Ms: 50.1 },
@@ -19,6 +20,7 @@ const budget = {
 
 function sample(medianMs, p95Ms, windows = [[medianMs, p95Ms], [medianMs, p95Ms]]) {
   return {
+    samples: 110,
     medianMs,
     p95Ms,
     windows: windows.map(([median, p95]) => ({ medianMs: median, p95Ms: p95 })),
@@ -37,87 +39,140 @@ function evidence(medianMs = 33.4, p95Ms = 50.1, overrides = {}) {
   };
 }
 
-function run(baseline, candidate) {
+function pair(order, baseline, candidate) {
+  return { order, baseline, candidate };
+}
+
+function run(pairs) {
   return evaluateMatchedTiming({
-    baseline,
-    candidate,
+    pairs,
     budget,
     baselineRevision: "base",
     candidateRevision: "head",
   });
 }
 
-test("equal matched measurements pass", () => {
-  assert.equal(run(evidence(), evidence()).verdict, "PASS");
+function balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate) {
+  return [
+    pair("baseline-candidate", firstBaseline, firstCandidate),
+    pair("candidate-baseline", secondBaseline, secondCandidate),
+  ];
+}
+
+test("equal counterbalanced measurements pass", () => {
+  const same = evidence();
+  assert.equal(run(balancedPairs(same, same, same, same)).verdict, "PASS");
 });
 
-test("small matched variation inside tolerance passes", () => {
-  assert.equal(run(evidence(), evidence(41.7, 58.4)).verdict, "PASS");
+test("small matched variation inside tolerance passes in both orders", () => {
+  const baseline = evidence();
+  const candidate = evidence(41.7, 58.4);
+  assert.equal(run(balancedPairs(baseline, candidate, baseline, candidate)).verdict, "PASS");
 });
 
-test("one bad confirmation window is noise, not a sustained regression", () => {
-  const candidateHigh = sample(50.1, 66.8, [[50.1, 66.8], [33.4, 50.1]]);
-  const candidate = evidence(33.4, 50.1, {
-    scenarios: [{ quality: "high", ...candidateHigh }],
-  });
-  const result = run(evidence(), candidate);
-  assert.equal(result.scenarios.high.verdict, "PASS");
+test("one noisy full-run pair is not a replicated regression", () => {
+  const baseline = evidence();
+  const noisy = evidence(33.4, 66.8);
+  const result = run(balancedPairs(baseline, noisy, baseline, baseline));
+  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
+  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 0);
+  assert.equal(result.scenarios.high.sustainedP95, false);
   assert.equal(result.verdict, "PASS");
 });
 
-test("both confirmation windows beyond tolerance fail", () => {
-  const candidateHigh = sample(50.1, 66.8);
-  const candidate = evidence(33.4, 50.1, {
-    scenarios: [{ quality: "high", ...candidateHigh }],
-  });
-  const result = run(evidence(), candidate);
+test("the same whole-run median regression in both execution orders fails", () => {
+  const baseline = evidence();
+  const candidate = evidence(50.1, 50.1);
+  const pairs = balancedPairs(baseline, candidate, baseline, candidate);
+  const result = run(pairs);
   assert.equal(result.scenarios.high.sustainedMedian, true);
   assert.equal(result.verdict, "FAIL");
   assert.throws(
-    () => assertMatchedTiming({ baseline: evidence(), candidate, budget }),
-    /matched performance regression/,
+    () => assertMatchedTiming({ pairs, budget, baselineRevision: "base", candidateRevision: "head" }),
+    /both counterbalanced pairs/,
   );
 });
 
-test("a sustained roughly one-frame p95 bucket regression fails", () => {
-  const candidateHigh = sample(33.4, 66.8, [[33.4, 66.8], [33.4, 66.8]]);
-  const candidate = evidence(33.4, 50.1, {
-    scenarios: [{ quality: "high", ...candidateHigh }],
-  });
-  const result = run(evidence(), candidate);
+test("a replicated roughly one-frame p95 bucket regression fails in both orders", () => {
+  const baseline = evidence(33.4, 50.1);
+  const candidate = evidence(33.4, 66.8);
+  const result = run(balancedPairs(baseline, candidate, baseline, candidate));
   assert.equal(result.scenarios.high.sustainedP95, true);
   assert.equal(result.verdict, "FAIL");
 });
 
-test("runner-wide slowness is normalized by same-runner comparison", () => {
-  const slowRunnerBaseline = evidence(83.3, 150);
-  const slowRunnerCandidate = evidence(84.0, 151);
-  const result = run(slowRunnerBaseline, slowRunnerCandidate);
+test("counterbalancing rejects monotonic runner drift that changes sign with order", () => {
+  const firstBaseline = evidence(66.6, 100.0);
+  const firstCandidate = evidence(83.3, 116.7);
+  const secondCandidate = evidence(66.6, 100.0);
+  const secondBaseline = evidence(83.3, 116.7);
+  const result = run(
+    balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate),
+  );
+  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
+  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, -16.7);
+  assert.equal(result.scenarios.high.verdict, "PASS");
   assert.equal(result.verdict, "PASS");
-  assert.equal(result.scenarios.high.delta.medianMs, 0.7);
-  assert.equal(result.scenarios.high.delta.p95Ms, 1);
 });
 
+test("a real regression survives moderate opposing order drift", () => {
+  const firstBaseline = evidence(66.6, 100.0);
+  const firstCandidate = evidence(83.3, 133.4);
+  const secondCandidate = evidence(83.3, 116.7);
+  const secondBaseline = evidence(66.6, 100.0);
+  const result = run(
+    balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate),
+  );
+  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 33.4);
+  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 16.7);
+  assert.equal(result.scenarios.high.sustainedP95, true);
+  assert.equal(result.verdict, "FAIL");
+});
 
-test("independent window bucket order cannot fail an unchanged whole-run p95", () => {
-  const baselineDistant = sample(66.6, 100.0, [[66.6, 66.7], [66.6, 100.0]]);
-  const candidateDistant = sample(66.6, 100.1, [[50.1, 99.9], [66.6, 116.6]]);
+test("diagnostic window bucket order cannot manufacture a whole-run failure", () => {
+  const baselineDistant = sample(66.6, 100.0, [[66.6, 66.7], [66.6, 116.6]]);
+  const candidateDistant = sample(66.6, 100.1, [[50.1, 116.6], [66.6, 66.7]]);
   const baseline = evidence(33.4, 50.1, { channelDistant: baselineDistant });
   const candidate = evidence(33.4, 50.1, { channelDistant: candidateDistant });
-  const result = run(baseline, candidate);
-  assert.equal(result.scenarios.channelDistant.delta.p95Ms, 0.1);
+  const result = run(balancedPairs(baseline, candidate, baseline, candidate));
+  assert.equal(result.scenarios.channelDistant.pairedDelta.p95Ms, 0.1);
   assert.equal(result.scenarios.channelDistant.verdict, "PASS");
   assert.equal(result.verdict, "PASS");
 });
 
-test("missing or malformed baseline windows fail explicitly", () => {
+test("duplicate execution order is rejected instead of pretending to be independent confirmation", () => {
+  const baseline = evidence();
+  const candidate = evidence();
+  assert.throws(
+    () => run([
+      pair("baseline-candidate", baseline, candidate),
+      pair("baseline-candidate", baseline, candidate),
+    ]),
+    /requires both baseline-candidate and candidate-baseline order/,
+  );
+});
+
+test("missing, malformed, or sample-mismatched evidence fails explicitly", () => {
   const malformed = evidence();
   malformed.scenarios[0].windows = [{ medianMs: 33.4, p95Ms: 50.1 }];
-  assert.throws(() => run(malformed, evidence()), /exactly 2 confirmation windows/);
+  assert.throws(
+    () => run(balancedPairs(malformed, evidence(), evidence(), evidence())),
+    /exactly 2 diagnostic windows/,
+  );
 
   const missing = evidence();
   delete missing.channelCut;
-  assert.throws(() => run(missing, evidence()), /missing scenario channelCut/);
+  assert.throws(
+    () => run(balancedPairs(missing, evidence(), evidence(), evidence())),
+    /missing scenario channelCut/,
+  );
+
+  const mismatch = evidence();
+  mismatch.channelDistant.samples = 109;
+  assert.throws(
+    () => run(balancedPairs(evidence(), mismatch, evidence(), evidence())),
+    /sample counts differ/,
+  );
 });
 
 test("dependency compatibility ignores script-only package drift", () => {

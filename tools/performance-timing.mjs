@@ -12,19 +12,29 @@ function requireFinite(value, message) {
   return value;
 }
 
-function requireScenario(evidence, label, confirmationWindows, side) {
+function requireScenario(evidence, label, diagnosticWindows, side) {
   const reader = SCENARIO_READERS[label];
   if (!reader) throw new Error(`unknown performance scenario: ${label}`);
   const scenario = reader(evidence);
   if (!scenario) throw new Error(`${side} evidence is missing scenario ${label}`);
-  if (!Array.isArray(scenario.windows) || scenario.windows.length !== confirmationWindows) {
-    throw new Error(`${side} ${label} must contain exactly ${confirmationWindows} confirmation windows`);
+  if (!Number.isInteger(scenario.samples) || scenario.samples <= 0) {
+    throw new Error(`${side} ${label} samples must be a positive integer`);
+  }
+  if (!Array.isArray(scenario.windows) || scenario.windows.length !== diagnosticWindows) {
+    throw new Error(`${side} ${label} must contain exactly ${diagnosticWindows} diagnostic windows`);
   }
   const windows = scenario.windows.map((window, index) => ({
-    medianMs: requireFinite(window?.medianMs, `${side} ${label} window ${index + 1} medianMs must be finite`),
-    p95Ms: requireFinite(window?.p95Ms, `${side} ${label} window ${index + 1} p95Ms must be finite`),
+    medianMs: requireFinite(
+      window?.medianMs,
+      `${side} ${label} window ${index + 1} medianMs must be finite`,
+    ),
+    p95Ms: requireFinite(
+      window?.p95Ms,
+      `${side} ${label} window ${index + 1} p95Ms must be finite`,
+    ),
   }));
   return {
+    samples: scenario.samples,
     medianMs: requireFinite(scenario.medianMs, `${side} ${label} medianMs must be finite`),
     p95Ms: requireFinite(scenario.p95Ms, `${side} ${label} p95Ms must be finite`),
     windows,
@@ -35,50 +45,106 @@ function roundMs(value) {
   return Math.round(value * 10) / 10;
 }
 
-export function evaluateMatchedTiming({ baseline, candidate, budget, baselineRevision, candidateRevision }) {
-  if (!baseline || !candidate) throw new Error("baseline and candidate evidence are required");
-  const toleranceMs = requireFinite(budget?.toleranceMs, "timing toleranceMs must be finite");
-  const confirmationWindows = budget?.confirmationWindows;
-  if (!Number.isInteger(confirmationWindows) || confirmationWindows < 2) {
-    throw new Error("confirmationWindows must be an integer >= 2");
+function median(values) {
+  const sorted = values.slice().sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2) return sorted[middle];
+  return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function requireCounterbalancedPairs(pairs, confirmationPairs) {
+  if (!Array.isArray(pairs) || pairs.length !== confirmationPairs) {
+    throw new Error(`matched timing requires exactly ${confirmationPairs} independent confirmation pairs`);
   }
+  const validOrders = new Set(["baseline-candidate", "candidate-baseline"]);
+  const seenOrders = new Set();
+  for (const [index, pair] of pairs.entries()) {
+    if (!pair?.baseline || !pair?.candidate) {
+      throw new Error(`confirmation pair ${index + 1} requires baseline and candidate evidence`);
+    }
+    if (!validOrders.has(pair.order)) {
+      throw new Error(`confirmation pair ${index + 1} has invalid order: ${pair.order}`);
+    }
+    seenOrders.add(pair.order);
+  }
+  if (!seenOrders.has("baseline-candidate") || !seenOrders.has("candidate-baseline")) {
+    throw new Error("matched timing requires both baseline-candidate and candidate-baseline order");
+  }
+  return pairs;
+}
+
+export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candidateRevision }) {
+  const toleranceMs = requireFinite(budget?.toleranceMs, "timing toleranceMs must be finite");
+  const confirmationPairs = budget?.confirmationPairs;
+  const diagnosticWindows = budget?.diagnosticWindows ?? 2;
+  if (!Number.isInteger(confirmationPairs) || confirmationPairs < 2) {
+    throw new Error("confirmationPairs must be an integer >= 2");
+  }
+  if (!Number.isInteger(diagnosticWindows) || diagnosticWindows < 1) {
+    throw new Error("diagnosticWindows must be an integer >= 1");
+  }
+  const matchedPairs = requireCounterbalancedPairs(pairs, confirmationPairs);
   const scenarioNames = Object.keys(budget?.scenarios ?? {});
   if (scenarioNames.length === 0) throw new Error("timing budget must declare protected scenarios");
 
   const scenarios = {};
   const failures = [];
   for (const label of scenarioNames) {
-    const base = requireScenario(baseline, label, confirmationWindows, "baseline");
-    const next = requireScenario(candidate, label, confirmationWindows, "candidate");
-    const windows = base.windows.map((baseWindow, index) => {
-      const candidateWindow = next.windows[index];
+    const comparisons = matchedPairs.map((pair, index) => {
+      const base = requireScenario(
+        pair.baseline,
+        label,
+        diagnosticWindows,
+        `pair ${index + 1} baseline`,
+      );
+      const next = requireScenario(
+        pair.candidate,
+        label,
+        diagnosticWindows,
+        `pair ${index + 1} candidate`,
+      );
+      if (base.samples !== next.samples) {
+        throw new Error(
+          `pair ${index + 1} ${label} sample counts differ: ${base.samples} baseline vs ${next.samples} candidate`,
+        );
+      }
       return {
-        baseline: baseWindow,
-        candidate: candidateWindow,
-        deltaMedianMs: roundMs(candidateWindow.medianMs - baseWindow.medianMs),
-        deltaP95Ms: roundMs(candidateWindow.p95Ms - baseWindow.p95Ms),
+        pair: index + 1,
+        order: pair.order,
+        baseline: {
+          samples: base.samples,
+          medianMs: base.medianMs,
+          p95Ms: base.p95Ms,
+          windows: base.windows,
+        },
+        candidate: {
+          samples: next.samples,
+          medianMs: next.medianMs,
+          p95Ms: next.p95Ms,
+          windows: next.windows,
+        },
+        delta: {
+          medianMs: roundMs(next.medianMs - base.medianMs),
+          p95Ms: roundMs(next.p95Ms - base.p95Ms),
+        },
       };
     });
-    const overallDeltaMedianMs = roundMs(next.medianMs - base.medianMs);
-    const overallDeltaP95Ms = roundMs(next.p95Ms - base.p95Ms);
-    const sustainedMedian =
-      overallDeltaMedianMs > toleranceMs &&
-      windows.every((window) => window.deltaMedianMs > toleranceMs);
-    const sustainedP95 =
-      overallDeltaP95Ms > toleranceMs &&
-      windows.every((window) => window.deltaP95Ms > toleranceMs);
+    const sustainedMedian = comparisons.every(
+      (comparison) => comparison.delta.medianMs > toleranceMs,
+    );
+    const sustainedP95 = comparisons.every(
+      (comparison) => comparison.delta.p95Ms > toleranceMs,
+    );
     const failed = sustainedMedian || sustainedP95;
     if (failed) failures.push(label);
     scenarios[label] = {
       historicalReference: budget.scenarios[label],
-      baseline: { medianMs: base.medianMs, p95Ms: base.p95Ms },
-      candidate: { medianMs: next.medianMs, p95Ms: next.p95Ms },
-      delta: {
-        medianMs: overallDeltaMedianMs,
-        p95Ms: overallDeltaP95Ms,
-      },
       toleranceMs,
-      windows,
+      pairedDelta: {
+        medianMs: roundMs(median(comparisons.map((comparison) => comparison.delta.medianMs))),
+        p95Ms: roundMs(median(comparisons.map((comparison) => comparison.delta.p95Ms))),
+      },
+      comparisons,
       sustainedMedian,
       sustainedP95,
       verdict: failed ? "FAIL" : "PASS",
@@ -86,14 +152,15 @@ export function evaluateMatchedTiming({ baseline, candidate, budget, baselineRev
   }
 
   return {
-    comparisonMode: "same-runner-delta",
+    comparisonMode: "same-runner-counterbalanced-pairs",
     baselineRevision,
     candidateRevision,
-    environment: candidate.environment ?? baseline.environment ?? null,
+    environment: pairs?.[0]?.candidate?.environment ?? pairs?.[0]?.baseline?.environment ?? null,
     disclaimer:
       "SwiftShader/software-renderer measurements are relative regression evidence, not representative hardware/mobile FPS.",
     toleranceMs,
-    confirmationWindows,
+    confirmationPairs,
+    diagnosticWindows,
     scenarios,
     failures,
     verdict: failures.length === 0 ? "PASS" : "FAIL",
@@ -104,7 +171,7 @@ export function assertMatchedTiming(args) {
   const report = evaluateMatchedTiming(args);
   if (report.failures.length > 0) {
     throw new Error(
-      `matched performance regression exceeded ${report.toleranceMs} ms in: ${report.failures.join(", ")}`,
+      `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
     );
   }
   return report;

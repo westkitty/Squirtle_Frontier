@@ -3,8 +3,8 @@ import {
   closeSync,
   existsSync,
   mkdirSync,
-  openSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -15,7 +15,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   assertCompatibleDependencies,
-  assertMatchedTiming,
+  evaluateMatchedTiming,
 } from "./performance-timing.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -27,10 +27,15 @@ const candidateRevision = git(["rev-parse", "HEAD"]);
 const port = Number(process.env.PERF_MATCHED_PORT || 5187);
 const tempRoot = mkdtempSync(join(tmpdir(), "sf-perf-matched-"));
 const baselineRoot = join(tempRoot, "baseline");
-const baselineEvidencePath = join(tempRoot, "baseline.json");
-const candidateEvidencePath = join(tempRoot, "candidate.json");
 const artifactDir = join(root, "artifacts/performance");
 mkdirSync(artifactDir, { recursive: true });
+
+const schedule = [
+  { key: "baseline-a", side: "baseline", pair: 1, order: "baseline-candidate" },
+  { key: "candidate-a", side: "candidate", pair: 1, order: "baseline-candidate" },
+  { key: "candidate-b", side: "candidate", pair: 2, order: "candidate-baseline" },
+  { key: "baseline-b", side: "baseline", pair: 2, order: "candidate-baseline" },
+];
 
 function git(args, cwd = root) {
   return execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
@@ -126,8 +131,32 @@ function runRaw(outputPath, role, measureOnly) {
   });
 }
 
-let baselineServer;
-let candidateServer;
+async function measureRun(spec) {
+  const outputPath = join(tempRoot, `${spec.key}.json`);
+  const cwd = spec.side === "baseline" ? baselineRoot : root;
+  let server;
+  try {
+    server = await startServer(cwd, spec.key);
+    runRaw(outputPath, spec.side, spec.side === "baseline");
+  } finally {
+    await stopServer(server);
+    if (existsSync(outputPath)) {
+      writeFileSync(
+        join(artifactDir, `${spec.key}-evidence.json`),
+        readFileSync(outputPath),
+      );
+    }
+  }
+  if (!existsSync(outputPath)) {
+    throw new Error(`${spec.key} did not produce performance evidence`);
+  }
+  return JSON.parse(readFileSync(outputPath, "utf8"));
+}
+
+function rendererOf(evidence) {
+  return evidence.scenarios?.find((scenario) => scenario.quality === "high")?.renderer;
+}
+
 let worktreeAdded = false;
 try {
   ensureBaselineCommit();
@@ -153,37 +182,31 @@ try {
   }
   symlinkSync(candidateModules, join(baselineRoot, "node_modules"), "dir");
 
-  baselineServer = await startServer(baselineRoot, "baseline");
-  runRaw(baselineEvidencePath, "baseline", true);
-  await stopServer(baselineServer);
-  baselineServer = null;
+  const runs = {};
+  for (const spec of schedule) runs[spec.key] = await measureRun(spec);
 
-  candidateServer = await startServer(root, "candidate");
-  runRaw(candidateEvidencePath, "candidate", false);
-  await stopServer(candidateServer);
-  candidateServer = null;
-
-  const baseline = JSON.parse(readFileSync(baselineEvidencePath, "utf8"));
-  const candidate = JSON.parse(readFileSync(candidateEvidencePath, "utf8"));
-  const baselineRenderer = baseline.scenarios?.find(
-    (scenario) => scenario.quality === "high",
-  )?.renderer;
-  const candidateRenderer = candidate.scenarios?.find(
-    (scenario) => scenario.quality === "high",
-  )?.renderer;
-  if (
-    !baselineRenderer ||
-    !candidateRenderer ||
-    baselineRenderer !== candidateRenderer
-  ) {
+  const rendererSet = new Set(Object.values(runs).map(rendererOf));
+  if (rendererSet.has(undefined) || rendererSet.size !== 1) {
     throw new Error(
-      "baseline and candidate renderer identities differ; matched benchmark is invalid",
+      "baseline and candidate renderer identities differ across replicated runs; matched benchmark is invalid",
     );
   }
+  const [renderer] = rendererSet;
 
-  const timing = assertMatchedTiming({
-    baseline,
-    candidate,
+  const pairs = [
+    {
+      order: "baseline-candidate",
+      baseline: runs["baseline-a"],
+      candidate: runs["candidate-a"],
+    },
+    {
+      order: "candidate-baseline",
+      baseline: runs["baseline-b"],
+      candidate: runs["candidate-b"],
+    },
+  ];
+  const timing = evaluateMatchedTiming({
+    pairs,
     budget,
     baselineRevision,
     candidateRevision,
@@ -195,23 +218,15 @@ try {
       platform: process.platform,
       arch: process.arch,
     },
-    renderer: candidateRenderer,
+    renderer,
     dependencies: dependencyProof,
-    baselineEvidence: baseline,
-    candidateEvidence: candidate,
+    schedule: schedule.map(({ key, side, pair, order }) => ({ key, side, pair, order })),
+    runs,
   };
 
   writeFileSync(
     join(root, "docs/performance/phase1-measured.json"),
-    JSON.stringify(candidate, null, 2) + "\n",
-  );
-  writeFileSync(
-    join(artifactDir, "baseline-evidence.json"),
-    JSON.stringify(baseline, null, 2) + "\n",
-  );
-  writeFileSync(
-    join(artifactDir, "candidate-evidence.json"),
-    JSON.stringify(candidate, null, 2) + "\n",
+    JSON.stringify(runs["candidate-b"], null, 2) + "\n",
   );
   writeFileSync(
     join(artifactDir, "matched-performance.json"),
@@ -225,14 +240,26 @@ try {
         comparisonMode: report.comparisonMode,
         baselineRevision,
         candidateRevision,
+        schedule: report.schedule,
         scenarios: Object.fromEntries(
           Object.entries(report.scenarios).map(([name, value]) => [
             name,
             {
-              baseline: value.baseline,
-              candidate: value.candidate,
-              delta: value.delta,
+              pairedDelta: value.pairedDelta,
               verdict: value.verdict,
+              comparisons: value.comparisons.map((comparison) => ({
+                pair: comparison.pair,
+                order: comparison.order,
+                baseline: {
+                  medianMs: comparison.baseline.medianMs,
+                  p95Ms: comparison.baseline.p95Ms,
+                },
+                candidate: {
+                  medianMs: comparison.candidate.medianMs,
+                  p95Ms: comparison.candidate.p95Ms,
+                },
+                delta: comparison.delta,
+              })),
             },
           ]),
         ),
@@ -241,9 +268,13 @@ try {
       2,
     ),
   );
+
+  if (report.verdict !== "PASS") {
+    throw new Error(
+      `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
+    );
+  }
 } finally {
-  await stopServer(baselineServer);
-  await stopServer(candidateServer);
   if (worktreeAdded) {
     rmSync(join(baselineRoot, "node_modules"), { force: true });
     try {
