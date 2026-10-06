@@ -4,11 +4,15 @@ A systemic browser game in development where **you directly control Squirtle, no
 
 ## Current slice
 
-**Early playable frontier: Stillwater Reach, the Listening Basin and Deep Record.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. No quest checklist is required. The authored pond is still not the full terrain-derived watershed.
+**Early playable frontier: Stillwater Reach, the Listening Basin and Deep Record.** Walk/run, swim/dive, shell-slide and Water Jet around a small streamed proving ground. No quest checklist is required.
 
-Technical movement, browser, asset and lifecycle checks pass. **The Phase 1 quality gate remains open**: ten-minute human enjoyment, actual hardware performance, touch usability and audio review are not verified. The user has waived approval gates for continued implementation. Phase 2 semantic hydrology is in progress; its saved graph now drives pond current/tint and nearby Water Jet debris clearing. Hold F (or touch Sense) in water to locate the disturbance. Repair now propagates to wetland growth, aggregate prey/predators, a settlement trough and delayed Lab basin colonization. The stone doorway on the western bank leads to the Lab. Rest near the wooden platform inside (R or contextual button) to let five minutes pass through the same simulation. A flooded Deep Record shaft is reached by diving to the centre of the Lab basin and pressing R; down there a measurement column tells you which of 22 metres of strata you are standing in, what the water has worn since the save began, and that the record's years and the basin's seconds do not
-convert; hold one band of strata still for a moment and the shaft logs that you read it,
-in the save. Weather changes source flow; lightning can ignite a bounded eastern-bank fire patch and rain washes ash downstream. Water Jet suppresses fire or opens the western side groove, which diverts flow away from the wetland. The side groove’s saved stages now carve bounded local terrain and update body/camera contact; only its overlapping chunk is rebuilt at finer resolution. Memory shows only surveyed cells and known places; a marked Lab frog can acquire persistent familiarity. Nearby wetland prey now forage and flee from Squirtle and stalking predators. The water-house caretaker remembers visits, withdraws from alarming movement, and leaves a cistern-fed bowl after sustained calm contact. Art and navigation remain provisional.
+**Body-first redesign accepted 2026-10-06.** The target game is now explicitly organized around **movement → encounter → curiosity → consequence**. Hydrology, ecology, settlements, weather/fire and persistence remain valuable background machinery, but the player is not expected to diagnose or maintain those systems.
+
+The current build still contains the earlier Current Sense / named-reach / watershed-repair loop. That behavior remains runnable only as **legacy implementation state pending removal/demotion**; it is no longer a protected product requirement and new work must not deepen dependencies on it.
+
+The Phase 1 quality gate remains open: objective-free ten-minute human movement enjoyment, actual hardware performance, human touch usability and heard audio are not verified. That gate is again the controlling prerequisite for larger-map or major-system expansion.
+
+The existing slice also includes the Lab, five-minute rest/fast-forward, the Deep Record, weather/fire, staged channel terrain, persistent ecology, nearby wildlife, caretaker memory/bowl behavior, projected Squirtles, versioned saves and offline return. These systems are being retained so they can produce visible consequences and encounters around a better Squirtle body rather than becoming player-facing simulation homework.
 
 ## Run
 
@@ -26,22 +30,16 @@ Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 | Shell-slide       | Hold C                 | Hold Shell                |
 | Water Jet         | Hold Space             | Hold Jet                  |
 | Dive / rise       | Hold Q / E             | Hold Dive / Rise          |
-| Current Sense     | Hold F in water        | Hold Sense                |
 | Enter / leave Lab | R near doorway         | Contextual doorway button |
 
-Settings include sensitivity, invert look, reduced camera motion, sound and detail. **Remember this place** saves position; **Return to the bank** is a safe reset. Near wildlife is behavioural, not a
+Settings include sensitivity, invert look, reduced camera motion, sound and detail.
+
+**Legacy runtime note:** F / the touch Sense control may still function until the dedicated Current Sense removal phase. It is intentionally omitted from the target control table because it is being retired. **Remember this place** saves position; **Return to the bank** is a safe reset. Near wildlife is behavioural, not a
 population model: thirst drives the herd to a shore the world actually reports as
 wet, and fouled or dried shallows stop the drinking instead of silently thinning
 the animals. Where you have seen them drink is logged in Places remembered.
 
-The basin's inflows are named too. Hold Current Sense anywhere on a channel and it
-says which one you are on and how far above the shallows that is, and Places
-remembered lists the routes you have actually stood on. Nothing here is simulated
-twice: the water still follows the watershed graph, and only the groove you cut is
-carved terrain. The basin itself now has a level, so clearing the landslide raises the
-shoreline and opens the side groove lowers it again: the same water the herd drinks at,
-the same edge you start swimming at, and the reach map colours itself by which gullies
-are actually holding water. Version 6 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings add adaptive resolution (pixel budget only, never simulation) and tri-state camera motion. Saving records the full body pose per place, so a reload resumes mid-dive in the basin instead of dropping the body onto land. Storage writes are serialized with Web Locks when the browser offers them; a tab that loses the write race is told so and can adopt the newer generation in place rather than reloading blind. Export, validated import and explicit backup restoration remain available. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Locking serializes tabs on this browser only; there is no cross-device sync.
+The saved hydrology still drives basin level, wetness, channel state, ecology and offline consequences, but those systems are now background authority rather than a required diagnostic loop. Future player-facing work must express flow, blockage, contamination, diversion and recovery through water motion, terrain, vegetation, wildlife and other physical cues instead of requiring named-reach telemetry or a special sensing mode. The same derived basin level continues to govern the shore the herd drinks at and the edge where swimming begins. Version 6 saves include location, watershed, ecological state and wall time. Return simulates up to six hours using the same regional tick as active play; old saves migrate without retroactive catch-up. A malformed primary can load its backup read-only without overwriting the original. Conflicting stale-tab saves are rejected. Settings add adaptive resolution (pixel budget only, never simulation) and tri-state camera motion. Saving records the full body pose per place, so a reload resumes mid-dive in the basin instead of dropping the body onto land. Storage writes are serialized with Web Locks when the browser offers them; a tab that loses the write race is told so and can adopt the newer generation in place rather than reloading blind. Export, validated import and explicit backup restoration remain available. Replacements validate first and preserve prior bytes in one local quarantine slot. Export before replacing if you need multiple external backups. Locking serializes tabs on this browser only; there is no cross-device sync.
 
 ## Validate
 
@@ -79,4 +77,4 @@ Living Frontier remains the technical foundation; Squirtle Lab supplies characte
 
 ## Living Squirtle population
 
-Stillwater now has a bounded same-species ecology: Marsh and Urban Squirtles can project into valid current-slice habitat, Freshwater remains rarer, while Saltwater and Deepwater are implemented but intentionally habitat-ineligible until the world contains a real coast/estuary or naturally deep flooded region. Nearby Squirtles are behavioral actors, not quests or enemies; meaningful individuals can become remembered, and that persistent memory is now surfaced alongside real same-species signs in the Places remembered panel. Current Sense reads genuine same-species traces, ordinary humans range from ignoring to protecting despite the law, and real legal escalation or rare Shucker pressure can surface through in-world transition messages without spawning a combat faction. The player remains the existing untyped Squirtle; no canonical player ecotype is assigned.
+Stillwater now has a bounded same-species ecology: Marsh and Urban Squirtles can project into valid current-slice habitat, Freshwater remains rarer, while Saltwater and Deepwater are implemented but intentionally habitat-ineligible until the world contains a real coast/estuary or naturally deep flooded region. Nearby Squirtles are behavioral actors, not quests or enemies; meaningful individuals can become remembered, and that persistent memory is now surfaced alongside real same-species signs in the Places remembered panel. Same-species traces, ordinary human reactions, legal escalation and rare Shucker pressure remain simulation foundations, but Sense-only telemetry for them is scheduled to be replaced by physical world evidence, actor behavior and visible consequences rather than a combat faction or quest log. The player remains the existing untyped Squirtle; no canonical player ecotype is assigned.
