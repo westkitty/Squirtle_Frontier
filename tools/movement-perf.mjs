@@ -40,7 +40,7 @@ try {
     const measured = await page.evaluate(() => {
       const g = window.__SF,
         s = g.stats(),
-        raw = s.frames.slice(10),
+        raw = s.frames.slice(10, 120),
         summarize = (values) => {
           const f = values.slice().sort((a, b) => a - b);
           return {
@@ -169,7 +169,7 @@ try {
     const m = await page.evaluate(() => {
       const g = window.__SF,
         s = g.stats(),
-        raw = s.frames.slice(10),
+        raw = s.frames.slice(10, 120),
         summarize = (values) => {
           const f = values.slice().sort((a, b) => a - b);
           return {

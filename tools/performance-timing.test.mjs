@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   assertCompatibleDependencies,
   assertMatchedTiming,
@@ -245,7 +246,14 @@ test("unbalanced execution order is rejected instead of pretending to be counter
   );
 });
 
-test("missing, malformed, or sample-mismatched evidence fails explicitly", () => {
+test("protected windows are fixed and malformed evidence fails explicitly", () => {
+  const samplerSource = readFileSync(new URL("./movement-perf.mjs", import.meta.url), "utf8");
+  assert.equal(
+    samplerSource.match(/raw = s\\.frames\\.slice\\(10, 120\\),/g)?.length,
+    2,
+    "high/low and protected scene timing must each use an exact 110-frame window after 10 warm-up frames",
+  );
+
   const malformed = evidence();
   malformed.scenarios[0].windows = [{ medianMs: 33.4, p95Ms: 50.1 }];
   assert.throws(
