@@ -1,6 +1,8 @@
 # Phase 1 movement slice — technical evidence, not gate acceptance
 
-Date: 2026-09-30. Phase 2 has **not** started.
+Original evidence date: 2026-09-30.
+
+**Authority update — 2026-10-06:** later development did proceed into hydrology/ecology, but the original movement-quality warning below was correct. The body-first redesign reinstates this human movement gate as the controlling prerequisite for further major-system or world-scale expansion.
 
 ## Implemented
 
@@ -38,8 +40,44 @@ Probe corrections: renderer geometry uploads depend on visibility and one-time s
 3. **Human touch usability, animation quality and audio review**: unverified. Procedural sound ran in browser journeys, but was not listened to. Captured poses are not proof of compelling animation.
 4. Full movement-state save/recovery, remapping, true terrain LOD for the creature-scale region and broader accessibility coverage remain future work. Current save explicitly stores position/time only.
 
-Do not label the Phase 1 gate passed. The next external evidence is a human movement playtest in the preview on actual hardware, with concrete feel/camera feedback and measured frame timings. Do not build semantic-world complexity while that gate is open.
+Do not label the Phase 1 gate passed. The next decisive external evidence is a human movement playtest on actual hardware, with concrete feel/camera feedback and measured frame timings.
+
+**2026-10-06 enforcement:** no new major gameplay subsystem, semantic-simulation expansion, or larger-map expansion may proceed while this gate is open. Work may continue when it directly serves the body-first pass: removing Current Sense, demoting watershed exposition, repairing Water Jet intent, shell/step/momentum/camera behavior, improving water/shore transitions, encounter readability, visible consequence, human-shaped journeys, or performance proof.
 
 ## Bounded repair revalidation — 2026-09-30
 
 20 automated tests pass after slope/slide and final camera collision repairs. Full browser journey and lifecycle probes rerun; refreshed JSON evidence. Opened bank, portrait touch and underwater screenshots; no missing character/UI observed, low resolution is visibly softer. Human enjoyment/audio/touch and hardware performance gates remain unverified. See performance diagnostic report.
+
+
+## Body-first redesign acceptance protocol — added 2026-10-06
+
+The target product no longer requires Current Sense or watershed diagnosis. Those later additions do not count toward movement acceptance.
+
+The five core movement verbs to judge are:
+- scamper/run;
+- shell slide;
+- swim;
+- dive/rise;
+- Water Jet;
+plus the camera/control model.
+
+### Human session
+
+Give a tester the game with only this instruction:
+
+> Move around.
+
+Observe for ten minutes:
+- which movement verbs are voluntarily repeated;
+- whether slopes or water are sought out without prompting;
+- whether moves are combined into routes;
+- whether the player enters/exits water deliberately;
+- whether camera/look behavior causes unintended movement;
+- whether collision/steps interrupt intended flow;
+- whether the player continues moving after learning the controls.
+
+The key behavioral question is:
+
+> What did the player voluntarily do twice?
+
+Automation may verify finite state, transitions, resource lifecycle and regression protection. It cannot pass the enjoyment gate.
