@@ -397,6 +397,7 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Validation: All 129 unit tests (`npm test`), architecture checks (`npm run check`), 26/26 mutations (`npm run mutate`), production build (`npm run build`), and browser journeys pass cleanly with zero resource leaks (0 geometries / 0 textures at teardown).
 
 ## Loop 1: Squirtle living rest & slumber kinematics checkpoint
+
 - Squirtle's living physical identity expanded with peaceful sleep/wake kinematics, comfortable resting crouch, curled tail, slowed respiration cadence, and Lab platform rest integration.
 - Rest/sleep state activation: Triggered by prolonged undisturbed land stillness (`idleTime > 5.5s`) or explicit rest action on the Lab platform (`b.resting = true`). Instantly and smoothly awakens upon any player movement or action input.
 - Living slumber kinematics (`src/assets/squirtle-presentation.js`):
