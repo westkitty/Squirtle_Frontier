@@ -249,7 +249,7 @@ test("unbalanced execution order is rejected instead of pretending to be counter
 test("protected windows are fixed and malformed evidence fails explicitly", () => {
   const samplerSource = readFileSync(new URL("./movement-perf.mjs", import.meta.url), "utf8");
   assert.equal(
-    samplerSource.match(/raw = s\\.frames\\.slice\\(10, 120\\),/g)?.length,
+    samplerSource.match(/raw = s\.frames\.slice\(10, 120\),/g)?.length,
     2,
     "high/low and protected scene timing must each use an exact 110-frame window after 10 warm-up frames",
   );
