@@ -18,9 +18,22 @@ This is not:
 
 The core fantasy is:
 
-> You are Squirtle. You are small. The frontier is enormous. Water is how you move, sense, understand, and repair a living world that continues changing when you leave.
+> You are Squirtle. You are small. The frontier is enormous. Moving through it should be pleasurable before the game asks anything else of you. You notice creatures, places and physical changes because the world makes them interesting; the simulation works underneath those experiences rather than becoming homework.
 
 The final game should create awe through causal depth rather than through sheer asset density.
+
+### Body-first product hierarchy
+
+The controlling order is:
+
+1. **Movement** — scamper, shell, swim, dive and Water Jet must be enjoyable without objectives.
+2. **Encounter** — wildlife, other Squirtles, humans, structures, weather and events give movement somewhere interesting to lead.
+3. **Curiosity** — physical world cues should create questions before UI explains answers.
+4. **Consequence** — persistent systems make places visibly different because of earlier actions.
+
+**Simulation is allowed to be complicated internally. Playing Squirtle is not.**
+
+Current Sense, named-reach diagnosis, the amber disturbance ripple and watershed repair as an opening objective are superseded design contracts. They may remain in the current runtime until later phases remove or demote them, but no new system may depend on them.
 
 ---
 
@@ -455,42 +468,47 @@ Do not proceed until:
 
 ---
 
-# PART V — PHASE 2: BUILD ONE WATERSHED
+# PART V — PHASE 2: REMOVE DIAGNOSTIC GAMEPLAY AND DEMOTE THE WATERSHED
 
-## 16. Add semantic hydrology
+## 16. Preserve semantic hydrology as background infrastructure
+
+Do not delete useful hydrology merely because it stops being a player-facing objective.
+
+Preserve semantic state where it earns its cost:
+- water levels;
+- wetness;
+- flow;
+- sediment;
+- contamination;
+- staged channel state;
+- ecology/settlement dependencies;
+- offline consequences;
+- persistence.
 
 Do not build global fluid physics.
 
-Represent the watershed as a graph/state system.
+The strict player-facing rule is:
 
-Each water node/segment should be able to track:
-- source;
-- downstream links;
-- flow;
-- capacity;
-- blockage;
-- wetness;
-- contamination;
-- sediment;
-- temperature class;
-- salinity where relevant;
-- seasonal modifier;
-- active/inactive channel;
-- restoration state.
+> The watershed may influence the world. It may not dictate what the player must do.
 
-## 17. Generate watercourses from terrain
+## 17. Make watercourses physically legible
 
-At world generation:
-1. identify high points/sources;
-2. trace downhill routes;
-3. select tributaries;
-4. build confluences;
-5. assign ponds/wetlands;
-6. determine settlement water relationships;
-7. create local render splines/meshes;
-8. persist the semantic topology separately from presentation.
+Terrain and water presentation should communicate local conditions directly.
 
-## 18. Local water rendering
+Use physical cues such as:
+- visible flow direction;
+- foam/drift;
+- pooling upstream of blockage;
+- downstream dryness;
+- mud/sediment;
+- vegetation condition;
+- animal drinking behavior;
+- altered shorelines;
+- current force on the body.
+
+Do not require graph terminology or named-reach telemetry for ordinary play.
+
+## 18. Local water rendering must communicate without a sensing mode
 
 Use:
 - simple surface meshes;
@@ -503,80 +521,64 @@ Use:
 - depth color;
 - reflection/refraction only within budget.
 
-## 19. Current Sense
+Flow presentation should remain readable when Current Sense is absent.
 
-Current Sense should interpret simulation state, not reveal arbitrary quest markers.
+## 19. Remove Current Sense
 
-Possible signals:
-- ash/fire;
-- disturbed sediment;
-- blood/injury;
-- pollen/vegetation;
-- sewage/runoff;
-- salt;
-- cold mineral spring;
-- unusual heat;
-- storm debris;
-- nearby migration.
+Current Sense is not part of the target game.
 
-Interaction:
-1. enter water or touch a source;
-2. hold/activate Current Sense;
-3. camera/audio simplify;
-4. directional ripple cues appear;
-5. nearby/upstream semantic sources are ranked;
-6. player follows the strongest clue physically.
+Remove, in the dedicated implementation phase:
+- keyboard/touch/gamepad Sense bindings;
+- status-line hydrology diagnosis;
+- named-reach dependency in ordinary play;
+- Sense-only flow motes;
+- amber disturbance ripple;
+- Sense-only conspecific or Shucker telemetry.
 
-Ensure every signal is grounded in actual world state.
+Before removal, identify information only Current Sense exposes and provide a physical-world replacement where that information still matters.
 
-## 20. One repairable hydrology problem
+Examples:
+- flow direction -> surface motion, foam, drifting debris, current force, leaning vegetation;
+- blockage -> visible obstruction, upstream pooling, downstream dryness, sediment;
+- contamination/ash -> coloration, particulates, deposits;
+- conspecific/Shucker traces -> physical evidence and actor behavior.
 
-Create exactly one full vertical slice:
+Text may remain as accessible reinforcement, but important local state must not be unknowable without a special diagnostic mode.
 
-Example:
-- landslide blocks a tributary;
-- downstream wetland dries;
-- settlement cistern declines;
-- prey distribution changes;
-- Lab basin receives less flow.
+## 20. Convert hydrology repair into optional physical interaction
 
-Player can:
-- discover blockage;
-- inspect alternate channel;
-- use Water Jet;
-- move small debris;
-- create a starter groove;
-- trigger a semantic channel transition.
+The existing landslide/blockage may remain as one environmental interaction, but it is no longer the assigned opening loop.
 
-The simulation then propagates the change.
+The player should be able to:
+- notice a physical obstruction without a diagnostic button;
+- manipulate it through ordinary Squirtle abilities;
+- receive immediate visible/audio confirmation;
+- leave and later notice a persistent consequence.
 
-## 21. Staged erosion
+Do not require the player to understand the watershed graph.
 
-Represent erosion as discrete states:
+## 21. Preserve staged erosion only where it creates visible consequence
+
+Staged erosion remains a lightweight implementation technique.
+
+Possible stages:
 - dry depression;
 - damp groove;
 - trickle;
 - cut channel;
 - established creek.
 
-Transitions should depend on:
-- water flow;
-- slope;
-- soil class;
-- vegetation stabilization;
-- time.
+Keep a stage only if it changes what the player can see, traverse, hear, or encounter.
 
-Each state swaps/rebuilds local terrain/water presentation.
-
-## 22. Phase 2 gate
+## 22. Phase 2 gate — world readability without diagnostic UI
 
 Prove:
-- hydrology graph persists;
-- local water reflects semantic state;
-- repair can change downstream state;
-- change survives save/load;
+- Current Sense can be removed without making important local conditions unknowable;
+- background hydrology persists and remains valid through save/load/offline return;
+- at least one physical action produces an immediate readable response;
+- at least one later consequence is visible without debug or diagnostic UI;
 - no global fluid simulation exists;
-- visual result reads naturally without debug UI.
+- the body-first Phase 1 movement gate remains the controlling prerequisite for major expansion.
 
 ---
 
@@ -874,44 +876,42 @@ Render only the currently explored depth.
 
 ---
 
-# PART XII — PHASE 9: WORLD REPAIR
+# PART XII — PHASE 9: PERSISTENT CONSEQUENCE
 
-## 43. Repair verbs
+## 43. Physical actions and persistent consequences
 
-Build repair around physical/systemic acts:
-- clear blockage;
-- initiate new channel;
-- restore pond;
+Use existing Squirtle abilities and world systems to create consequential interactions:
+- move or wash debris;
 - extinguish fire;
 - rinse contamination;
-- reconnect wetland;
-- carry/redistribute seed;
-- restore cistern;
-- reopen culvert;
-- stabilize bank.
+- open or close a physical route;
+- alter a wet/dry area;
+- disturb or calm wildlife;
+- create a repeated route or shoreline trace.
+
+The player does not need a repair checklist or moral score.
 
 ## 44. Avoid binary morality
 
 Every intervention may have second-order effects.
 
 Examples:
-- restore pond -> more prey -> more predators;
-- reroute water -> settlement improves -> downstream wetland loses flow;
+- more water -> more prey -> more predators;
+- reroute water -> one area improves while another dries;
 - extinguish all fire -> fuel accumulates;
 - create crossing -> humans establish route.
 
 Do not label outcomes `GOOD` or `BAD`.
 
-## 45. Repair must propagate
+## 45. Consequences must propagate visibly
 
-At least one intervention must visibly affect:
-1. local environment;
-2. another downstream/upstream location;
-3. ecology;
-4. settlement;
-5. Lab.
+At least one prototype action must visibly affect:
+1. its immediate physical site; and
+2. one later state the player can notice without diagnostic UI.
 
-If all consequences happen at the interaction site, the design thesis has failed.
+That later state may be hydrology, ecology, settlement, Lab, another Squirtle, route availability, vegetation, fire/ash, shoreline, or another persistent world expression.
+
+If all consequence exists only as scalar state or status text, the design thesis has failed.
 
 ---
 
@@ -941,7 +941,7 @@ Examples:
 - ice changes shell friction;
 - drought opens cave;
 - wildfire changes air visibility and water demand;
-- storm runoff creates temporary Current Sense signals.
+- storm runoff creates temporary visible currents, debris lines or routes.
 
 ---
 
@@ -1142,15 +1142,18 @@ Require:
 - readable text at mobile widths;
 - no critical information conveyed only by color.
 
-## 61. Current Sense accessibility
+## 61. Environmental readability and accessible reinforcement
 
-Current Sense must not depend only on subtle color/ripple differences.
+Important world conditions must not depend on one subtle visual channel.
 
-Provide:
+Provide multiple signals where appropriate:
 - audio;
 - motion;
-- shape;
-- optional text cue in accessibility mode.
+- shape/silhouette;
+- material/state change;
+- optional concise text reinforcement.
+
+Accessibility support may explain what the world is showing, but it should not recreate a hidden diagnostic mechanic.
 
 ---
 
