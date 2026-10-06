@@ -30,7 +30,6 @@ export function standardGamepadState(gamepad) {
       slide: false,
       jet: false,
       interact: false,
-      sense: false,
       dive: false,
       ascend: false,
       recenter: false,
@@ -44,11 +43,10 @@ export function standardGamepadState(gamepad) {
     name: gamepad.id || "Gamepad",
     move: { x: move.x, z: move.y },
     look,
-    // Standard mapping: A jet, B shell, X sense, Y interact, shoulders dive/rise,
-    // right trigger (or left-stick press) runs.
+    // Standard mapping: A jet, B shell, Y interact, shoulders dive/rise,
+    // right trigger (or left-stick press) runs. X is intentionally unassigned.
     jet: pressed(buttons[0]),
     slide: pressed(buttons[1]),
-    sense: pressed(buttons[2]),
     interact: pressed(buttons[3]),
     dive: pressed(buttons[4]),
     ascend: pressed(buttons[5]),
@@ -203,7 +201,6 @@ export class Input {
           state.slide ||
           state.jet ||
           state.interact ||
-          state.sense ||
           state.dive ||
           state.ascend ||
           state.recenter
@@ -246,7 +243,6 @@ export class Input {
         slide: false,
         jet: false,
         interact: false,
-        sense: false,
         dive: false,
         ascend: false,
         recenter: false,
@@ -270,7 +266,6 @@ export class Input {
       slide: this.keys.has("KeyC") || this.actions.slide || pad.slide,
       jet: this.keys.has("Space") || this.actions.jet || pad.jet,
       interact: this.keys.has("KeyR") || this.actions.interact || pad.interact,
-      sense: this.keys.has("KeyF") || this.actions.sense || pad.sense,
       dive: this.keys.has("KeyQ") || this.actions.dive || pad.dive,
       ascend: this.keys.has("KeyE") || this.actions.ascend || pad.ascend,
       recenter: this.keys.has("KeyV") || pad.recenter,

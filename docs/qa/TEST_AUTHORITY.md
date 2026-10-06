@@ -95,6 +95,14 @@ A mutation kill proves the suite owns a rule. It does **not** prove the rule is 
 
 Browser journeys that claim a player journey must ultimately exercise it through player-available controls. Fixture teleportation or direct state injection may remain for setup/isolation, but must be labeled as such and cannot prove that the equivalent human control path is usable.
 
+## Body-first Phase 2 authority transition — 2026-10-06
+
+Current Sense is no longer an active runtime contract. The source/unit suite now contains **268 checks** after retiring the one reach-line presentation assertion that existed only to protect the superseded named-reach overlay. The obstruction presentation tests were rewritten in place to protect ordinary physical debris visibility and response instead of amber ripple / flow-mote behavior.
+
+The mutation registry remains **80 contracts**. The former "Current Sense invents Shucker evidence" mutation was not discarded; its real invariant survived the redesign and is now named **"Shucker evidence appears without active Shucker state."** The replacement ecology test proves that evidence and nearby hide/flee behavior require real Shucker pressure, independent of any scanner.
+
+Browser authority changed accordingly: watershed proof now covers physical obstruction, player-input Jet interaction, derived shoreline change and save/reload reconstruction without Sense; world proof confirms the Memory panel no longer exposes reach traces/mouths or live water telemetry; Squirtle social proof uses actual actor behavior rather than Sense messages.
+
 ## What it deliberately does not cover
 
 - Anything only a browser or human can show: DOM, render-loop wiring, GPU cost, camera

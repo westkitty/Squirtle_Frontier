@@ -7,27 +7,7 @@ import {
 export const MAX_NEAR_CONSPECIFICS = 3;
 export const MAX_CONSPECIFIC_TRACES = 8;
 const ACTIVE_RADIUS2 = 28 * 28,
-  SENSE_RADIUS2 = 12 * 12,
   TRACE_INTERVAL = 2.2;
-
-const tracePriority = Object.freeze({
-  shucker: 7,
-  danger: 6,
-  human: 5,
-  "safe-water": 4,
-  home: 3,
-  route: 2,
-});
-
-const traceMessage = Object.freeze({
-  shucker:
-    "A cut-metal scent crosses frightened shell-scrapes. Shucker evidence; nearby conspecific routes have gone quiet.",
-  danger: "Fresh shell-scrapes break sharply toward cover. Another conspecific fled something here.",
-  human: "Small tracks pause at the human edge, then double back through cover.",
-  "safe-water": "Fresh webbed tracks linger at clean water. Another conspecific drank safely here.",
-  home: "Layered shell and foot marks repeat here. This is used as a conspecific home reach.",
-  route: "Faint webbed tracks form a repeated route through the ground cover.",
-});
 
 const notableFor = (memory, id) =>
   memory?.squirtles?.find((record) => record.id === id) ?? null;
@@ -368,33 +348,6 @@ export class NearConspecifics {
       )
         memory.rememberConspecific(actor, tick);
     }
-  }
-
-  sense(body, ecology) {
-    let best = null,
-      bestScore = -Infinity;
-    const consider = (trace) => {
-      const dx = trace.x - body.x,
-        dz = trace.z - body.z,
-        d2 = dx * dx + dz * dz;
-      if (d2 > SENSE_RADIUS2) return;
-      const score = (tracePriority[trace.type] ?? 0) * 100 - d2;
-      if (score > bestScore) {
-        best = trace;
-        bestScore = score;
-      }
-    };
-    const evidence = ecology?.shuckerEvidence?.();
-    if (evidence) consider(evidence);
-    for (const trace of this.traces) if (trace) consider(trace);
-    if (!best) return null;
-    return {
-      type: best.type,
-      x: best.x,
-      z: best.z,
-      strength: best.strength ?? 0.5,
-      message: traceMessage[best.type] ?? traceMessage.route,
-    };
   }
 
   performanceStats() {

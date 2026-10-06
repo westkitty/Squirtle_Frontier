@@ -2,75 +2,44 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { WatershedPresentation } from "../src/player/watershed-presentation.js";
-import { SPRING_SITE } from "../src/simulation/reaches.js";
-import { createBody } from "../src/player/body-state.js";
+import { WorldState } from "../src/worldstate.js";
+import { DEBRIS_SITE } from "../src/simulation/water-interaction.js";
 
-test("Current Sense animates bounded downstream motes only on locally active water", () => {
+test("ordinary watershed presentation keeps the physical obstruction without diagnostic overlays", () => {
   const scene = new THREE.Group(),
     view = new WatershedPresentation(scene),
-    body = createBody(SPRING_SITE.x, SPRING_SITE.z, 0),
-    watershed = { nodes: [{}, { blockage: 0.3 }] },
-    water = {
-      "spring-gully": { flowing: true, fraction: 1 },
-    },
-    first = new THREE.Matrix4(),
-    second = new THREE.Matrix4();
+    state = new WorldState(),
+    body = { x: DEBRIS_SITE.x, z: DEBRIS_SITE.z };
 
-  view.update(watershed, body, true, 1, [], 0, water);
-  assert.equal(view.flowMotes.visible, true);
-  assert.equal(view.flowMotes.count, 10);
-  assert.equal(
-    view.flowMotes.geometry,
-    view.geometry,
-    "Current Sense motes reuse the existing watershed geometry",
-  );
-  view.flowMotes.getMatrixAt(0, first);
+  view.update(state.watershed, body);
+  assert.equal(view.debris.count, 9);
+  assert.equal("ripple" in view, false);
+  assert.equal("flowMotes" in view, false);
+  assert.equal("reachLines" in view, false);
 
-  view.update(watershed, body, true, 1.4, [], 0, water);
-  view.flowMotes.getMatrixAt(0, second);
-  assert.notDeepEqual(
-    first.elements,
-    second.elements,
-    "motes must travel along the reach over time",
-  );
+  state.watershed.clearDebris("landslide", 0.48);
+  view.update(state.watershed, body);
+  assert.ok(view.debris.count > 0 && view.debris.count < 9);
 
-  view.update(
-    watershed,
-    body,
-    true,
-    2,
-    [],
-    0,
-    { "spring-gully": { flowing: false, fraction: 0 } },
-  );
-  assert.equal(view.flowMotes.count, 0, "dry reaches must not invent flow");
-
-  view.update(watershed, body, false, 2.2, [], 0, water);
-  assert.equal(view.flowMotes.count, 0, "flow motes belong to Current Sense only");
+  while (state.watershed.nodes[1].blockage > 0)
+    state.watershed.clearDebris("landslide", 0.1);
+  view.update(state.watershed, body);
+  assert.equal(view.debris.count, 0);
   view.dispose();
+  assert.equal(scene.children.length, 0);
 });
 
-
-test("named-reach flow guidance follows held Sense without weakening touch-water ripple gating", () => {
+test("obstruction presentation is local world geometry rather than an always-on watershed diagram", () => {
   const scene = new THREE.Group(),
     view = new WatershedPresentation(scene),
-    body = createBody(SPRING_SITE.x, SPRING_SITE.z, 0),
-    watershed = { nodes: [{}, { blockage: 0.3 }] },
-    water = { "spring-gully": { flowing: true, fraction: 1 } };
+    state = new WorldState();
 
-  view.update(watershed, body, false, 1, [], 0, water, true);
-  assert.equal(
-    view.flowMotes.count,
-    10,
-    "held Current Sense must guide along a named active reach even without a touch-water signal",
-  );
-  assert.equal(
-    view.ripple.visible,
-    false,
-    "the debris ripple must remain gated by the original touch-water signal",
-  );
+  view.update(state.watershed, { x: DEBRIS_SITE.x, z: DEBRIS_SITE.z });
+  assert.equal(view.group.visible, true);
+  view.update(state.watershed, { x: DEBRIS_SITE.x + 80, z: DEBRIS_SITE.z + 80 });
+  assert.equal(view.group.visible, false);
+  assert.equal(scene.children.length, 1);
 
-  view.update(watershed, body, false, 1.2, [], 0, water, false);
-  assert.equal(view.flowMotes.count, 0);
   view.dispose();
+  assert.equal(scene.children.length, 0);
 });

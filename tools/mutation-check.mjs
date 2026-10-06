@@ -46,7 +46,7 @@ const MUTATIONS = [
     to: "export const MAX_NEAR_CONSPECIFICS = 30;",
   },
   {
-    what: "Current Sense invents Shucker evidence without Shucker state",
+    what: "Shucker evidence appears without active Shucker state",
     file: "src/simulation/squirtle-ecology.js",
     from: "    if (this.shuckerPressure < 0.35 || this.shuckerTicks <= 0) return null;",
     to: "    if (false) return null;",

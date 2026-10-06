@@ -14,7 +14,7 @@
   <body>
     <main>
       <canvas
-        aria-label="Third-person Squirtle exploration in a persistent watershed world. Use WASD to move and drag to look."
+        aria-label="Third-person Squirtle exploration in a persistent living frontier. Use WASD to move and drag to look."
       ></canvas>
       <header>
         <div class="eyebrow"><span class="mark">◈</span> SQUIRTLE FRONTIER</div>
@@ -52,15 +52,12 @@
         <div class="survey-legend" aria-hidden="true">
           <span><i class="survey-swatch"></i> Visited · darker = revisited</span>
           <span><i class="survey-swatch landmark"></i> Remembered place</span>
-          <span><i class="survey-swatch waterway"></i> Followed water · diamond = downstream</span>
           <span><i class="survey-swatch drink"></i> Observed drinking</span>
           <span><i class="survey-swatch you"></i> You</span>
           <span><i class="survey-swatch facing"></i> Facing</span>
         </div>
         <p id="remembered"></p>
         <p id="drink-note"></p>
-        <p id="water-note"></p>
-        <p id="water-quality-note"></p>
         <p id="ecology-note"></p>
         <p id="strata-note"></p>
         <p id="companion"></p>
@@ -73,16 +70,13 @@
           data-close-panel="help"
           aria-label="Close Controls"
         >×</button>
-        <h2 id="help-title">Follow your own current</h2>
+        <h2 id="help-title">Move like Squirtle</h2>
         <p>
-          Dive to the centre of the Lab basin to enter the Deep Record. Stand
-          inside a band of strata and hold still and the shaft logs that you
-          read it. Water Jet can open the old groove beside the western doorway,
-          or suppress fire on the eastern bank. Diverting flow helps the outlet
-          but leaves less for the wetland. No objectives here. Find the shore,
-          gather speed, and get to know your shell. Animals drink where the
-          shallows are wet and clean, so mending the waterway changes who you
-          meet.
+          Move through the frontier as Squirtle. Dive to the centre of the Lab
+          basin to enter the Deep Record; stand still inside a band of strata to
+          log it. Water Jet can move you, suppress fire, and push on some physical
+          obstacles. There is no quest checklist: follow slopes, shorelines,
+          animals, other Squirtles, weather, and whatever changes around you.
         </p>
         <dl>
           <dt>W A S D / arrows</dt>
@@ -101,12 +95,6 @@
             western bank. Rest by the wooden platform inside to let five minutes
             pass.
           </dd>
-          <dt>F · hold</dt>
-          <dd>
-            Current Sense: touch water and follow the amber ripple. Standing on
-            a named channel also says how far above the shallows you are. Aim
-            Water Jet at the debris to clear it.
-          </dd>
           <dt>Q / E · hold</dt>
           <dd>Dive / rise</dd>
           <dt>V / R3</dt>
@@ -118,11 +106,11 @@
         </p>
         <p>
           Controller: left stick moves, right stick looks. A = Jet, B = Shell,
-          X = Sense, Y = interact, LB/RB = dive/rise, RT or L3 = run.
+          Y = interact, LB/RB = dive/rise, RT or L3 = run.
         </p>
         <p class="small">
-          Stillwater is one reach in a larger watershed. Nearby debris restricts downstream flow; Water
-          Jet can clear it.
+          Water, weather, animals and people respond to persistent world state.
+          You do not need to diagnose the simulation to explore it.
         </p>
       </aside>
       <aside
@@ -239,7 +227,7 @@
       </div>
       <footer>
         <div class="location">
-          <span class="eyebrow">STILLWATER REACH / FIELD CURRENT</span>
+          <span class="eyebrow">STILLWATER REACH / FIELD NOTES</span>
           <div>
             <span id="mode">On the bank</span><span class="separator"> / </span
             ><span id="speed">0.0 m/s</span>
@@ -260,9 +248,7 @@
       <div id="touch" aria-label="Touch movement controls">
         <div id="stick" role="group" aria-label="Movement stick"><i></i></div>
         <div class="actions">
-          <button data-action="sense" aria-label="Hold for Current Sense">
-            Sense</button
-          ><button data-action="run" aria-label="Hold to run">Run</button
+          <button data-action="run" aria-label="Hold to run">Run</button
           ><button data-action="slide" aria-label="Hold to shell slide">
             Shell</button
           ><button data-action="dive" aria-label="Hold to dive">Dive</button

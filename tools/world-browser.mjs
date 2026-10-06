@@ -1,7 +1,6 @@
 import { launchBrowser } from "./browser-launch.mjs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
-import { REACHES, SPRING_SITE } from "../src/simulation/reaches.js";
 import { BYPASS_SITE } from "../src/simulation/frontier-systems.js";
 import {
   deepHistory,
@@ -63,64 +62,8 @@ try {
     soaked: window.__SF.state.frontier.soaked[0],
   }));
   await page.screenshot({ path: "artifacts/world-fire.png" });
-  // Following the water: stand at the head of the longest inflow, listen with
-  // Current Sense, then check the map learned the reach. Position is teleported.
-  const standOn = (spot) =>
-    page.evaluate((p) => {
-      const g = window.__SF;
-      Object.assign(g.body, {
-        x: p.x,
-        z: p.z,
-        y: g.state.sampleHeight(p.x, p.z),
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        yaw: Math.PI,
-      });
-      g.rig.initial = true;
-    }, spot);
-  await standOn({ x: SPRING_SITE.x, z: SPRING_SITE.z });
-  await page.waitForTimeout(1600);
-  await page.keyboard.down("KeyF");
-  await page.waitForTimeout(250);
-  evidence.senseAtSpring = await page.evaluate(
-    () => document.querySelector("#status").textContent,
-  );
-  await page.keyboard.up("KeyF");
-  assert.match(evidence.senseAtSpring, /You are on the Spring gully/);
-  assert.match(evidence.senseAtSpring, /\d+ m to the shallows/);
-  assert.match(
-    evidence.senseAtSpring,
-    /[\d.]+ m above the water|, at the water/,
-    "the sense line has to say how high the water is under you",
-  );
-  assert.match(
-    evidence.senseAtSpring,
-    /a dry channel/,
-    "with an undisturbed basin a natural inflow holds no water to report",
-  );
-  await standOn({ x: BYPASS_SITE.x, z: BYPASS_SITE.z });
-  await page.waitForTimeout(1600);
-  await page.keyboard.down("KeyF");
-  await page.waitForTimeout(250);
-  evidence.senseAtGroove = await page.evaluate(
-    () => document.querySelector("#status").textContent,
-  );
-  await page.keyboard.up("KeyF");
-  assert.match(evidence.senseAtGroove, /You are on the Drainage groove/);
-  assert.match(
-    evidence.senseAtGroove,
-    /(still a dry groove|carrying water)/,
-    "a cut channel has to say whether it is running",
-  );
-  evidence.reachCounts = await page.evaluate(() =>
-    [...window.__SF.state.memory.reaches].sort().join(","),
-  );
-  assert.equal(
-    evidence.reachCounts,
-    "drainage-groove,spring-gully",
-    "only routes actually stood on are remembered",
-  );
+  // The memory panel remains about places and witnessed events, not a live
+  // hydrology instrument. Named-reach telemetry is deliberately absent.
   await page.click("#memory-toggle");
   await page.waitForFunction(
     () => document.querySelector("#survey").children.length > 0,
@@ -132,29 +75,24 @@ try {
     playerMarker: !!document.querySelector("[data-map-player]"),
     facingMarker: !!document.querySelector("[data-map-facing]"),
     mapLabel: document.querySelector("#survey").getAttribute("aria-label"),
-    waterQuality: document.querySelector("#water-quality-note").textContent,
     landmarkMarkers: document.querySelectorAll("[data-map-landmark]").length,
     reachTraces: document.querySelectorAll("[data-map-reach]").length,
     reachMouths: document.querySelectorAll("[data-map-mouth]").length,
+    liveWaterNote: !!document.querySelector("#water-note"),
+    liveWaterQuality: !!document.querySelector("#water-quality-note"),
     drinkMarkers: document.querySelectorAll("[data-map-drink]").length,
     rememberedPlaces: window.__SF.state.memory.places.length,
   }));
   assert.equal(evidence.memoryInstrument.playerMarker, true);
   assert.equal(evidence.memoryInstrument.facingMarker, true);
-  assert.equal(
-    evidence.memoryInstrument.reachTraces,
-    2,
-    "the two followed waterways must be drawn on the survey",
-  );
+  assert.equal(evidence.memoryInstrument.reachTraces, 0);
+  assert.equal(evidence.memoryInstrument.reachMouths, 0);
+  assert.equal(evidence.memoryInstrument.liveWaterNote, false);
+  assert.equal(evidence.memoryInstrument.liveWaterQuality, false);
   assert.equal(
     evidence.memoryInstrument.landmarkMarkers,
     evidence.memoryInstrument.rememberedPlaces,
     "survey landmark markers must reveal remembered places only",
-  );
-  assert.equal(
-    evidence.memoryInstrument.reachMouths,
-    2,
-    "every followed waterway must expose one downstream mouth marker",
   );
   assert.equal(
     evidence.memoryInstrument.drinkMarkers,
@@ -163,11 +101,7 @@ try {
   );
   assert.match(evidence.memoryInstrument.mapLabel, /revisit intensity/);
   assert.match(evidence.memoryInstrument.mapLabel, /facing/);
-  assert.match(
-    evidence.memoryInstrument.waterQuality,
-    /wetland.*water/i,
-    "Memory must explain current water quality in words",
-  );
+  assert.doesNotMatch(evidence.memoryInstrument.mapLabel, /waterway|reach/i);
   assert.equal(
     evidence.drinkNote,
     "No drink tracks yet. Animals drink where the shallows run clean.",
@@ -179,25 +113,6 @@ try {
     ),
     "Nothing of the record is logged. Hold still inside a band of it until the shaft agrees you read it.",
     "the panel cannot claim a reading the player never made",
-  );
-  evidence.waterNote = await page.evaluate(
-    () => document.querySelector("#water-note").textContent,
-  );
-  assert.match(evidence.waterNote, /Spring gully \(\d+ m\)/);
-  assert.match(
-    evidence.waterNote,
-    /2 of \d+ reaches, \d+ holding water\./,
-    "the panel counts water in the network, not just walked routes",
-  );
-  evidence.reachGeometry = await page.evaluate(() => ({
-    geometries: window.__SF.renderer.info.memory.geometries,
-    followed: window.__SF.state.memory.reaches.length,
-  }));
-  assert.equal(evidence.reachGeometry.followed, 2);
-  assert.equal(REACHES.length, 6, "five inflows plus the cut groove");
-  assert.ok(
-    evidence.reachGeometry.geometries <= 24,
-    "one shared line mesh for the whole network",
   );
   await page.screenshot({ path: "artifacts/world-memory.png" });
   await page.click("#memory-toggle");

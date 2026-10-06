@@ -1,10 +1,9 @@
 import { launchBrowser } from "./browser-launch.mjs";
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
-import { REACHES } from "../src/simulation/reaches.js";
 import { WATER_BASE, waterLevelFor } from "../src/simulation/water-level.js";
 import { waterAt } from "../src/player/movement-region.js";
-// Counted here rather than in the page, through the same predicate the body swims by.
+
 const shoreline = (level) => {
   let wet = 0;
   for (let x = -12; x <= 12; x += 1)
@@ -12,18 +11,33 @@ const shoreline = (level) => {
   return wet;
 };
 
-// A point mid-route on the north run: the inflow whose wording this pass is about,
-// because it is the one the basin can flood without the player cutting anything.
-const WATCH_POINT = REACHES.find((r) => r.id === "north-run").points[7];
 const browser = await launchBrowser();
 const evidence = {};
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 640 } }),
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(m.text());
+  });
   await page.goto(process.env.BASE_URL || "http://127.0.0.1:5173");
   await page.waitForFunction(() => window.__SF?.loop.frames.length > 10);
-  // Explicit setup teleport; subsequent repair uses actual input and simulation.
+
+  evidence.retiredSense = await page.evaluate(() => ({
+    inputHasSense: Object.hasOwn(window.__SF.input.sample(), "sense"),
+    touchSense: !!document.querySelector('[data-action="sense"]'),
+    helpMentionsSense: /Current Sense|amber ripple|X = Sense/.test(
+      document.querySelector("#help")?.textContent || "",
+    ),
+  }));
+  assert.deepEqual(evidence.retiredSense, {
+    inputHasSense: false,
+    touchSense: false,
+    helpMentionsSense: false,
+  });
+
+  // Fixture positioning isolates the causal watershed proof. The physical interaction
+  // itself still uses the same Space/Water Jet input available to the player.
   await page.evaluate(() => {
     const g = window.__SF;
     Object.assign(g.body, {
@@ -39,95 +53,45 @@ try {
     });
     g.rig.initial = true;
   });
-  await page.keyboard.down("KeyF");
-  await page.waitForFunction(() =>
-    document.querySelector("#status").textContent.includes("sediment"),
+  await page.waitForFunction(() => window.__SF.stats().effects.obstruction === 9);
+  evidence.obstructionBefore = await page.evaluate(
+    () => window.__SF.stats().effects.obstruction,
   );
-  await page.screenshot({ path: "artifacts/watershed-sense.png" });
-  await page.keyboard.up("KeyF");
+  evidence.levelUntouched = await page.evaluate(
+    () => window.__SF.state.waterLevel,
+  );
+  assert.ok(evidence.levelUntouched <= WATER_BASE + 1e-9);
+  await page.screenshot({ path: "artifacts/watershed-obstruction-before.png" });
+
   await page.keyboard.down("Space");
   await page.waitForFunction(
     () => window.__SF.state.watershed.nodes[1].blockage < 0.94,
   );
   await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.jetTime === 0);
-  const nudged = await page.evaluate(
+  evidence.blockageBeforeClear = await page.evaluate(
     () => window.__SF.state.watershed.nodes[1].blockage,
   );
-  // Two poses: a place to stand on the route, and the debris shore the jet needs. The
-  // body drifts with the current and slides down slopes, so the jet loop re-finds its
-  // footing between pulses instead of trusting one placement to hold.
-  const place = async (x, z, y, mode, grounded) => {
-    await page.evaluate(
-      ([x, z, y, mode, grounded]) => {
-        const g = window.__SF,
-          height = y === null ? g.state.sampleHeight(x, z) : y;
-        Object.assign(g.body, {
-          x,
-          z,
-          y: height,
-          vx: 0,
-          vy: 0,
-          vz: 0,
-          yaw: Math.PI,
-          mode,
-          grounded,
-        });
-        g.rig.initial = true;
-      },
-      [x, z, y, mode, grounded],
-    );
-    await page.waitForTimeout(400);
-  };
-  const stand = (x, z) => place(x, z, null, "land", true);
-  const aimAtDebris = () => place(-6, 14, -0.22, "swim", false);
-  const sense = async () => {
-    // The status line keeps the last message after the key is released, so clearing it is
-    // what makes this read a fresh sense line rather than the previous one.
+
+  const aimAtDebris = async () => {
     await page.evaluate(() => {
-      document.querySelector("#status").textContent = "";
+      const g = window.__SF;
+      Object.assign(g.body, {
+        x: -6,
+        z: 14,
+        y: -0.22,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        yaw: Math.PI,
+        mode: "swim",
+        grounded: false,
+      });
+      g.rig.initial = true;
     });
-    await page.keyboard.down("KeyF");
-    let text = "";
-    for (let attempt = 0; attempt < 40; attempt++) {
-      text = await page.evaluate(
-        () => document.querySelector("#status").textContent,
-      );
-      if (text.includes("You are on the")) break;
-      await page.waitForTimeout(120);
-    }
-    const motes = await page.evaluate(
-      () => window.__SF.stats().effects.senseMotes,
-    );
-    await page.keyboard.up("KeyF");
-    return { text, motes };
+    await page.waitForTimeout(120);
   };
 
-  // Setup teleport onto the route; the water itself is only moved by the jet below.
-  await stand(WATCH_POINT.x, WATCH_POINT.z);
-  evidence.levelUntouched = await page.evaluate(
-    () => window.__SF.state.waterLevel,
-  );
-  assert.ok(
-    evidence.levelUntouched <= WATER_BASE + 1e-9,
-    "an untouched basin has to sit exactly on the line it used to",
-  );
-  const drySense = await sense();
-  evidence.senseBeforeFlood = drySense.text;
-  evidence.senseMotesBeforeFlood = drySense.motes;
-  assert.equal(
-    drySense.motes,
-    0,
-    "Current Sense must not manufacture downstream motion on a dry reach",
-  );
-  assert.match(
-    drySense.text,
-    /You are on the North run, a dry channel/,
-    "an inflow with nothing in it must not claim water",
-  );
-
-  // Clear the landslide outright rather than nudging it. The jet is a 0.36 s pulse on a
-  // 1.1 s cooldown, so this is the same wait-a-pulse play a player does, not a shortcut.
   await page.keyboard.down("Space");
   let cleared = false;
   for (let attempt = 0; attempt < 90 && !cleared; attempt++) {
@@ -144,35 +108,18 @@ try {
   evidence.blockageCleared = await page.evaluate(
     () => window.__SF.state.watershed.nodes[1].blockage,
   );
-  assert.ok(
-    cleared,
-    `aimed jetting has to clear the landslide, left ${evidence.blockageCleared}`,
+  assert.ok(cleared, `aimed jetting left blockage ${evidence.blockageCleared}`);
+  await page.waitForFunction(() => window.__SF.stats().effects.obstruction === 0);
+  evidence.obstructionAfter = await page.evaluate(
+    () => window.__SF.stats().effects.obstruction,
   );
+  assert.equal(evidence.obstructionAfter, 0);
 
-  await stand(WATCH_POINT.x, WATCH_POINT.z);
-  await page.waitForFunction(
-    (base) => window.__SF.state.waterLevel > base + 0.18,
-    WATER_BASE,
-    { timeout: 120000 },
-  );
-  await page.waitForFunction(
-    (base) => window.__SF.state.waterLevel > base + 0.18,
-    WATER_BASE,
-    { timeout: 120000 },
-  );
-  evidence.blockageBeforeClear = nudged;
   const before = evidence.levelUntouched;
-  const wetSense = await sense();
-  evidence.senseAfterFlood = wetSense.text;
-  evidence.senseMotesAfterFlood = wetSense.motes;
-  assert.ok(
-    wetSense.motes > 0,
-    "Current Sense must carry visible downstream motion once the reach holds water",
-  );
-  assert.match(
-    wetSense.text,
-    /You are on the North run, water in patches/,
-    "the flooded reach has to say so, in measured rather than authored words",
+  await page.waitForFunction(
+    (base) => window.__SF.state.waterLevel > base + 0.18,
+    WATER_BASE,
+    { timeout: 120000 },
   );
   evidence.waterLevel = {
     before,
@@ -185,15 +132,10 @@ try {
   };
   assert.ok(
     evidence.shorelineCells.after > evidence.shorelineCells.before + 20,
-    "a fed wetland has to uncover less shore than a blocked one",
+    "background hydrology must visibly move the same shoreline the body uses",
   );
-  assert.equal(
-    await page.evaluate(() => window.__SF.state.watershed.nodes[1].blockage),
-    evidence.blockageCleared,
-  );
-  // Read the level together with the wetness it comes from, in one evaluation: the graph
-  // ticks every second and the save button takes its own copy at click time, so two
-  // separate reads would compare numbers from two different worlds.
+  await page.screenshot({ path: "artifacts/watershed-background-after.png" });
+
   const levelPair = () =>
     page.evaluate(() => {
       const wetland = window.__SF.state.watershed.nodes.find(
@@ -210,10 +152,13 @@ try {
   assert.equal(
     afterRestore.level,
     waterLevelFor(afterRestore.wetness),
-    "the level is derived from the graph, so a restore has to reproduce it",
+    "save/load must reconstruct water level from authoritative watershed state",
   );
-  // And it is derived live: nudge the graph and the water follows in the same frame,
-  // which no stored height could do.
+  assert.equal(
+    await page.evaluate(() => window.__SF.state.watershed.nodes[1].blockage),
+    evidence.blockageCleared,
+  );
+
   evidence.levelFollowsGraph = await page.evaluate(() => {
     const wetland = window.__SF.state.watershed.nodes.find(
       (n) => n.id === "wetland",
@@ -225,23 +170,16 @@ try {
     const back = window.__SF.state.waterLevel;
     return { raised, back, was };
   });
-  assert.equal(
-    evidence.levelFollowsGraph.raised,
-    waterLevelFor(0.5),
-    "the level has to track the graph, not a stored number",
-  );
-  assert.equal(
-    evidence.levelFollowsGraph.back,
-    evidence.levelAfterReload,
-    "putting the graph back has to put the water back",
-  );
+  assert.equal(evidence.levelFollowsGraph.raised, waterLevelFor(0.5));
+  assert.equal(evidence.levelFollowsGraph.back, evidence.levelAfterReload);
   assert.deepEqual(errors, []);
+
   await writeFile(
     "docs/qa/watershed-browser.json",
     JSON.stringify(evidence, null, 2) + "\n",
   );
   console.log(
-    "Current Sense, input-driven repair, the flooded north run and graph reload passed; setup position was teleported.",
+    "Background watershed causality passed without Current Sense: physical obstruction, input-driven interaction, shoreline response and save/reload remained truthful.",
   );
 } finally {
   await browser.close();

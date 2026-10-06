@@ -612,12 +612,6 @@ footer {
   background: #e6c978;
   box-shadow: 0 0 0 1px #193c35;
 }
-.survey-swatch.waterway {
-  width: 14px;
-  height: 2px;
-  border-radius: 0;
-  background: #6fb6d8;
-}
 .survey-swatch.drink {
   border-radius: 50%;
   background: #d7e0a3;

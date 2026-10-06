@@ -73,8 +73,8 @@ Preserve these capabilities unless the active phase explicitly replaces them wit
 
 The following old behaviors must **not** be restored simply because historical tests or documents contain them:
 
-- **Current Sense:** scheduled for complete removal from keyboard/touch/gamepad controls, status text and player-facing discovery. Do not add new dependencies to it.
-- **Sense-only presentation:** amber disturbance ripple, Sense-only flow motes, named-reach diagnosis and Sense-only Shucker/conspecific telemetry are not protected.
+- **Current Sense:** removed from keyboard/touch/gamepad controls, status text and player-facing discovery in body-first Phase 2. Do not reintroduce it, rename it, or bind its retired inputs to a substitute scanner.
+- **Sense-only presentation:** the retired amber disturbance ripple, flow motes, named-reach diagnosis and Shucker/conspecific telemetry must remain absent from ordinary play.
 - **Watershed-as-objective:** the player is no longer required to diagnose or repair a watershed graph. The watershed may remain authoritative internally and drive visible consequences.
 - **Opening hydrology tutorial:** the landslide may remain an optional physical interaction, but it is not the required opening loop.
 - **Exact Water Jet contract:** the current hold-to-pulsed-impulse/cooldown/body-yaw environmental interaction may be replaced by a clearer traversal/manipulation design.
@@ -136,7 +136,7 @@ Execute validation using the repository's **actual scripts** from `package.json`
 | Tier | Command | Purpose |
 |---|---|---|
 | **Tier 1: Assets** | `npm run assets` | Validates runtime GLB integrity and manifest hashes. |
-| **Tier 2: Syntax & Unit** | `npm run check` | Runs `tools/arch-check.mjs` (dead import/syntax audit) and `npm test` (`tools/*.test.mjs`, 269 checks). |
+| **Tier 2: Syntax & Unit** | `npm run check` | Runs `tools/arch-check.mjs` (dead import/syntax audit) and `npm test` (`tools/*.test.mjs`, 268 checks). |
 | **Tier 3: Test Authority** | `npm run mutate` | Inverts/removes 80 documented contracts in temp storage; requires named tests to kill each mutation. |
 | **Tier 4: Production Build** | `npm run build` | Verifies production Vite bundle compilation without errors. |
 | **Tier 5: Core Journey** | `BROWSER_BUNDLED=1 npm run browser` | **Primary protective gameplay journey:** land run → shell slide → bank water entry → swimming → dive → boost → ascent → surface launch → camera drag → settings/reduced-motion → save/reload → wet trail → 12 chunk returns → 30 asset cycles → zero teardown. |

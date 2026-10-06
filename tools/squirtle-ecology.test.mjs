@@ -116,16 +116,32 @@ test("near Squirtles project deterministically, cap at three and react by ecotyp
   assert.ok(["watch", "rest", "socialize"].includes(urban.mode));
 });
 
-test("Current Sense sees only real bounded Squirtle/Shucker traces", () => {
-  const state = new WorldState(), near = new NearConspecifics(state.seed), player = body(-13, -10);
-  assert.equal(near.sense(player, state.squirtleEcology), null);
+test("Shucker evidence and nearby Squirtle behavior require real active pressure", () => {
+  const state = new WorldState(),
+    near = new NearConspecifics(state.seed),
+    player = body(-13, -10);
+  rich(state);
+  state.squirtleEcology.shuckerPressure = 0;
+  state.squirtleEcology.shuckerTicks = 0;
+  state.squirtleEcology.abundance.urban = 1;
+  state.squirtleEcology.bumpRevision();
+  assert.equal(state.squirtleEcology.shuckerEvidence(), null);
+  near.step(1 / 60, player, "frontier", state.squirtleEcology, state.memory, env);
+  assert.ok(near.actors.some((actor) => actor.active));
+
   state.squirtleEcology.induceShuckerPressure(0.85, 60);
   const evidence = state.squirtleEcology.shuckerEvidence();
-  player.x = evidence.x;
-  player.z = evidence.z;
-  const sensed = near.sense(player, state.squirtleEcology);
-  assert.equal(sensed.type, "shucker");
-  assert.match(sensed.message, /Shucker evidence/);
+  assert.equal(evidence.type, "shucker");
+  for (let i = 0; i < 10; i++)
+    near.step(1 / 60, player, "frontier", state.squirtleEcology, state.memory, env);
+  assert.ok(
+    near.actors.some(
+      (actor) =>
+        actor.active &&
+        actor.cause === "shucker" &&
+        ["hide", "flee"].includes(actor.mode),
+    ),
+  );
 });
 
 test("meaningful calm contact promotes bounded notable Squirtles and restored fields are validated", () => {

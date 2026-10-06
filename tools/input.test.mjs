@@ -20,7 +20,6 @@ test("radial deadzone removes drift but preserves full analog range", () => {
 test("standard gamepad mapping covers movement, look and creature actions", () => {
   const b = buttons();
   b[0] = { pressed: true, value: 1 };
-  b[2] = { pressed: true, value: 1 };
   b[4] = { pressed: true, value: 1 };
   b[7] = { pressed: false, value: 0.8 };
   b[11] = { pressed: true, value: 1 };
@@ -35,7 +34,7 @@ test("standard gamepad mapping covers movement, look and creature actions", () =
   assert.ok(state.move.x > 0 && state.move.z > 0);
   assert.ok(state.look.x > 0 && state.look.y < 0);
   assert.equal(state.jet, true);
-  assert.equal(state.sense, true);
+  assert.equal("sense" in state, false);
   assert.equal(state.dive, true);
   assert.equal(state.run, true);
   assert.equal(state.recenter, true);

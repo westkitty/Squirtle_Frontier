@@ -179,3 +179,20 @@ Why:
 - No Phase 2 runtime work is included.
 
 The original human movement gate remains open. `PHASE 1 PASS` here means **the pre-redesign regression/authority baseline is trustworthy enough to begin the next redesign phase**; it does not mean movement enjoyment, audio, touch or hardware-performance gates passed.
+
+## Phase 2 realization — Current Sense retired / watershed demoted
+
+The Phase 1 retirement ledger has now been acted on for the dedicated diagnostic-removal phase:
+
+- Current Sense is absent from keyboard, touch and standard-gamepad action surfaces.
+- The amber disturbance ripple, Sense-only flow motes and named-reach line presentation are removed.
+- Sense-only conspecific/Shucker messaging is removed; the causal Shucker state, evidence source, traces and actor reactions remain.
+- The Memory panel no longer exposes named waterways, downstream-mouth markers or live wetland flow/quality telemetry.
+- The physical landslide obstruction remains optional world geometry and still responds to ordinary Water Jet interaction.
+- Background watershed state still drives deterministic water level/shoreline, ecology, settlements, persistence and offline advancement.
+- Existing ordinary presentation remains the readability channel: obstruction geometry, changing shoreline/water appearance, stream effects/audio, wildlife/conspecific behavior and persistent world transitions.
+- The superseded reach-line presentation test was retired narrowly; replacement physical-obstruction coverage landed before the diagnostic presentation was removed.
+- The source/unit authority is expected at **268 checks** and the mutation registry remains **80 contracts**, subject to the hosted verification result recorded in `OPERATIONAL_STATE.md`.
+
+This does **not** close the human body-first gate. Ten-minute enjoyment, heard audio, physical touch quality and representative hardware GPU performance remain outside automated proof.
+

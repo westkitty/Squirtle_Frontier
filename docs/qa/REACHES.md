@@ -1,4 +1,4 @@
-# Named reaches: following the water instead of guessing it
+# Legacy named-reach evidence and retained background route data
 
 The watershed has always been a graph of nodes (spring → landslide → wetland →
 outlet), but the physical world only had one named water feature: the drainage
@@ -27,7 +27,7 @@ network says "beside" rather than inventing a confluence.
 
 ## What the player gets
 
-> **Phase 1 authority note — 2026-10-06:** this section describes legacy runtime behavior, not future product authority. Current Sense and named-reach diagnosis are scheduled for removal. Reach geometry, memory and hydrological state may remain useful background simulation, but future gameplay must not require this diagnostic channel.
+> **Phase 2 authority note — 2026-10-06:** Current Sense, named-reach diagnosis, the player-facing reach line mesh and Memory-panel waterway telemetry have been removed. The measurements below are retained only as historical evidence for the superseded runtime. Route geometry/memory may remain internal data; ordinary play must not depend on them.
 
 
 - Holding Current Sense anywhere on a route appends "You are on the Spring gully;
@@ -42,7 +42,7 @@ network says "beside" rather than inventing a confluence.
 
 ## Invariants proved by tests
 
-`tools/reaches.test.mjs` (8 checks) pins the parts that could otherwise rot quietly:
+`tools/reaches.test.mjs` (7 checks) pins the parts that could otherwise rot quietly:
 every authored route descends into water within a bounded length; tracing is pure,
 so the network cannot drift between loads; naming a route must not change the
 ground under it, asserted as `channelHeight === heightAt` at every authored point

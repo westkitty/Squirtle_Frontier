@@ -490,6 +490,8 @@ The strict player-facing rule is:
 
 > The watershed may influence the world. It may not dictate what the player must do.
 
+**Phase 2 implementation status (2026-10-06):** the active control/UI/runtime scanner path is removed. The obstruction remains physical; shoreline/water presentation, stream effects/audio, ecology, settlements, persistence and offline advancement continue to consume background state.
+
 ## 17. Make watercourses physically legible
 
 Terrain and water presentation should communicate local conditions directly.
@@ -522,11 +524,9 @@ Use:
 
 Flow presentation should remain readable when Current Sense is absent.
 
-## 19. Remove Current Sense
+## 19. Current Sense is retired
 
-Current Sense is not part of the target game.
-
-Remove, in the dedicated implementation phase:
+Body-first Phase 2 removed Current Sense from active gameplay. Keep the following surfaces absent:
 - keyboard/touch/gamepad Sense bindings;
 - status-line hydrology diagnosis;
 - named-reach dependency in ordinary play;
@@ -534,7 +534,7 @@ Remove, in the dedicated implementation phase:
 - amber disturbance ripple;
 - Sense-only conspecific or Shucker telemetry.
 
-Before removal, identify information only Current Sense exposes and provide a physical-world replacement where that information still matters.
+Preserve useful underlying simulation facts and expose them through ordinary world state where they still matter; do not restore a scanner or diagnostic equivalent.
 
 Examples:
 - flow direction -> surface motion, foam, drifting debris, current force, leaning vegetation;
@@ -572,7 +572,7 @@ Keep a stage only if it changes what the player can see, traverse, hear, or enco
 ## 22. Phase 2 gate — world readability without diagnostic UI
 
 Prove:
-- Current Sense can be removed without making important local conditions unknowable;
+- the game remains readable without Current Sense or a renamed diagnostic equivalent;
 - background hydrology persists and remains valid through save/load/offline return;
 - at least one physical action produces an immediate readable response;
 - at least one later consequence is visible without debug or diagnostic UI;
@@ -1406,8 +1406,8 @@ The full project is complete only when:
 - Squirtle is the playable protagonist;
 - movement is excellent;
 - open-world simulation remains persistent;
-- watersheds matter mechanically;
-- repair creates second-order consequences;
+- background hydrology creates visible mechanical consequences without becoming player homework;
+- optional physical interactions can create persistent second-order consequences;
 - ecology, settlements, and Lab react;
 - the world changes while the player is away;
 - notable creature relationships persist;

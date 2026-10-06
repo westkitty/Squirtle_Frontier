@@ -10,7 +10,7 @@ This change makes non-player Squirtles a bounded ecological population rather th
 - NPC Squirtles never use the player controller.
 - Saltwater and Deepwater ecotypes are implemented but habitat-ineligible in Stillwater.
 - Shucker pressure is rare, separate from ordinary humans, and never removes player control.
-- Current Sense only reports traces backed by real simulation state.
+- Shucker evidence exists only when real Shucker pressure is active; nearby Squirtles react through ordinary hide/flee behavior. The retired Sense telemetry is no longer part of the proof.
 - NPC visuals reuse `playable.squirtle` through `AssetManager`; each visible clone owns its material clones and releases its asset reference.
 
 ## Required proof before closure

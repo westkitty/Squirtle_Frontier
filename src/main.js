@@ -7,8 +7,6 @@ import {
   settlementDialogue,
 } from "./simulation/settlement.js";
 import { channelSample } from "./simulation/channel-terrain.js";
-import { REACHES, reachAt, reachById } from "./simulation/reaches.js";
-import { reachWaterState } from "./simulation/water-level.js";
 import { bindRecovery } from "./recovery-ui.js";
 import { WorldEffects } from "./player/world-effects.js";
 import { DeepRecord, recordRegion } from "./player/deep-record.js";
@@ -47,7 +45,6 @@ import { MovementScenery } from "./player/movement-scenery.js";
 import {
   applyWaterJet,
   applyWorldJet,
-  senseWater,
   DEBRIS_SITE,
 } from "./simulation/water-interaction.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
@@ -70,7 +67,6 @@ import {
 } from "./presentation-signals.js";
 import {
   drinkTrackMarkers,
-  followedReachTraces,
   rememberedLandmarkMarkers,
   surveyedCells,
 } from "./map-overlay.js";
@@ -170,12 +166,7 @@ async function boot() {
     let visualRain = THREE.MathUtils.clamp(state.frontier.weather.rain, 0, 1);
     const regionAtmosphereBias = { wetland: 0, canyon: 0 };
     const waterTargetColor = scenery.water.material.color.clone();
-    // Water in the named inflows is read through the predicate the body swims by, and only
-    // re-read when the basin's level or the player's cut changes. Nothing here pretends to
-    // move water: it is a measurement of where water already is.
-    let reachWater = {},
-      reachWaterKey = "",
-      audioChannelKey = "",
+    let audioChannelKey = "",
       audioChannelDistance = 999;
     const readAudioChannelDistance = (x, z, stage) => {
       const key = `${stage}|${Math.round(x * 2)},${Math.round(z * 2)}`;
@@ -184,18 +175,6 @@ async function boot() {
         audioChannelDistance = channelDistance(x, z);
       }
       return audioChannelDistance;
-    };
-    const readReachWater = () => {
-      const key = `${state.frontier.stage}|${(state.waterLevel * 1000) | 0}`;
-      if (key === reachWaterKey) return reachWater;
-      reachWaterKey = key;
-      reachWater = {};
-      for (const reach of REACHES)
-        reachWater[reach.id] = reachWaterState(
-          reach,
-          (x, z) => !!liveRegion.water(x, z),
-        );
-      return reachWater;
     };
     let record = null;
     let lab = null,
@@ -388,39 +367,6 @@ async function boot() {
             }; nearest ${Math.round(nearest.d)} m ${nearest.bearing}.`
           : "No drink tracks yet. Animals drink where the shallows run clean.") +
         (wildlife.parched && issue ? ` Now ${issue}.` : "");
-      const followed = state.memory.reaches
-        .map((id) => reachById(id))
-        .filter(Boolean);
-      document.querySelector("#water-note").textContent = followed.length
-        ? `Water followed: ${followed
-            .map((r) => `${r.name} (${Math.round(r.length)} m)`)
-            .join(" · ")}. ${followed.length} of ${REACHES.length} reaches, ${
-            REACHES.filter((r) => readReachWater()[r.id]?.flowing).length
-          } holding water.`
-        : "No channels followed yet. Water runs down from the rim to the shallows.";
-      const wetland = state.watershed.nodes[2],
-        wetnessWord =
-          wetland.wetness < 0.22
-            ? "drying"
-            : wetland.wetness < 0.58
-              ? "damp"
-              : "saturated",
-        clarityWord =
-          wetland.contamination > 0.32
-            ? "fouled"
-            : wetland.sediment > 0.45
-              ? "silty"
-              : wetland.sediment > 0.16
-                ? "clouded"
-                : "clear",
-        flowWord =
-          wetland.flow < 0.05
-            ? "nearly still"
-            : wetland.flow < 0.34
-              ? "moving slowly"
-              : "running";
-      document.querySelector("#water-quality-note").textContent =
-        `The wetland is ${wetnessWord}; its water is ${clarityWord} and ${flowWord}.`;
       document.querySelector("#ecology-note").textContent = ecologySummary(
         state,
         wildlife,
@@ -450,41 +396,6 @@ async function boot() {
               : `Observed ${cell.visits} times`;
           r.append(title);
           return r;
-        }),
-        reachData = followedReachTraces(state.memory),
-        reachTraces = reachData.map((trace) => {
-          const line = document.createElementNS(svg, "polyline");
-          line.setAttribute(
-            "points",
-            trace.points.map((point) => `${point.x},${point.y}`).join(" "),
-          );
-          line.setAttribute("fill", "none");
-          line.setAttribute("stroke", "#6fb6d8");
-          line.setAttribute("stroke-width", "1.4");
-          line.setAttribute("stroke-linecap", "round");
-          line.setAttribute("stroke-linejoin", "round");
-          line.setAttribute("opacity", "0.82");
-          line.setAttribute("data-map-reach", trace.id);
-          return line;
-        }),
-        reachMouths = reachData.map((trace) => {
-          const diamond = document.createElementNS(svg, "rect"),
-            title = document.createElementNS(svg, "title");
-          diamond.setAttribute("x", String(trace.mouth.x - 1.5));
-          diamond.setAttribute("y", String(trace.mouth.y - 1.5));
-          diamond.setAttribute("width", "3");
-          diamond.setAttribute("height", "3");
-          diamond.setAttribute(
-            "transform",
-            `rotate(45 ${trace.mouth.x} ${trace.mouth.y})`,
-          );
-          diamond.setAttribute("fill", "#8dd7f0");
-          diamond.setAttribute("stroke", "#193c35");
-          diamond.setAttribute("stroke-width", "0.7");
-          diamond.setAttribute("data-map-mouth", trace.id);
-          title.textContent = `${trace.name} downstream mouth`;
-          diamond.append(title);
-          return diamond;
         }),
         drinkMarkers = drinkTrackMarkers(state.memory).map((marker) => {
           const dot = document.createElementNS(svg, "circle"),
@@ -536,8 +447,6 @@ async function boot() {
       player.setAttribute("data-map-player", "");
       const mapChildren = [
           ...cells,
-          ...reachTraces,
-          ...reachMouths,
           ...drinkMarkers,
           ...landmarkMarkers,
           player,
@@ -559,8 +468,8 @@ async function boot() {
       survey.setAttribute(
         "aria-label",
         state.place === "frontier"
-          ? `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places, ${reachTraces.length} followed waterways and ${drinkMarkers.length} observed drinking sites. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
-          : `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places, ${reachTraces.length} followed waterways and ${drinkMarkers.length} observed drinking sites. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
+          ? `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places and ${drinkMarkers.length} observed drinking sites. You are at ${Math.round(body.x)}, ${Math.round(body.z)}, facing ${facing}.`
+          : `Visited five-metre survey cells with revisit intensity, ${landmarkMarkers.length} remembered places and ${drinkMarkers.length} observed drinking sites. You are in ${state.place === "lab" ? "the Listening Basin" : "the Deep Record"}; the marker shows your frontier return point.`,
       );
     };
     document.addEventListener("pointerdown", () => audio.unlock(), options);
@@ -876,9 +785,6 @@ async function boot() {
       saveTime = 0,
       lastRender = null,
       statusFlash = null,
-      // The step callback owns the input sample; the render callback below needs to know
-      // whether the player is reading a sense line without reaching out of scope.
-      senseHeld = false,
       controllerSignature = "",
       interactionSignature = "",
       observedWorld = observationSnapshot(state),
@@ -900,7 +806,6 @@ async function boot() {
         const controls = input.sample(),
           world = rig.movement(controls.x, controls.z),
           inputMode = input.inputMode();
-        senseHeld = !!controls.sense;
         placeContext.settlement = state.settlement;
         placeContext.ecosystem = state.ecosystem;
         const action = placeAction(state.place, body, placeContext),
@@ -1049,7 +954,7 @@ async function boot() {
             const newlyDiscoveredId =
               state.memory.places[state.memory.places.length - 1];
             const landmark = LANDMARKS.find((l) => l.id === newlyDiscoveredId);
-            if (landmark && !controls.sense) {
+            if (landmark) {
               statusFlash = flashStatus(
                 status,
                 `${landmark.name} — place remembered.`,
@@ -1073,7 +978,7 @@ async function boot() {
           const nextObserved = observationSnapshot(state),
             change = worldTransition(observedWorld, nextObserved);
           observedWorld = nextObserved;
-          if (change && !statusFlash && !controls.sense)
+          if (change && !statusFlash)
             statusFlash = flashStatus(status, change.message, statusFlash, 4.5);
         }
         if (state.place === "frontier")
@@ -1122,30 +1027,8 @@ async function boot() {
             labEnvironment,
           );
         }
-        const signal =
-            controls.sense && state.place === "frontier"
-              ? senseWater(
-                  state.watershed,
-                  body,
-                  !!liveRegion.water(body.x, body.z) && body.y < 0.3,
-                  state.frontier,
-                )
-              : null,
-          speciesSignal =
-            controls.sense && state.place === "frontier"
-              ? squirtles.sense(body, state.squirtleEcology)
-              : null;
         if (state.place === "frontier")
-          watershedView.update(
-            state.watershed,
-            body,
-            !!signal,
-            state.elapsed,
-            state.memory.reaches,
-            state.frontier.stage,
-            readReachWater(),
-            !!controls.sense,
-          );
+          watershedView.update(state.watershed, body);
         const wetland = state.watershed.nodes[2],
           sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),
           contamination = THREE.MathUtils.clamp(
@@ -1172,40 +1055,7 @@ async function boot() {
           0.16 + wetland.wetness * 0.12 + wetland.flow * 0.12,
           waterEase,
         );
-        if (controls.sense && state.place === "lab")
-          status.textContent =
-            state.ecosystem.labWater > 0.5
-              ? "Fresh water carries reed seeds into the basin."
-              : "The basin waits for water from the wetland.";
-        else if (controls.sense) {
-          const primarySense =
-              signal?.message ||
-              speciesSignal?.message ||
-              "Touch the water to listen to its current.",
-            speciesSuffix = signal && speciesSignal ? ` ${speciesSignal.message}` : "",
-            reach = reachAt(body.x, body.z),
-            flow = reach ? readReachWater()[reach.id] : null,
-            above = reach
-              ? state.sampleHeight(body.x, body.z) - state.waterLevel
-              : 0;
-          status.textContent = `${primarySense}${speciesSuffix}${
-            reach
-              ? ` You are on the ${reach.name}${
-                  reach.cut && state.frontier.stage === 0
-                    ? ", still a dry groove"
-                    : flow?.flowing
-                      ? ", carrying water"
-                      : flow && flow.fraction > 0
-                        ? ", water in patches"
-                        : ", a dry channel"
-                }; ${Math.round(reach.toMouth)} m to the shallows${
-                  above > 0.25
-                    ? `, ${above.toFixed(1)} m above the water`
-                    : ", at the water"
-                }.`
-              : ""
-          }`;
-        } else if (state.place === "frontier") {
+        if (state.place === "frontier") {
           const dialogue = settlementDialogue(state.settlement, body);
           if (dialogue) status.textContent = dialogue;
         }
@@ -1220,8 +1070,8 @@ async function boot() {
           Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 11
         )
           showHint(
-            "sense",
-            "The current feels wrong here. Hold F / Sense while touching water to read it.",
+            "obstruction",
+            "Water is backed up against the stonefall.",
           );
         if (state.place === "record")
           showHint(
@@ -1440,14 +1290,11 @@ async function boot() {
           adaptive.add(previousFrame) !== null
         ) {
           resize();
-          // The scale notice is transient, so it must not overwrite a readout the player
-          // is deliberately asking for with the sense key held down.
-          if (!senseHeld)
-            statusFlash = flashStatus(
-              status,
-              `Render scale ${Math.round(adaptive.value * 100)}%.`,
-              statusFlash,
-            );
+          statusFlash = flashStatus(
+            status,
+            `Render scale ${Math.round(adaptive.value * 100)}%.`,
+            statusFlash,
+          );
         }
         hudTime++;
         if (hudTime % 3 === 0) {
@@ -1626,7 +1473,7 @@ async function boot() {
           foam: effects?.streamFoam?.count ?? 0,
           rainRipples: effects?.rainRipples?.count ?? 0,
           underwaterMotes: effects?.underwaterMotes?.count ?? 0,
-          senseMotes: watershedView?.flowMotes?.count ?? 0,
+          obstruction: watershedView?.debris?.count ?? 0,
           wetTrail: scenery?.wetTrail?.count ?? 0,
         },
       }),
@@ -1637,7 +1484,7 @@ async function boot() {
       loaded.message ||
       (loaded.ok
         ? loaded.seconds > 0
-          ? `The watershed continued for ${loaded.seconds} seconds${loaded.capped ? " (six-hour cap)" : ""}.`
+          ? `The frontier continued for ${loaded.seconds} seconds${loaded.capped ? " (six-hour cap)" : ""}.`
           : "Follow the shore. The stone doorway leads to the Listening Basin."
         : "Save unavailable.");
   } catch (error) {

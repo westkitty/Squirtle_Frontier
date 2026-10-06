@@ -1,7 +1,5 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import * as THREE from "three";
-import { WatershedPresentation } from "../src/player/watershed-presentation.js";
 import {
   REACHES,
   REACH_SOURCES,
@@ -178,24 +176,4 @@ test("followed reaches ride along in a version 6 save", () => {
   const result = load(restored, storage, { now: Date.now(), offline: false });
   assert.equal(result.ok, true, result.message);
   assert.deepEqual(restored.memory.snapshot(), before);
-});
-test("the whole network is one line mesh, painted from what was walked", () => {
-  const scene = new THREE.Scene(),
-    view = new WatershedPresentation(scene);
-  const expected = REACHES.reduce((n, r) => n + (r.points.length - 1) * 2, 0);
-  assert.equal(view.reachGeometry.attributes.position.count, expected);
-  assert.equal(view.reachLines.geometry, view.reachGeometry);
-  assert.equal(scene.children.length, 1);
-  const seenColor = (index) => view.reachColors[index * 3];
-  const before = seenColor(0);
-  view.update(new WorldState().watershed, { x: 0, z: 0 }, false, 0, [
-    REACHES[0].id,
-  ]);
-  assert.notEqual(seenColor(0), before, "a walked reach brightens");
-  view.update(new WorldState().watershed, { x: 0, z: 0 }, false, 0, [
-    REACHES[0].id,
-  ]);
-  assert.equal(seenColor(0), view.reachColors[0], "a repeat update is skipped");
-  view.dispose();
-  assert.equal(scene.children.length, 0);
 });

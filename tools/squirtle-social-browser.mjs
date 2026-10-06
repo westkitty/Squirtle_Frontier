@@ -83,17 +83,19 @@ try {
     window.__SF.squirtles.actors.find((actor) => actor.active && actor.ecotype === "marsh")?.mode,
   );
 
-  // Let real local movement leave a bounded same-species trace, then ask Current Sense.
-  await page.waitForFunction(() => window.__SF.squirtles.traces.length > 0, null, { timeout: 10000 });
-  const trace = await page.evaluate(() => window.__SF.squirtles.traces.find(Boolean));
-  await page.evaluate(({ x, z }) => {
-    const g = window.__SF;
-    Object.assign(g.body, { x, z: z + 1, y: g.state.sampleHeight(x, z + 1), vx: 0, vz: 0, jetTime: 0, mode: "land" });
-  }, trace);
-  await page.keyboard.down("f");
-  await page.waitForFunction(() => /tracks|shell|Squirtle|water/i.test(document.querySelector("#status")?.textContent || ""));
-  report.sense = await page.evaluate(() => document.querySelector("#status")?.textContent || "");
-  await page.keyboard.up("f");
+  // Real local movement still leaves bounded same-species traces as simulation
+  // evidence, while the player encounters the Squirtles themselves through the world.
+  await page.waitForFunction(() => window.__SF.squirtles.traces.length > 0, null, {
+    timeout: 10000,
+  });
+  report.traces = await page.evaluate(() => ({
+    count: window.__SF.squirtles.traces.length,
+    activeActors: window.__SF.squirtles.activeCount,
+    renderedActors: window.__SF.squirtleView.performanceStats().active,
+  }));
+  assert.ok(report.traces.count > 0 && report.traces.count <= 8);
+  assert.ok(report.traces.activeActors > 0);
+  assert.equal(report.traces.renderedActors, report.traces.activeActors);
 
   // Sustained calm contact is meaningful enough to promote one deterministic individual.
   await page.evaluate(() => {
@@ -141,25 +143,36 @@ try {
   assert.ok(["feed", "tolerate", "protect", "watch", "ignore"].includes(legal));
   assert.notEqual(legal, "report");
 
-  // Deliberately induce the rare threat for proof: it must cause a distinct hide/flee and
-  // Current Sense may name it only because genuine Shucker state now exists.
+  // Deliberately induce the rare threat for proof. The threat must remain causal:
+  // real pressure produces evidence and changes nearby Squirtle behavior without a scanner.
   await page.evaluate(() => {
     const g = window.__SF;
     g.state.squirtleEcology.induceShuckerPressure(0.9, 90);
-    const e = g.state.squirtleEcology.shuckerEvidence();
-    Object.assign(g.body, { x: e.x, z: e.z + 1, y: g.state.sampleHeight(e.x, e.z + 1), vx: 0, vz: 0, jetTime: 0, mode: "land" });
   });
   await page.waitForFunction(() =>
-    window.__SF.squirtles.actors.some((actor) => actor.active && ["hide", "flee", "return-home"].includes(actor.mode)),
+    window.__SF.squirtles.actors.some(
+      (actor) =>
+        actor.active &&
+        actor.cause === "shucker" &&
+        ["hide", "flee", "return-home"].includes(actor.mode),
+    ),
   );
-  await page.keyboard.down("f");
-  await page.waitForFunction(() => /Shucker evidence/.test(document.querySelector("#status")?.textContent || ""));
   report.shucker = await page.evaluate(() => ({
-    status: document.querySelector("#status")?.textContent || "",
     pressure: window.__SF.state.squirtleEcology.shuckerPressure,
-    modes: window.__SF.squirtles.actors.filter((actor) => actor.active).map((actor) => actor.mode),
+    evidence: window.__SF.state.squirtleEcology.shuckerEvidence(),
+    actors: window.__SF.squirtles.actors
+      .filter((actor) => actor.active)
+      .map((actor) => ({ mode: actor.mode, cause: actor.cause })),
   }));
-  await page.keyboard.up("f");
+  assert.ok(report.shucker.pressure >= 0.35);
+  assert.equal(report.shucker.evidence?.type, "shucker");
+  assert.ok(
+    report.shucker.actors.some(
+      (actor) =>
+        actor.cause === "shucker" &&
+        ["hide", "flee", "return-home"].includes(actor.mode),
+    ),
+  );
   await page.screenshot({ path: "artifacts/squirtle-shucker-warning.png" });
 
   await page.evaluate(() => window.__SF.dispose());
@@ -173,7 +186,7 @@ try {
   assert.equal(report.teardown.assets.references, 0);
   assert.equal(report.teardown.assets.cached, 0);
   assert.deepEqual(report.errors, []);
-  console.log("Squirtle ecology/social journey passed: valid ecotypes, behavior, sense, persistence, watershed causality, legality, Shucker warning and teardown.");
+  console.log("Squirtle ecology/social journey passed: valid ecotypes, visible behavior, persistence, watershed causality, legality, Shucker response and teardown.");
 } finally {
   await writeFile("docs/qa/squirtle-social-browser.json", JSON.stringify(report, null, 2));
   await browser.close();

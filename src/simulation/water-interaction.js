@@ -19,26 +19,6 @@ export function applyWaterJet(watershed, body, dt) {
     return false;
   return watershed.clearDebris("landslide", dt * 0.65);
 }
-export function senseWater(watershed, body, touchingWater, frontier = null) {
-  if (!touchingWater) return null;
-  const debris = watershed.nodes.find((n) => n.id === "landslide");
-  return {
-    x: DEBRIS_SITE.x,
-    z: DEBRIS_SITE.z,
-    strength:
-      debris.blockage /
-      (1 + Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) * 0.08),
-    message:
-      frontier?.ash.some((v) => v > 0.05) && frontier.weather.rain > 0
-        ? "Ash washes in from the eastern bank. Rain carries it toward the wetland."
-        : frontier?.diversion > 0.1
-          ? "Water takes the opened side route. Less reaches the reed shallows."
-          : debris.blockage > 0.1
-            ? "Disturbed sediment upstream. Follow the amber ripple."
-            : "The current runs clear. Water is reaching the wetland.",
-  };
-}
-
 export function applyWorldJet(frontier, body, dt) {
   if (body.jetTime <= 0) return;
   const hits = (p, y) => {
