@@ -31,32 +31,32 @@ Do not rewrite the build guide into another plan. It already is the plan.
 
 The player directly controls Squirtle.
 
+The controlling game loop is:
+
+**movement -> encounter -> curiosity -> consequence**
+
 There is:
 - no trainer avatar;
 - no conventional monster-catching loop;
 - no generic RPG quest structure;
 - no fake open world made of menus;
-- no global fluid simulation.
+- no global fluid simulation;
+- no requirement that the player diagnose a watershed graph.
 
-The game must combine:
+The game must prioritize:
 - pleasurable Squirtle-specific locomotion;
 - creature-scale exploration;
-- streaming open-world terrain;
-- persistent ecology;
-- semantic watershed/hydrology simulation;
-- world repair with second-order consequences;
-- settlements that visibly respond;
-- a Hydrological Lab that reacts to frontier state;
-- notable creature relationships;
-- actual exploration-based cartography;
-- offline world evolution;
-- a physicalized Deep Record of historical layers;
+- encounters with wildlife, other Squirtles, humans, structures and environmental events;
+- physical world readability;
+- persistent consequences driven by existing ecology/hydrology/weather/fire/settlement systems;
 - robust persistence/recovery;
 - performance appropriate for browser delivery.
 
 The emotional target is causal awe:
 
-> The player returns somewhere and understands that the world is different because of what happened there earlier.
+> The player moves because moving feels good, notices something because the world makes it interesting, interacts physically, and later realizes the place changed.
+
+**Current Sense and watershed diagnosis are superseded player-facing designs.** The current runtime may still contain them until later implementation phases remove or demote them. Do not add new dependencies to Current Sense. Preserve useful hydrology internally only as background simulation and consequence.
 
 ## 3. Protected architectural decisions
 
@@ -87,25 +87,20 @@ The first major objective is the **prototype gate**.
 The representative slice must prove:
 
 1. Squirtle direct control.
-2. Distinct land movement.
-3. Swimming and diving.
-4. Shell slide.
-5. Water Jet traversal.
-6. Creature-scale camera.
-7. One semantic watershed.
-8. Current Sense grounded in actual world state.
-9. One physical hydrology repair.
-10. Downstream ecological propagation.
-11. Visible settlement response.
-12. Visible Lab basin response.
-13. Save/load preservation.
-14. Offline fast-forward preservation.
-15. One persistent notable creature.
-16. One explorable Deep Record slice.
-17. Stable streaming/resource lifecycle.
-18. Measured performance.
+2. Distinct, enjoyable land movement.
+3. Swimming and diving that feel better in water than on land.
+4. Shell slide with useful terrain and momentum.
+5. Water Jet traversal with clear intention and feedback.
+6. Creature-scale camera without geometry trapping or unwanted steering.
+7. At least one visible encounter with wildlife, another Squirtle, a human, or an environmental event.
+8. At least one physical action whose persistent consequence becomes visible later.
+9. Environmental conditions understandable without Current Sense or quest text.
+10. Existing background ecology/hydrology/weather/fire may continue to drive consequences.
+11. Save/load and offline return preserve the world.
+12. Stable streaming/resource lifecycle.
+13. Human movement enjoyment, human input/camera/audio/touch review, and measured hardware performance.
 
-Production expansion is BLOCKED until the mandatory prototype criteria pass.
+Production expansion is BLOCKED until the mandatory body-first prototype criteria pass.
 
 ## 5. First implementation sequence
 
@@ -179,21 +174,19 @@ Measure:
 
 Repair leaks before continuing.
 
-### G. One watershed
-Implement:
-- semantic water graph;
-- local water rendering;
-- Current Sense;
-- one blockage;
-- one alternate channel;
-- staged erosion/channel formation;
-- one downstream wetland/settlement effect;
-- persistence.
+### G. Body-first redesign implementation
+After movement baseline and performance evidence:
+- retire obsolete Current Sense contracts;
+- remove Current Sense from controls/UI/runtime after replacing any necessary information with physical cues;
+- keep semantic hydrology as background infrastructure;
+- separate Water Jet traversal intent from environmental manipulation;
+- repair shell traction/sustain, step handling, movement continuity and camera defects;
+- make environmental state readable without diagnostic UI.
 
-### H. Lab response
-Implement one Lab basin connected to the watershed.
+### H. Encounter and consequence response
+Use existing Lab, wildlife, conspecific, settlement and hydrology state as consequence/encounter material.
 
-Prove the frontier repair can eventually change the Lab basin through actual simulation state.
+Prove that at least one ordinary physical player action changes something the player can later notice without opening a diagnostic panel.
 
 ### I. Offline return
 Save, advance world time, reload/return, and prove the causal chain remains coherent.
@@ -240,37 +233,30 @@ The prototype must remain enjoyable for at least ten minutes without objectives.
 
 ## 7. Hydrology implementation rule
 
-Never solve hydrology through globally simulated particles.
+Hydrology remains a background simulation tool, not a player job.
 
-Use:
-- watershed topology;
-- scalar state;
-- graph propagation;
-- staged presentation;
-- local shader/VFX interpretation.
+Never solve hydrology through globally simulated particles. Preserve the semantic graph/scalar/staged approach where it is useful for persistence, ecology, shorelines, channels and offline consequences.
 
-A river "moving" may mean:
-- channel state changes;
-- an alternate spline activates;
-- wetness masks change;
-- vegetation changes;
-- ecology updates;
-- settlement dependencies update.
+Do not require the player to:
+- know reach names;
+- inspect graph state;
+- activate Current Sense;
+- follow an amber diagnostic ripple;
+- perform watershed maintenance as an assigned loop.
 
-The player must see believable consequences without requiring physically exact fluid computation.
+Prefer physical consequences the body can notice: changed water levels, current, mud, vegetation, wildlife behavior, routes, fire/ash and settlement response.
 
-## 8. Repair rules
+## 8. Physical interaction rules
 
-Repair is not a quest-completion button.
+Environmental interaction is not a quest-completion button.
 
 The player should physically participate using Squirtle's body and abilities.
 
-At least one intervention in the prototype must affect:
-- interaction site;
-- downstream/upstream hydrology;
-- ecology;
-- settlement;
-- Lab.
+At least one ordinary physical intervention in the prototype must visibly affect:
+- its immediate physical site; and
+- at least one later world state the player can notice without diagnostic UI.
+
+Hydrology, ecology, settlement or Lab state may provide that later consequence; none is individually mandatory for the first body-first proof.
 
 Avoid binary moral scoring.
 Second-order consequences are desirable.
