@@ -4,6 +4,13 @@
   "toleranceMs": 8.4,
   "confirmationPairs": 2,
   "diagnosticWindows": 2,
+  "protectedWorkload": {
+    "quality": "high",
+    "adaptiveEnabled": false,
+    "adaptiveValue": 1,
+    "pixelRatio": 1,
+    "buffer": "960x640"
+  },
   "scenarios": {
     "high": { "medianMs": 33.4, "p95Ms": 50.1 },
     "channelCut": { "medianMs": 33.4, "p95Ms": 50.1 },

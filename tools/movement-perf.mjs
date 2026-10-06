@@ -16,10 +16,19 @@ try {
   const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
   await page.goto(process.env.BASE_URL || "http://127.0.0.1:5173");
   await page.waitForFunction(() => window.__SF?.loop.frames.length > 15);
-  for (const quality of ["high", "low"]) {
+  const setFixedTimingQuality = async (quality) => {
     await page.click("#settings-toggle");
     await page.selectOption("#quality", quality);
+    if (await page.isChecked("#adaptive")) await page.click("#adaptive");
     await page.click("#settings-toggle");
+    await page.waitForFunction(
+      () => !window.__SF.adaptive.enabled && window.__SF.adaptive.value === 1,
+      null,
+      { timeout: 10000 },
+    );
+  };
+  for (const quality of ["high", "low"]) {
+    await setFixedTimingQuality(quality);
     await page.evaluate(() => {
       window.__SF.loop.frames.length = 0;
     });
@@ -53,6 +62,13 @@ try {
         memory: s.memory,
         render: s.render,
         performance: s.performance,
+        workload: {
+          quality: document.querySelector("#quality").value,
+          adaptiveEnabled: g.adaptive.enabled,
+          adaptiveValue: g.adaptive.value,
+          pixelRatio: g.renderer.getPixelRatio(),
+          buffer: `${g.renderer.domElement.width}x${g.renderer.domElement.height}`,
+        },
         heap: performance.memory?.usedJSHeapSize ?? null,
         renderer: debug
           ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
@@ -133,6 +149,9 @@ try {
     if (evidence.adaptiveAb.findings.scaleReduced)
       assert.equal(evidence.adaptiveAb.findings.bufferShrank, true);
   }
+  // The adaptive-response experiment is diagnostic only. Protected timing must
+  // return to one fixed full-detail workload before any matched comparison.
+  await setFixedTimingQuality("high");
   // A carved groove forces high tessellation on the chunk that holds it, which is
   // only one of nine streamed chunks. Both the "in it" and "looking at it from the
   // next chunk over" views are measured, because the second is where detail cost
@@ -170,6 +189,13 @@ try {
         memory: s.memory,
         render: s.render,
         performance: s.performance,
+        workload: {
+          quality: document.querySelector("#quality").value,
+          adaptiveEnabled: g.adaptive.enabled,
+          adaptiveValue: g.adaptive.value,
+          pixelRatio: g.renderer.getPixelRatio(),
+          buffer: `${g.renderer.domElement.width}x${g.renderer.domElement.height}`,
+        },
       };
     });
     evidence.scenarios.push({ label, ...m });

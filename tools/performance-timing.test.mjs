@@ -6,8 +6,17 @@ import {
   evaluateMatchedTiming,
 } from "./performance-timing.mjs";
 
+const fixedWorkload = Object.freeze({
+  quality: "high",
+  adaptiveEnabled: false,
+  adaptiveValue: 1,
+  pixelRatio: 1,
+  buffer: "960x640",
+});
+
 const budget = {
   toleranceMs: 8.4,
+  protectedWorkload: fixedWorkload,
   confirmationPairs: 2,
   diagnosticWindows: 2,
   scenarios: {
@@ -21,6 +30,7 @@ const budget = {
 function sample(medianMs, p95Ms, windows = [[medianMs, p95Ms], [medianMs, p95Ms]]) {
   return {
     samples: 110,
+    workload: { ...fixedWorkload },
     medianMs,
     p95Ms,
     windows: windows.map(([median, p95]) => ({ medianMs: median, p95Ms: p95 })),
@@ -166,6 +176,37 @@ test("diagnostic window bucket order cannot manufacture a whole-run failure", ()
   assert.equal(result.scenarios.channelDistant.pairedDelta.p95Ms, 0.1);
   assert.equal(result.scenarios.channelDistant.verdict, "PASS");
   assert.equal(result.verdict, "PASS");
+});
+
+test("matched timing rejects adaptive-resolution workload contamination", () => {
+  const baseline = evidence();
+  const candidate = evidence();
+  candidate.channelCut.workload = {
+    quality: "high",
+    adaptiveEnabled: true,
+    adaptiveValue: 0.85,
+    pixelRatio: 0.85,
+    buffer: "816x544",
+  };
+  assert.throws(
+    () => run(balancedPairs(baseline, candidate, baseline, baseline)),
+    /baseline\/candidate workloads differ/,
+  );
+
+  const bothContaminated = evidence();
+  bothContaminated.channelCut.workload = { ...candidate.channelCut.workload };
+  assert.throws(
+    () =>
+      run(
+        balancedPairs(
+          bothContaminated,
+          bothContaminated,
+          baseline,
+          baseline,
+        ),
+      ),
+    /does not match the protected timing workload/,
+  );
 });
 
 test("duplicate execution order is rejected instead of pretending to be independent confirmation", () => {

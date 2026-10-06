@@ -12,6 +12,38 @@ function requireFinite(value, message) {
   return value;
 }
 
+function requireWorkload(workload, side) {
+  if (!workload || typeof workload !== "object") {
+    throw new Error(`${side} workload is required`);
+  }
+  if (typeof workload.quality !== "string" || !workload.quality) {
+    throw new Error(`${side} workload quality is required`);
+  }
+  if (typeof workload.adaptiveEnabled !== "boolean") {
+    throw new Error(`${side} workload adaptiveEnabled must be boolean`);
+  }
+  if (typeof workload.buffer !== "string" || !workload.buffer) {
+    throw new Error(`${side} workload buffer is required`);
+  }
+  return {
+    quality: workload.quality,
+    adaptiveEnabled: workload.adaptiveEnabled,
+    adaptiveValue: requireFinite(
+      workload.adaptiveValue,
+      `${side} workload adaptiveValue must be finite`,
+    ),
+    pixelRatio: requireFinite(
+      workload.pixelRatio,
+      `${side} workload pixelRatio must be finite`,
+    ),
+    buffer: workload.buffer,
+  };
+}
+
+function workloadKey(workload) {
+  return JSON.stringify(workload);
+}
+
 function requireScenario(evidence, label, diagnosticWindows, side) {
   const reader = SCENARIO_READERS[label];
   if (!reader) throw new Error(`unknown performance scenario: ${label}`);
@@ -38,6 +70,7 @@ function requireScenario(evidence, label, diagnosticWindows, side) {
     medianMs: requireFinite(scenario.medianMs, `${side} ${label} medianMs must be finite`),
     p95Ms: requireFinite(scenario.p95Ms, `${side} ${label} p95Ms must be finite`),
     windows,
+    workload: requireWorkload(scenario.workload, `${side} ${label}`),
   };
 }
 
@@ -95,6 +128,11 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
     throw new Error("diagnosticWindows must be an integer >= 1");
   }
   const matchedPairs = requireCounterbalancedPairs(pairs, confirmationPairs);
+  const protectedWorkload = requireWorkload(
+    budget?.protectedWorkload,
+    "timing protected",
+  );
+  const protectedWorkloadKey = workloadKey(protectedWorkload);
   const scenarioNames = Object.keys(budget?.scenarios ?? {});
   if (scenarioNames.length === 0) throw new Error("timing budget must declare protected scenarios");
 
@@ -121,6 +159,16 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
           `pair ${index + 1} ${label} sample counts differ: ${base.samples} baseline vs ${next.samples} candidate`,
         );
       }
+      if (workloadKey(base.workload) !== workloadKey(next.workload)) {
+        throw new Error(
+          `pair ${index + 1} ${label} baseline/candidate workloads differ`,
+        );
+      }
+      if (workloadKey(base.workload) !== protectedWorkloadKey) {
+        throw new Error(
+          `pair ${index + 1} ${label} workload does not match the protected timing workload`,
+        );
+      }
       return {
         pair: index + 1,
         order: pair.order,
@@ -129,12 +177,14 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
           medianMs: base.medianMs,
           p95Ms: base.p95Ms,
           windows: base.windows,
+          workload: base.workload,
         },
         candidate: {
           samples: next.samples,
           medianMs: next.medianMs,
           p95Ms: next.p95Ms,
           windows: next.windows,
+          workload: next.workload,
         },
         delta: {
           medianMs: roundMs(next.medianMs - base.medianMs),
