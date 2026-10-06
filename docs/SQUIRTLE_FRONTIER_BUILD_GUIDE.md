@@ -205,7 +205,6 @@ src/
     shell-slide.js
     water-jet.js
     creature-camera.js
-    current-sense.js
     body-state.js
 
   hydrology/
@@ -1259,37 +1258,47 @@ Cover:
 - water entry/exit;
 - shell slide;
 - Water Jet;
-- Current Sense;
-- watershed propagation;
-- channel transitions;
-- repair persistence;
-- Lab colonization;
-- notable actor promotion;
+- camera collision/recovery;
+- background watershed propagation where retained;
+- channel transitions where retained;
+- visible consequence persistence;
+- wildlife/conspecific/human encounter state;
+- Lab/Deep Record continuity;
 - save/recovery;
 - offline fast-forward.
 
+Tests that pin superseded Current Sense behavior, amber-ripple guidance, watershed-as-objective behavior, or old exact movement tuning must be retired or rewritten only after replacement coverage exists.
+
 ## 70. Browser journey
 
-Automate a representative journey:
+Automate representative **human-shaped** journeys. A journey that claims a player path must use player-available controls for that path; fixture teleportation or direct state injection may isolate setup but may not prove usability.
+
+Core traversal journey:
 1. boot;
 2. move on land;
-3. enter water;
-4. dive;
-5. Water Jet;
-6. shell slide;
-7. Current Sense;
-8. cross chunks;
-9. discover blockage;
-10. repair channel;
-11. save;
-12. reload;
-13. advance/return;
-14. verify downstream ecology;
-15. enter Lab;
-16. verify basin response;
-17. inspect Deep Record;
-18. exit Lab;
-19. verify no console/page errors.
+3. shell slide;
+4. Water Jet;
+5. physically enter water;
+6. swim;
+7. dive/rise;
+8. return to land;
+9. rotate/look near obstacles;
+10. save/reload;
+11. verify no console/page errors and no resource growth.
+
+Consequence journey:
+1. approach an environmental interaction through normal movement;
+2. perform the physical action;
+3. receive immediate visible feedback;
+4. leave/rest/advance;
+5. return;
+6. verify one persistent visible consequence without Current Sense or debug UI.
+
+Encounter journey:
+1. approach wildlife or another actor quietly;
+2. approach with faster/noisier movement;
+3. use Jet or shell nearby;
+4. verify distinct visible behavioral responses.
 
 ## 71. Visual QA
 
@@ -1299,7 +1308,7 @@ Capture and inspect:
 - swimming;
 - underwater;
 - shell slide;
-- Current Sense;
+- environmental readability without diagnostic UI;
 - settlement from Squirtle height;
 - storm;
 - fire aftermath;
@@ -1315,27 +1324,24 @@ Source inspection is not visual QA.
 The prototype passes only when all of these are true:
 
 1. Squirtle is directly playable.
-2. Land, swim/dive, shell slide, and Water Jet each feel distinct.
-3. Creature-scale camera makes ordinary terrain feel large.
-4. One semantic watershed exists.
-5. Current Sense reads real world state.
-6. One hydrology repair can be performed physically.
-7. The repair propagates downstream over simulation time.
-8. Ecology visibly responds.
-9. A settlement visibly responds.
-10. A Lab basin visibly responds.
-11. Save/load preserves the causal chain.
-12. Offline fast-forward advances it correctly.
-13. At least one notable creature can persist across encounters.
-14. The Deep Record has one explorable historical slice.
-15. Streaming and repeated transitions settle without resource growth.
-16. Desktop performance meets the defined threshold.
-17. Mobile-class behavior is measured or explicitly marked unknown.
-18. No unexplained console/page errors remain.
-19. A human tester can understand one major world change without debug numbers.
-20. Movement remains fun when no objective is active.
+2. Scamper, shell slide, swim, dive/rise and Water Jet each feel distinct.
+3. A human can move for ten objective-free minutes on real hardware and voluntarily repeat movement verbs.
+4. Creature-scale camera supports movement without geometry trapping or unwanted steering.
+5. Important nearby environmental conditions are understandable without Current Sense, named-reach telemetry, a quest checklist or debug numbers.
+6. At least one wildlife, human or Squirtle encounter visibly responds to how the player moves or acts.
+7. At least one ordinary physical action produces immediate readable feedback.
+8. At least one later persistent consequence of player action can be noticed physically after leaving/resting/returning.
+9. Background hydrology/ecology/weather/fire state, where retained, remains coherent and persists without becoming player homework.
+10. Save/load and offline fast-forward preserve the world.
+11. Lab/Deep Record continuity remains stable if those areas are included in the slice.
+12. Streaming and repeated transitions settle without resource growth.
+13. Desktop hardware performance is measured against the defined threshold.
+14. Mobile-class behavior is measured or explicitly marked unknown.
+15. Human touch usability and heard audio are reviewed or explicitly remain open.
+16. No unexplained console/page errors remain.
+17. Browser journeys claiming player behavior perform the claimed control path without teleporting around the mechanic under test.
 
-If any of items 1–12 fail, production expansion is blocked.
+Production expansion is blocked if the body-first movement gate, camera/control gate, world-readability gate, persistence/lifecycle gate or required hardware evidence remains failed or unverified.
 
 ---
 
