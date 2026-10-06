@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 38
-status: Body-first Phase 2 implemented on validation branch / merge blocked by matched software-timing gate / full game incomplete
+revision: 39
+status: Body-first Phase 2 performance-cleared for main delivery / full game incomplete
 
 ## Purpose
 
@@ -181,6 +181,22 @@ Phase 0 of the redesign changes authority only. Runtime gameplay changes begin i
 
 
 
+## Body-first Phase 2 matched-performance closure — 2026-10-06
+
+- **PHASE 2 PERFORMANCE GATE PASS ON THE VALIDATION BRANCH.** Exact verified candidate: `54841cbcfdbbfd8671fc6c0b34415747d63480c3`; exact matched control: `2b2dedd2b2187f0735608e1d9e95507257506cf8`.
+- Root cause was the performance proof, not an established Phase 2 runtime regression. The original same-runner gate had two confounders: it always ran baseline before candidate, and its protected channel/Squirtle scenarios inherited adaptive-resolution state from an earlier diagnostic A/B. That allowed runner drift and a different render scale/workload to masquerade as candidate cost.
+- The repair is intentionally stricter, not more permissive: two counterbalanced pairs run baseline→candidate and candidate→baseline; one unexplained breaching pair is INCONCLUSIVE rather than PASS; a replicated breach in both orders is FAIL; sign-reversing order variance cannot pass if its counterbalanced central delta still exceeds the unchanged **8.4 ms** threshold.
+- Protected timing now has an explicit workload identity: **high quality, adaptive resolution disabled, adaptive value 1, pixel ratio 1, 960×640 buffer**. The comparator rejects missing, mismatched or contaminated workload identity instead of comparing unlike runs.
+- Final hosted Verify run `37448792146` on `54841cbcfdbbfd8671fc6c0b34415747d63480c3`: assets PASS; source/architecture/unit suite **271/271 PASS**; mutation suite **80/80 PASS**; production build PASS; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS; matched performance PASS; shoreline capture PASS with **1.50 m** low-to-full long-axis movement; built production bundle PASS; evidence upload PASS.
+- Final counterbalanced Chromium/ANGLE SwiftShader matrix, median/p95 in ms:
+  - **high** — pair 1 baseline **33.3/66.6**, candidate **33.3/50.1**; pair 2 baseline **33.3/66.6**, candidate **33.3/50.1**; paired delta **0.0/-16.5**, PASS.
+  - **channelCut** — pair 1 baseline **49.9/50.1**, candidate **50.0/50.1**; pair 2 baseline **49.9/50.1**, candidate **49.9/50.1**; paired delta **+0.1/0.0**, PASS.
+  - **channelDistant** — pair 1 baseline **49.9/50.1**, candidate **49.9/50.1**; pair 2 baseline **49.9/50.1**, candidate **50.0/50.1**; paired delta **+0.1/0.0**, PASS.
+  - **squirtles** — pair 1 baseline **33.3/66.7**, candidate **33.3/66.7**; pair 2 baseline **33.3/66.7**, candidate **33.3/66.6**; paired delta **0.0/-0.1**, PASS.
+- Final performance verdict contained **no failures, no inconclusive scenarios and no order-sensitive exceptions**. The 8.4 ms threshold was not widened, bad samples were not discarded, and no gameplay/render code was changed to chase SwiftShader noise.
+- Phase 2 is therefore merge-cleared. The branch proof does **not** substitute for final delivery proof: the containing closure revision on `main` must still pass Verify and GitHub Pages after fast-forward.
+- Evidence boundary remains unchanged: ten-minute human movement enjoyment, physical touch feel, physical gamepad feel, heard audio quality, representative Mac/mobile real-GPU performance and overall first-ten-minutes gameplay quality remain **UNKNOWN**, not PASS.
+
 ## Current verified state (supersedes historical checkpoints below)
 
 - Branch `arena/01a0f3be-squirtle-frontier`; source repositories remain read-only. Previously pushed rest/causal slice: `ad926ed`.
@@ -198,7 +214,7 @@ Phase 0 of the redesign changes authority only. Runtime gameplay changes begin i
 
 ## Remaining scope / completion truth
 
-Full project NOT finished. Phase 2 diagnostic removal is implemented on its validation branch but is not merge-cleared because the matched SwiftShader performance gate remained red after the allowed retry. Resolve or adjudicate that performance evidence first without weakening thresholds merely for green CI. After Phase 2 can merge cleanly, continue with the body-first order: separate Water Jet traversal from environmental manipulation; repair shell/step/momentum/camera feel; make water and shore transitions physically expressive; strengthen encounters and visible persistent consequences; rebuild the first ten minutes; then run human-shaped journeys, representative hardware performance checks and the ten-minute human movement gate. Larger-map and major-system expansion remain deferred. Existing simulation, persistence, ecology, Lab and Deep Record work are bounded foundations, not a reason to bypass movement quality.
+Full project NOT finished. Phase 2 diagnostic removal is merge-cleared by hosted run `37448792146` on verified candidate `54841cbcfdbbfd8671fc6c0b34415747d63480c3`; final delivery authority is the Verify and Pages result on the containing `main` revision, not the branch run alone. Continue with the body-first order: separate Water Jet traversal from environmental manipulation; repair shell/step/momentum/camera feel; make water and shore transitions physically expressive; strengthen encounters and visible persistent consequences; rebuild the first ten minutes; then run human-shaped journeys, representative hardware performance checks and the ten-minute human movement gate. Larger-map and major-system expansion remain deferred. Existing simulation, persistence, ecology, Lab and Deep Record work are bounded foundations, not a reason to bypass movement quality.
 
 Evidence: `docs/qa/WORLD_SYSTEMS.md`, `docs/qa/world-browser.json`, `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, performance and historical asset evidence.
 
@@ -397,7 +413,6 @@ R/contextual button near the wooden platform advances the existing regional simu
 - Mutation suite: Added 1 new mutation (killing undisturbed idle standing upright instead of slumber crouch), expanding suite to 27/27 mutations killed by named unit tests.
 - Browser validation: `browser` (movement, save/reload, 12 chunk returns, 30 asset cycles, touch) and `browser:habitat` (rest guard, 12 Lab/frontier cycles) pass with zero resource leaks (0 geometries / 0 textures at teardown).
 ## Loop 2: Creature-centered procedural audio engine checkpoint
-
 - Procedural audio engine (`src/audio.js`) upgraded from a monolithic single-noise lowpass loop into a responsive, creature-centered multi-voice synthesizer operating entirely through a single zero-leak `AudioContext`.
 - Six specialized procedural voice paths:
   1. Master output bus: AudioContext lifecycle management, master gain node with smooth exponential volume ramping and mute handling (`Settings.values.sound`).

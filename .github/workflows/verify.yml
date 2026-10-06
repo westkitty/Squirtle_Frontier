@@ -2,7 +2,7 @@ name: Verify Squirtle Frontier
 
 on:
   push:
-    branches: [main, phase2-sense-watershed-demotion]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
