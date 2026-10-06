@@ -136,7 +136,7 @@ Execute validation using the repository's **actual scripts** from `package.json`
 | Tier | Command | Purpose |
 |---|---|---|
 | **Tier 1: Assets** | `npm run assets` | Validates runtime GLB integrity and manifest hashes. |
-| **Tier 2: Syntax & Unit** | `npm run check` | Runs `tools/arch-check.mjs` (dead import/syntax audit) and `npm test` (`tools/*.test.mjs`, 271 checks). |
+| **Tier 2: Syntax & Unit** | `npm run check` | Runs `tools/arch-check.mjs` (dead import/syntax audit) and `npm test` (`tools/*.test.mjs`, 273 checks). |
 | **Tier 3: Test Authority** | `npm run mutate` | Inverts/removes 80 documented contracts in temp storage; requires named tests to kill each mutation. |
 | **Tier 4: Production Build** | `npm run build` | Verifies production Vite bundle compilation without errors. |
 | **Tier 5: Core Journey** | `BROWSER_BUNDLED=1 npm run browser` | **Primary protective gameplay journey:** land run → shell slide → bank water entry → swimming → dive → boost → ascent → surface launch → camera drag → settings/reduced-motion → save/reload → wet trail → 12 chunk returns → 30 asset cycles → zero teardown. |

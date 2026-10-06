@@ -97,7 +97,7 @@ Browser journeys that claim a player journey must ultimately exercise it through
 
 ## Body-first Phase 2 authority transition — 2026-10-06
 
-Current Sense is no longer an active runtime contract. The source/unit suite now contains **271 checks**: the Phase 2 replacement authority plus matched-performance regressions that protect counterbalanced ordering, ambiguity handling, and fixed workload identity after retiring the one reach-line presentation assertion that existed only to protect the superseded named-reach overlay. The obstruction presentation tests were rewritten in place to protect ordinary physical debris visibility and response instead of amber ripple / flow-mote behavior.
+Current Sense is no longer an active runtime contract. The source/unit suite now contains **273 checks**: the Phase 2 replacement authority plus matched-performance regressions that protect counterbalanced ordering, ambiguity handling, fixed workload identity, exact sample windows, semantic-start identity, and fixed per-render simulation cadence after retiring the one reach-line presentation assertion that existed only to protect the superseded named-reach overlay. The obstruction presentation tests were rewritten in place to protect ordinary physical debris visibility and response instead of amber ripple / flow-mote behavior.
 
 The mutation registry remains **80 contracts**. The former "Current Sense invents Shucker evidence" mutation was not discarded; its real invariant survived the redesign and is now named **"Shucker evidence appears without active Shucker state."** The replacement ecology test proves that evidence and nearby hide/flee behavior require real Shucker pressure, independent of any scanner.
 
