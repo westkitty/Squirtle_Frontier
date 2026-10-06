@@ -275,6 +275,26 @@ test("protected windows are fixed and malformed evidence fails explicitly", () =
     2,
     "high/low and protected scene timing must each use an exact 110-frame window after 10 warm-up frames",
   );
+  assert.match(
+    samplerSource,
+    /matchedFixedStepFrame/,
+    "matched timing must install the test-only fixed-step frame wrapper",
+  );
+  assert.match(
+    samplerSource,
+    /this\.update\(1 \/ 60\);/,
+    "each measured RAF must execute exactly one 1/60 simulation update",
+  );
+  assert.match(
+    samplerSource,
+    /__matchedPaused = true/,
+    "semantic pinning must pause benchmark updates before the start snapshot",
+  );
+  assert.match(
+    samplerSource,
+    /startMatchedSample/,
+    "measurement must resume from the pinned state through one controlled start path",
+  );
 
   const malformed = evidence();
   malformed.scenarios[0].windows = [{ medianMs: 33.4, p95Ms: 50.1 }];

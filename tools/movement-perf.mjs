@@ -18,6 +18,30 @@ try {
     const next = await browser.newPage({ viewport: { width: 960, height: 640 } });
     await next.goto(baseUrl);
     await next.waitForFunction(() => window.__SF?.loop.frames.length > 15);
+    await next.evaluate(() => {
+      const loop = window.__SF.loop;
+      if (loop.__matchedFixedStepInstalled) return;
+      loop.__matchedFixedStepInstalled = true;
+      loop.__matchedPaused = false;
+      loop.frame = function matchedFixedStepFrame(now) {
+        const raw =
+          this.last === null ? 0 : Math.max(0, (now - this.last) / 1000);
+        this.last = now;
+        this.accumulator = 0;
+        if (this.__matchedPaused) {
+          this.render();
+          return;
+        }
+        this.update(1 / 60);
+        this.render();
+        if (raw > 0) {
+          this.frames.push(raw * 1000);
+          if (this.frames.length > 600) this.frames.shift();
+        }
+      };
+      loop.reset();
+      loop.frames.length = 0;
+    });
     return next;
   };
   let page = await openBenchmarkPage();
@@ -63,6 +87,7 @@ try {
       g.state.frontier.ash = Array(16).fill(0);
       g.state.frontier.soaked = Array(16).fill(0);
       g.state.frontier.history = [];
+      g.loop.__matchedPaused = true;
       g.loop.reset();
       g.loop.frames.length = 0;
     });
@@ -99,10 +124,18 @@ try {
       state.update(1);
       state.elapsed = 0;
       state.ecoRemainder = 0;
+      g.loop.__matchedPaused = true;
       g.loop.reset();
       g.loop.frames.length = 0;
     });
   };
+  const startMatchedSample = async () =>
+    page.evaluate(() => {
+      const loop = window.__SF.loop;
+      loop.__matchedPaused = false;
+      loop.reset();
+      loop.frames.length = 0;
+    });
   const semanticStart = async () =>
     page.evaluate(() => {
       const g = window.__SF;
@@ -154,9 +187,7 @@ try {
     await setFixedTimingQuality(quality);
     await pinBenchmarkClock();
     const scenarioStart = await semanticStart();
-    await page.evaluate(() => {
-      window.__SF.loop.frames.length = 0;
-    });
+    await startMatchedSample();
     await page.waitForFunction(
       () => window.__SF.loop.frames.length >= 120,
       null,
@@ -288,9 +319,7 @@ try {
   // can be paid for nothing.
   const measureScene = async (label) => {
     const scenarioStart = await semanticStart();
-    await page.evaluate(() => {
-      window.__SF.loop.frames.length = 0;
-    });
+    await startMatchedSample();
     await page.waitForFunction(
       () => window.__SF.loop.frames.length >= 120,
       null,
