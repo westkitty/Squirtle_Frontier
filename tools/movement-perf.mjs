@@ -52,6 +52,57 @@ try {
       g.loop.frames.length = 0;
     });
   };
+  const pinBenchmarkClock = async () => {
+    await page.evaluate(() => {
+      const g = window.__SF;
+      g.state.elapsed = 0;
+      g.state.ecoRemainder = 0;
+      g.state.frontier.tick = 0;
+      g.state.frontier.heat = Array(16).fill(0);
+      g.state.frontier.fuel = Array(16).fill(1);
+      g.state.frontier.ash = Array(16).fill(0);
+      g.state.frontier.soaked = Array(16).fill(0);
+      g.state.frontier.history = [];
+      g.loop.reset();
+      g.loop.frames.length = 0;
+    });
+  };
+  const pinChannelSemanticStart = async () => {
+    await page.evaluate(() => {
+      const g = window.__SF;
+      const state = g.state;
+      const bypass = state.frontier.bypass;
+      const channelErosion = state.frontier.channelErosion;
+      state.elapsed = 0;
+      state.ecoRemainder = 0;
+      state.frontier.tick = 0;
+      state.frontier.heat = Array(16).fill(0);
+      state.frontier.fuel = Array(16).fill(1);
+      state.frontier.ash = Array(16).fill(0);
+      state.frontier.soaked = Array(16).fill(0);
+      state.frontier.history = [];
+      state.frontier.bypass = bypass;
+      state.frontier.channelErosion = channelErosion;
+      for (const node of state.watershed.nodes) {
+        node.blockage = node.id === "landslide" ? 0.95 : 0;
+        node.flow = 0;
+        node.wetness = 0;
+        node.contamination = 0;
+        node.sediment = 0;
+        node.seasonalModifier = 1;
+        node.vegetation = 0.3;
+        node.erosion = 0;
+        node.stage = 0;
+        node.active = false;
+        node.restoration = 0;
+      }
+      state.update(1);
+      state.elapsed = 0;
+      state.ecoRemainder = 0;
+      g.loop.reset();
+      g.loop.frames.length = 0;
+    });
+  };
   const semanticStart = async () =>
     page.evaluate(() => {
       const g = window.__SF;
@@ -101,6 +152,7 @@ try {
   await resetSemanticBenchmarkState();
   for (const quality of ["high", "low"]) {
     await setFixedTimingQuality(quality);
+    await pinBenchmarkClock();
     const scenarioStart = await semanticStart();
     await page.evaluate(() => {
       window.__SF.loop.frames.length = 0;
@@ -235,7 +287,6 @@ try {
   // next chunk over" views are measured, because the second is where detail cost
   // can be paid for nothing.
   const measureScene = async (label) => {
-    await page.waitForTimeout(1200);
     const scenarioStart = await semanticStart();
     await page.evaluate(() => {
       window.__SF.loop.frames.length = 0;
@@ -308,6 +359,8 @@ try {
         timeout: 60000,
       },
     );
+    await page.waitForTimeout(1200);
+    await pinChannelSemanticStart();
     return measureScene(label);
   };
   evidence.channelCut = await lookAtTheCut(
@@ -368,6 +421,7 @@ try {
     null,
     { timeout: 30000 },
   );
+  await pinBenchmarkClock();
   evidence.squirtles = await measureScene("three nearby Squirtles");
   assert.equal(evidence.squirtles.performance.squirtles.simulation.active, 3);
   assert.equal(evidence.squirtles.performance.squirtles.view.active, 3);
