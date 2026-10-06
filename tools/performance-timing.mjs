@@ -73,6 +73,16 @@ function requireCounterbalancedPairs(pairs, confirmationPairs) {
   return pairs;
 }
 
+function classifyMetric(comparisons, key, toleranceMs) {
+  const deltas = comparisons.map((comparison) => comparison.delta[key]);
+  const over = deltas.filter((delta) => delta > toleranceMs).length;
+  const opposite = deltas.some((delta) => delta < -toleranceMs);
+  if (over === deltas.length) return "FAIL";
+  if (over === 0) return "PASS";
+  if (opposite) return "ORDER_VARIANCE";
+  return "INCONCLUSIVE";
+}
+
 export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candidateRevision }) {
   const toleranceMs = requireFinite(budget?.toleranceMs, "timing toleranceMs must be finite");
   const confirmationPairs = budget?.confirmationPairs;
@@ -89,6 +99,8 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
 
   const scenarios = {};
   const failures = [];
+  const inconclusive = [];
+  const orderSensitive = [];
   for (const label of scenarioNames) {
     const comparisons = matchedPairs.map((pair, index) => {
       const base = requireScenario(
@@ -129,14 +141,21 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
         },
       };
     });
-    const sustainedMedian = comparisons.every(
-      (comparison) => comparison.delta.medianMs > toleranceMs,
-    );
-    const sustainedP95 = comparisons.every(
-      (comparison) => comparison.delta.p95Ms > toleranceMs,
-    );
-    const failed = sustainedMedian || sustainedP95;
+
+    const medianVerdict = classifyMetric(comparisons, "medianMs", toleranceMs);
+    const p95Verdict = classifyMetric(comparisons, "p95Ms", toleranceMs);
+    const failed = medianVerdict === "FAIL" || p95Verdict === "FAIL";
+    const ambiguous =
+      !failed &&
+      (medianVerdict === "INCONCLUSIVE" || p95Verdict === "INCONCLUSIVE");
+    const orderVariance =
+      medianVerdict === "ORDER_VARIANCE" || p95Verdict === "ORDER_VARIANCE";
+    const verdict = failed ? "FAIL" : ambiguous ? "INCONCLUSIVE" : "PASS";
+
     if (failed) failures.push(label);
+    if (ambiguous) inconclusive.push(label);
+    if (orderVariance) orderSensitive.push(label);
+
     scenarios[label] = {
       historicalReference: budget.scenarios[label],
       toleranceMs,
@@ -145,9 +164,12 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
         p95Ms: roundMs(median(comparisons.map((comparison) => comparison.delta.p95Ms))),
       },
       comparisons,
-      sustainedMedian,
-      sustainedP95,
-      verdict: failed ? "FAIL" : "PASS",
+      metricVerdicts: {
+        medianMs: medianVerdict,
+        p95Ms: p95Verdict,
+      },
+      orderVariance,
+      verdict,
     };
   }
 
@@ -163,7 +185,14 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
     diagnosticWindows,
     scenarios,
     failures,
-    verdict: failures.length === 0 ? "PASS" : "FAIL",
+    inconclusive,
+    orderSensitive,
+    verdict:
+      failures.length > 0
+        ? "FAIL"
+        : inconclusive.length > 0
+          ? "INCONCLUSIVE"
+          : "PASS",
   };
 }
 
@@ -172,6 +201,11 @@ export function assertMatchedTiming(args) {
   if (report.failures.length > 0) {
     throw new Error(
       `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
+    );
+  }
+  if (report.inconclusive.length > 0) {
+    throw new Error(
+      `matched performance evidence is inconclusive across counterbalanced pairs for: ${report.inconclusive.join(", ")}`,
     );
   }
   return report;

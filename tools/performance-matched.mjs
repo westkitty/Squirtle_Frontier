@@ -241,11 +241,16 @@ try {
         baselineRevision,
         candidateRevision,
         schedule: report.schedule,
+        failures: report.failures,
+        inconclusive: report.inconclusive,
+        orderSensitive: report.orderSensitive,
         scenarios: Object.fromEntries(
           Object.entries(report.scenarios).map(([name, value]) => [
             name,
             {
               pairedDelta: value.pairedDelta,
+              metricVerdicts: value.metricVerdicts,
+              orderVariance: value.orderVariance,
               verdict: value.verdict,
               comparisons: value.comparisons.map((comparison) => ({
                 pair: comparison.pair,
@@ -269,9 +274,14 @@ try {
     ),
   );
 
-  if (report.verdict !== "PASS") {
+  if (report.verdict === "FAIL") {
     throw new Error(
       `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
+    );
+  }
+  if (report.verdict === "INCONCLUSIVE") {
+    throw new Error(
+      `matched performance evidence remained inconclusive across counterbalanced pairs for: ${report.inconclusive.join(", ")}`,
     );
   }
 } finally {

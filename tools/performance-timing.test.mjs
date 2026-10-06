@@ -70,14 +70,20 @@ test("small matched variation inside tolerance passes in both orders", () => {
   assert.equal(run(balancedPairs(baseline, candidate, baseline, candidate)).verdict, "PASS");
 });
 
-test("one noisy full-run pair is not a replicated regression", () => {
+test("one unexplained breaching pair is inconclusive, not a pass", () => {
   const baseline = evidence();
   const noisy = evidence(33.4, 66.8);
-  const result = run(balancedPairs(baseline, noisy, baseline, baseline));
+  const pairs = balancedPairs(baseline, noisy, baseline, baseline);
+  const result = run(pairs);
   assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
   assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 0);
-  assert.equal(result.scenarios.high.sustainedP95, false);
-  assert.equal(result.verdict, "PASS");
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "INCONCLUSIVE");
+  assert.equal(result.scenarios.high.verdict, "INCONCLUSIVE");
+  assert.equal(result.verdict, "INCONCLUSIVE");
+  assert.throws(
+    () => assertMatchedTiming({ pairs, budget, baselineRevision: "base", candidateRevision: "head" }),
+    /evidence is inconclusive/,
+  );
 });
 
 test("the same whole-run median regression in both execution orders fails", () => {
@@ -85,7 +91,7 @@ test("the same whole-run median regression in both execution orders fails", () =
   const candidate = evidence(50.1, 50.1);
   const pairs = balancedPairs(baseline, candidate, baseline, candidate);
   const result = run(pairs);
-  assert.equal(result.scenarios.high.sustainedMedian, true);
+  assert.equal(result.scenarios.high.metricVerdicts.medianMs, "FAIL");
   assert.equal(result.verdict, "FAIL");
   assert.throws(
     () => assertMatchedTiming({ pairs, budget, baselineRevision: "base", candidateRevision: "head" }),
@@ -97,11 +103,11 @@ test("a replicated roughly one-frame p95 bucket regression fails in both orders"
   const baseline = evidence(33.4, 50.1);
   const candidate = evidence(33.4, 66.8);
   const result = run(balancedPairs(baseline, candidate, baseline, candidate));
-  assert.equal(result.scenarios.high.sustainedP95, true);
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "FAIL");
   assert.equal(result.verdict, "FAIL");
 });
 
-test("counterbalancing rejects monotonic runner drift that changes sign with order", () => {
+test("counterbalancing identifies monotonic runner drift when the sign flips with order", () => {
   const firstBaseline = evidence(66.6, 100.0);
   const firstCandidate = evidence(83.3, 116.7);
   const secondCandidate = evidence(66.6, 100.0);
@@ -111,6 +117,9 @@ test("counterbalancing rejects monotonic runner drift that changes sign with ord
   );
   assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
   assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, -16.7);
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "ORDER_VARIANCE");
+  assert.equal(result.scenarios.high.orderVariance, true);
+  assert.deepEqual(result.orderSensitive, ["high"]);
   assert.equal(result.scenarios.high.verdict, "PASS");
   assert.equal(result.verdict, "PASS");
 });
@@ -125,7 +134,7 @@ test("a real regression survives moderate opposing order drift", () => {
   );
   assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 33.4);
   assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 16.7);
-  assert.equal(result.scenarios.high.sustainedP95, true);
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "FAIL");
   assert.equal(result.verdict, "FAIL");
 });
 
