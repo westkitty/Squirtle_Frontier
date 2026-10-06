@@ -68,11 +68,36 @@ the rim, and the lift is measured from the surface — is now asserted by name i
 `tools/water-level.test.mjs` ("the paint may shimmer, but never wider than the rim it sits
 on"), and that mutation is now killed. Suite total went 105 → 106.
 
+## Redesign authority — 2026-10-06
+
+Mutation tests own **current documented contracts**, not historical behavior forever.
+
+The accepted body-first redesign deliberately supersedes several prior contracts:
+- Current Sense as a required input/UI/discovery mechanic;
+- named-reach diagnosis as ordinary player information;
+- the amber ripple as required guidance;
+- watershed repair as the opening/core player loop;
+- exact Water Jet pulse/cooldown/body-yaw interaction behavior where it conflicts with the later traversal/manipulation redesign;
+- exact shell friction, step threshold, braking, speed-cap and camera-coupling tuning where later movement work intentionally replaces them.
+
+When implementation reaches one of these contracts:
+
+1. identify every mutation and named test that encodes the superseded rule;
+2. add replacement coverage for the new player-facing invariant first;
+3. then retire or rewrite the obsolete mutation/test;
+4. never weaken a test merely because current code fails it;
+5. preserve simulation/persistence/resource invariants that remain authoritative.
+
+A mutation kill proves the suite owns a rule. It does **not** prove the rule is still the correct product design.
+
+Browser journeys that claim a player journey must ultimately exercise it through player-available controls. Fixture teleportation or direct state injection may remain for setup/isolation, but must be labeled as such and cannot prove that the equivalent human control path is usable.
+
 ## What it deliberately does not cover
 
-- Anything only a browser can show: DOM, the render loop's wiring in `src/main.js`, GPU
-  cost. That is the journey ladder's job, which is why the Deep Record leg earns its
-  reading with input rather than by pinning the body.
+- Anything only a browser or human can show: DOM, render-loop wiring, GPU cost, camera
+  comfort or movement enjoyment. Browser journeys own deterministic user-path behavior;
+  humans own pleasure and comfort. A journey must not use fixture movement to claim
+  usability of a path a human must physically perform.
 - Internals that are tuning rather than promise. The wetland's relaxation time constant
   (`1 - exp(-dt / 12)`) is deliberately _not_ in the list: a survivor there would only say
   "nothing pins a number nobody documented", which is a fact about the list, not the game.
