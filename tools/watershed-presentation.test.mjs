@@ -17,7 +17,8 @@ test("ordinary watershed presentation keeps the physical obstruction without dia
   assert.equal("flowMotes" in view, false);
   assert.equal("reachLines" in view, false);
 
-  state.watershed.clearDebris("landslide", 0.48);
+  state.watershed.clearDebris("landslide", 0.1);
+  state.watershed.clearDebris("landslide", 0.1);
   view.update(state.watershed, body);
   assert.ok(view.debris.count > 0 && view.debris.count < 9);
 

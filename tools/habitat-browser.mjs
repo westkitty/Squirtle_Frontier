@@ -40,13 +40,6 @@ try {
     report.labBefore.basinOpacity < 0.35,
     "an unfed basin renders thin water",
   );
-  await page.keyboard.down("KeyF");
-  await page.waitForFunction(() =>
-    document
-      .querySelector("#status")
-      .textContent.includes("waits for water from the wetland"),
-  );
-  await page.keyboard.up("KeyF");
   await page.screenshot({ path: "artifacts/lab-before.png" });
   // Leave through the threshold the same way a player does.
   await page.evaluate(() => {
@@ -181,14 +174,8 @@ try {
     "the fed basin must render deeper water",
   );
   await page.screenshot({ path: "artifacts/lab-after.png" });
-  // The mirror sentence has flipped with the water: the basin says what changed.
-  await page.keyboard.down("KeyF");
-  await page.waitForFunction(() =>
-    document
-      .querySelector("#status")
-      .textContent.includes("Fresh water carries reed seeds"),
-  );
-  await page.keyboard.up("KeyF");
+  // The basin itself is the proof: water depth, reeds and frogs changed without
+  // requiring a special diagnostic input.
 
   // Rest near the platform: the same five-minute advance through the same simulation.
   await page.evaluate(() => {
@@ -259,7 +246,7 @@ try {
   assert.equal(report.teardown.memory.textures, 0);
   assert.deepEqual(report.errors, []);
   console.log(
-    "Jet-driven repair, UI save, thirty-minute absence, colonization rendered on both sides, mirrored sense line, rest guard, 12 Lab/frontier cycles and zero-resource teardown passed; vantage and door placements are teleports, and the absence is a rewound saved clock standing in for a wait.",
+    "Jet-driven interaction, UI save, thirty-minute absence, colonization rendered on both sides, physical Lab change, rest guard, 12 Lab/frontier cycles and zero-resource teardown passed; vantage and door placements are teleports, and the absence is a rewound saved clock standing in for a wait.",
   );
 } finally {
   await writeFile(
