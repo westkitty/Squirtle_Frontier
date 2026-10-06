@@ -7,9 +7,15 @@ Durable instructions for Antigravity agents working on `westkitty/Squirtle_Front
 ## 1. Protagonist & Design Thesis
 
 - **The player IS Squirtle.** Not a trainer, not a human handler, not an abstract cursor.
-- **Creature Scale:** The frontier is vast, indifferent, and experienced at Squirtle's physical height. Camera framing, collision geometry, traversal routes, and human structures must reflect creature scale.
-- **No Conventional RPG Clutter:** No trainer avatars, monster-catching loops, quest checklists, or generic hotbars. Water is locomotion, sensation, ecological infrastructure, and world repair.
-- **Causal Depth over Asset Sprawl:** Emotional awe comes from persistent consequences (returning to find altered watercourses, recovering vegetation, adapting settlements, colonized Lab basins), not brute asset density.
+- **Body First:** Running, swimming, diving, shell-sliding and Water Jet are the primary product surface. Movement must be pleasurable without an objective before major feature expansion.
+- **Creature Scale:** The frontier is vast, indifferent, and experienced at Squirtle's physical height. Camera framing, collision geometry, traversal routes, water entrances and human structures must reflect creature scale.
+- **Encounter Over Explanation:** Other Squirtles, wildlife, humans, structures, weather and environmental events should create curiosity through visible behavior and physical cues.
+- **Consequence Over Maintenance:** The world may use hydrology, ecology, settlements, fire and persistence internally, but the player is not a hydrologist. Simulation supports physical consequences; it does not assign system-maintenance homework.
+- **No Conventional RPG Clutter:** No trainer avatars, monster-catching loops, quest checklists or generic hotbars.
+- **Environmental Readability:** Important local conditions must be discoverable in the world. Text is reinforcement/accessibility, not the only source of truth.
+- **Causal Depth over Asset Sprawl:** Emotional awe comes from returning to a place and noticing that it changed because of prior actions.
+
+**Controlling rule:** simulation is allowed to be complicated internally. Playing Squirtle is not.
 
 ---
 
@@ -43,24 +49,44 @@ Preserve existing architectural decisions unless explicit repository evidence ma
 
 ---
 
-## 4. Protected Gameplay Capabilities (Strict Non-Regression)
+## 4. Protected Capabilities and Redesign Authority
 
-A new change **cannot** survive by breaking verified working behavior. The following verified capabilities are protected against regression:
+A new change cannot survive by casually breaking verified infrastructure. However, the 2026-10-06 body-first redesign intentionally supersedes several old player-facing contracts. Distinguish **protected capability** from **legacy behavior scheduled to change**.
 
-1. **Land Locomotion:** Responsive walk, sprint/scamper (Shift), slope alignment, grounded step handling, footstep surface audio, idle breathing/tail sway, living slumber crouch with respiration audio, and smooth recovery on wake.
-2. **Wading & Shorelines:** Discrete wading offset (5 cm) and paint lift (1.5 cm) relative to dynamically derived water levels (`waterAt`), with water surface wake ripples and lapping shoreline edges.
-3. **Swimming:** Distinct aquatic controller state, buoyancy equilibrium, flipper paddle strokes, tail rudder undulation, yaw-rate banking, and speed wake density.
-4. **Diving & Surfacing:** Hold Q (dive) / Hold E (rise), vertical body pitch attitude following vertical velocity, depth-graded underwater audio attenuation (occluding rain/stream/fauna), and sediment/contamination particulate scaling.
-5. **Shell Slide:** Hold C / Hold Shell, full extremity retraction, downhill acceleration, surface-dependent friction, banking/steering, speed-driven shell spin without mutating authoritative body yaw, impact micro-recoil, and dust trails.
-6. **Water Jet Traversal & Action:** Hold Space / Hold Jet, forward propulsion impulse, underwater boost, surface launch, uphill assist, aimed debris clearance at the landslide, ash rinsing on burnt ground, fire suppression, and side-groove opening. Uses dedicated particle pool and hydrodynamic surge audio.
-7. **Collision & Camera/Input:** Analytic ground heights, cached static obstacle colliders, boom smoothing, low creature-scale eye line, camera recenter (keyboard V / gamepad R3), tri-state reduced-motion support, and modal panel input suppression (Escape dismisses). Multi-modality tracking (keyboard/mouse, touch stick, standard Gamepad API).
-8. **Terrain & Chunk Streaming:** 24 m chunk size, streamed LOD (128 segments on the player's groove chunk, 64 segments on the immediate ring, 32 standard), static collider ground caching, and clean chunk disposal.
-9. **Watershed & Hydrology:** Semantic DAG (spring → landslide → wetland → outlet), dynamic basin water level (+0.28 / -0.05 m derived from wetness), named reach inflow network (Spring gully, South draw, Long spur, North run, Basin door run, Drainage groove), and stage-reconstructed channel terrain.
-10. **Current Sense:** Hold F / Hold Sense in water or on reaches. Animates downstream flow motes along active reaches, ripples at disturbances, reports reach name and water depth, and detects real Shucker evidence without inventing false signals.
-11. **Wildlife & Conspecific Ecology:** Near prey foraging/fleeing and predator stalking/ambushing (capped within 28 m); thirst-driven drinking at wet shores; same-kind separation steering. Conspecific ecology with 5 ecotypes (Freshwater, Marsh, Urban active in Stillwater; Saltwater, Deepwater system-valid but habitat-ineligible); hard cap of 3 near projected Squirtles; max 4 persistent notable conspecific memories.
-12. **Human Legality & Settlement:** Caretaker response ladder (fear, drought/check-water, calm familiarity, protection, reporting beyond the reeds); cistern-fed water bowl consumption after calm visits; contextual ambient dialogue.
-13. **Hydrological Lab & Deep Record:** Submerged Lab entry from western bank, 5-minute rest/fast-forward (R) with edge-latch, delayed probabilistic reed/frog colonization, flooded Deep Record shaft (22 m depth, 8 seeded strata), pure `deepTimeLedger` matching HUD `<dl>`, and strata hold-to-read logging.
-14. **Persistence, Concurrency & Recovery:** Version 7 save schema with migration from v1–6; place-scoped body pose resume with physics settling; `navigator.locks` critical-section serialization; stale-tab conflict refusal with in-place adoption (`adoptStoredWorld`); backup quarantine; and bounded 6-hour offline fast-forward.
+### 4.1 Protected foundations
+
+Preserve these capabilities unless the active phase explicitly replaces them with validated equivalents:
+
+1. **Direct Squirtle Body Authority:** One authoritative body-state controller separated from imported scene hierarchy.
+2. **Land/Water Mode Coverage:** The player can locomote on land, wade/swim, dive/rise, shell-slide and use Water Jet. Exact tuning, step thresholds, friction constants, braking curves, velocity caps and transition rules are *not* protected merely because tests currently pin them.
+3. **Creature Presentation Seam:** Procedural body presentation, wetness, shell retraction/spin, wake/splash/dust and asset ownership remain behind the PlayableCreature/presentation boundary.
+4. **Camera/Input/Accessibility Foundation:** Low creature-scale camera, obstacle/terrain constraint, recenter, sensitivity/invert, reduced-motion support, keyboard/mouse, touch and standard Gamepad API remain supported. Exact camera behavior may be changed to remove penetration or involuntary steering.
+5. **Terrain & Chunk Streaming:** Existing chunk ownership, LOD, collider caching and clean disposal remain protected while traversal composition is changed.
+6. **Background World Simulation:** Weather, fire, ecology, semantic hydrology, water levels, wetness, sediment/contamination, staged channels and offline advancement remain available as background consequence machinery. Their current *player-facing diagnosis* is not protected.
+7. **Wildlife & Conspecific Ecology:** Near prey/predator behavior, bounded projected Squirtles, persistent notable memories and legality/Shucker state remain protected as data/behavior foundations.
+8. **Human & Settlement State:** Caretaker fear/familiarity/protection/reporting and water-dependent bowl/cistern state remain protected as consequence/encounter foundations.
+9. **Lab & Deep Record:** Scene exclusion, Lab access, rest/fast-forward, basin/colonization state, Deep Record access and saved strata knowledge remain protected as optional world content.
+10. **Persistence, Concurrency & Recovery:** Versioned semantic saves, migration, body-pose resume, locking/conflict handling, backup quarantine and bounded offline fast-forward remain strict non-regression areas.
+11. **Resource Lifecycle and Performance Discipline:** Zero-leak teardown, hot-path allocation discipline, draw/geometry budgets and evidence honesty remain strict.
+
+### 4.2 Explicitly superseded or redesign-authorized contracts
+
+The following old behaviors must **not** be restored simply because historical tests or documents contain them:
+
+- **Current Sense:** scheduled for complete removal from keyboard/touch/gamepad controls, status text and player-facing discovery. Do not add new dependencies to it.
+- **Sense-only presentation:** amber disturbance ripple, Sense-only flow motes, named-reach diagnosis and Sense-only Shucker/conspecific telemetry are not protected.
+- **Watershed-as-objective:** the player is no longer required to diagnose or repair a watershed graph. The watershed may remain authoritative internally and drive visible consequences.
+- **Opening hydrology tutorial:** the landslide may remain an optional physical interaction, but it is not the required opening loop.
+- **Exact Water Jet contract:** the current hold-to-pulsed-impulse/cooldown/body-yaw environmental interaction may be replaced by a clearer traversal/manipulation design.
+- **Exact Shell/step tuning:** altitude-based slide friction, 0.18 m hard-step cancellation, immediate release braking and the current global speed cap are authorized for replacement when the movement phase reaches them.
+- **Exact camera-relative look/movement coupling:** may be changed if human or runtime evidence shows unintended redirection.
+- **Simulation telemetry in ordinary UI:** ongoing hydrology/ecology diagnostics are not protected product features.
+
+When implementation reaches one of these areas, retire or rewrite tests/mutations that assert the superseded behavior **only after replacement coverage exists**. Never weaken tests merely to make a broken implementation pass.
+
+### 4.3 Expansion gate
+
+No new major gameplay subsystem, world-scale expansion, or semantic-simulation expansion may be added until the Phase 1 human movement gate passes. The five core verbs—scamper, shell, swim, dive and Jet—plus camera must be enjoyable on real hardware without objectives.
 
 ---
 
