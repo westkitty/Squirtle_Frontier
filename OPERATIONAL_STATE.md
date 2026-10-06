@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 37
-status: Body-first Phase 1 baseline complete / legacy causal slice still runnable / Phase 2 implementation pending / full game incomplete
+revision: 38
+status: Body-first Phase 2 implemented on validation branch / merge blocked by matched software-timing gate / full game incomplete
 
 ## Purpose
 
@@ -83,7 +83,7 @@ Adapt from Squirtle Lab:
 - Movement must be body-specific: land locomotion, swimming/diving, shell slide, and Water Jet must feel materially different and must be evaluated as play, not merely as passing mechanics.
 - **The body-first gate controls feature growth.** Do not add major systemic-world complexity while objective-free movement enjoyment remains unverified.
 - Environmental state must be legible primarily through the physical world. Text may reinforce or provide accessibility, but it must not be the only way to understand an important local condition.
-- Current Sense is a legacy runtime capability scheduled for removal. It is explicitly **not** protected against redesign, and no new feature may depend on it.
+- Current Sense is removed from active gameplay on the Phase 2 validation branch. Do not reintroduce it, rename it, or bind its retired inputs to a substitute diagnostic mode.
 - The watershed remains semantic/background infrastructure for now. Preserve its useful persistence and ecological consequences while removing the obligation for the player to diagnose or repair a graph.
 - Water simulation must remain layered/semantic; do not implement global physically accurate fluid simulation.
 - Large-scale erosion must remain staged/state-driven; do not implement global destructible voxel terrain.
@@ -135,11 +135,11 @@ Current Sense, named-reach diagnosis, the amber ripple, and watershed repair as 
 
 The user explicitly accepted a body-first redesign after comparative and runtime gameplay audits.
 
-This decision supersedes earlier product directives that treated Current Sense, watershed diagnosis, or deliberate hydrological repair as protected player-facing pillars. The existing runtime still contains those features until later implementation phases remove or demote them; their current presence is implementation state, not design authority.
+This decision supersedes earlier product directives that treated Current Sense, watershed diagnosis, or deliberate hydrological repair as protected player-facing pillars. Body-first Phase 2 now removes those player-facing diagnostic surfaces on its validation branch while retaining useful background simulation.
 
 Effective immediately:
 
-- Current Sense is scheduled for complete removal from controls, HUD/status, player-facing simulation diagnosis and discovery.
+- Current Sense is removed from controls, HUD/status, player-facing simulation diagnosis and discovery on the Phase 2 validation branch.
 - The semantic watershed is retained as background simulation/persistence unless later evidence shows that a smaller model is sufficient.
 - The watershed may influence the world; it may not dictate what the player must do.
 - Water Jet is authorized for a later redesign separating traversal intent from continuous environmental manipulation.
@@ -166,6 +166,21 @@ Phase 0 of the redesign changes authority only. Runtime gameplay changes begin i
 - The next implementation phase may remove Current Sense and demote watershed diagnosis only after preserving or replacing any useful information through world-readable evidence. Larger-map or major-system expansion remains blocked by the human body-first gate.
 
 
+## Body-first Phase 2 validation checkpoint — 2026-10-06
+
+- **IMPLEMENTED ON VALIDATION BRANCH; NOT MERGE-CLEARED.** Branch `phase2-sense-watershed-demotion` reached implementation head `79ff5e474dae5bbe780d1b6409c15342355f4a2f`. `main` remains the Phase 1 closure `7e1b2300f26e04dde0443230665f8858e1446757`.
+- Active Current Sense surfaces are removed: no F/X/touch Sense input, no `senseWater()`, no amber obstruction ripple, no Sense-only flow motes, no named-reach status diagnosis, no Sense-only Squirtle/Shucker telemetry, and no live named-waterway/wetland diagnostic panel in ordinary play.
+- The useful simulation foundation remains: semantic watershed state, derived water level and shoreline, wetness/sediment/contamination, staged channel state, ecology/settlement dependencies, persistence/offline advancement, Shucker state, conspecific traces and actor behavior.
+- The optional landslide remains ordinary physical world geometry. Water Jet can still act on it; downstream shoreline/ecology consequences remain simulation-driven rather than objective-driven.
+- Replacement test authority is in place: source/architecture/unit suite is **268 checks**; mutation authority remains **80 contracts** with Shucker truth protected independently of any scanner. Habitat/world/watershed/Squirtle browser proofs no longer press or read Current Sense.
+- Initial validation run `37432595947` exposed two deterministic test migrations (a debris-instance rounding expectation and legacy Habitat F-key assertions); both were repaired in the single allowed bounded repair pass.
+- Fresh verification run `37434198582` passes assets, **268/268** source/architecture/unit checks, **80/80** mutation checks, production build, all functional browser journeys, shoreline capture (**1.50 m** low-to-full long-axis movement), built production bundle and evidence upload. The aggregate remains red **only** on matched Chromium/ANGLE SwiftShader timing.
+- Performance attempt 1 failed varying software-timing scenarios (`high`, `squirtles`). The one allowed no-code retry (attempt 2) failed `channelDistant`: baseline/candidate median both **66.6 ms**, but p95 moved **66.8 → 116.6 ms**. Candidate resource counts were lower (**21 vs 23 geometries; 27 vs 28 calls**) with identical **36,935** triangles. This is software-renderer tail variance evidence, not hardware/mobile proof, but the repository gate is still formally failed.
+- Because the allowed timing retry also failed, thresholds were **not** widened, the renderer was **not** speculatively redesigned, and Phase 2 was **not merged to `main`**. No public deployment of Phase 2 is claimed.
+- Next bounded action is performance-gate diagnosis/evidence adjudication (or representative hardware evidence) without weakening the existing threshold merely to obtain green CI. Phase 3 / larger-map / major-system expansion remains blocked.
+
+
+
 ## Current verified state (supersedes historical checkpoints below)
 
 - Branch `arena/01a0f3be-squirtle-frontier`; source repositories remain read-only. Previously pushed rest/causal slice: `ad926ed`.
@@ -183,7 +198,7 @@ Phase 0 of the redesign changes authority only. Runtime gameplay changes begin i
 
 ## Remaining scope / completion truth
 
-Full project NOT finished. Immediate remaining work is now ordered by the body-first redesign: preserve a regression baseline; retire obsolete Current Sense/watershed-as-objective contracts; remove Current Sense without losing world readability; demote hydrology to background consequence; separate Water Jet traversal from environmental manipulation; repair shell/step/momentum/camera feel; make water and shore transitions physically expressive; strengthen encounters and visible persistent consequences; rebuild the first ten minutes; then run human-shaped journeys, hardware performance checks and the ten-minute human movement gate. Larger-map and major-system expansion remain deferred. Existing simulation, persistence, ecology, Lab and Deep Record work are bounded foundations, not a reason to bypass movement quality.
+Full project NOT finished. Phase 2 diagnostic removal is implemented on its validation branch but is not merge-cleared because the matched SwiftShader performance gate remained red after the allowed retry. Resolve or adjudicate that performance evidence first without weakening thresholds merely for green CI. After Phase 2 can merge cleanly, continue with the body-first order: separate Water Jet traversal from environmental manipulation; repair shell/step/momentum/camera feel; make water and shore transitions physically expressive; strengthen encounters and visible persistent consequences; rebuild the first ten minutes; then run human-shaped journeys, representative hardware performance checks and the ten-minute human movement gate. Larger-map and major-system expansion remain deferred. Existing simulation, persistence, ecology, Lab and Deep Record work are bounded foundations, not a reason to bypass movement quality.
 
 Evidence: `docs/qa/WORLD_SYSTEMS.md`, `docs/qa/world-browser.json`, `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, performance and historical asset evidence.
 
