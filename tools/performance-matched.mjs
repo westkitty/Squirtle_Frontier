@@ -30,12 +30,35 @@ const baselineRoot = join(tempRoot, "baseline");
 const artifactDir = join(root, "artifacts/performance");
 mkdirSync(artifactDir, { recursive: true });
 
-const schedule = [
-  { key: "baseline-a", side: "baseline", pair: 1, order: "baseline-candidate" },
-  { key: "candidate-a", side: "candidate", pair: 1, order: "baseline-candidate" },
-  { key: "candidate-b", side: "candidate", pair: 2, order: "candidate-baseline" },
-  { key: "baseline-b", side: "baseline", pair: 2, order: "candidate-baseline" },
+const pairOrders = [
+  "baseline-candidate",
+  "candidate-baseline",
+  "candidate-baseline",
+  "baseline-candidate",
 ];
+if (budget.confirmationPairs !== pairOrders.length) {
+  throw new Error(
+    `movement budget confirmationPairs must be ${pairOrders.length} for the balanced matched schedule`,
+  );
+}
+const schedule = pairOrders.flatMap((order, index) => {
+  const pair = index + 1;
+  const baseline = {
+    key: `baseline-${pair}`,
+    side: "baseline",
+    pair,
+    order,
+  };
+  const candidate = {
+    key: `candidate-${pair}`,
+    side: "candidate",
+    pair,
+    order,
+  };
+  return order === "baseline-candidate"
+    ? [baseline, candidate]
+    : [candidate, baseline];
+});
 
 function git(args, cwd = root) {
   return execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
@@ -193,18 +216,14 @@ try {
   }
   const [renderer] = rendererSet;
 
-  const pairs = [
-    {
-      order: "baseline-candidate",
-      baseline: runs["baseline-a"],
-      candidate: runs["candidate-a"],
-    },
-    {
-      order: "candidate-baseline",
-      baseline: runs["baseline-b"],
-      candidate: runs["candidate-b"],
-    },
-  ];
+  const pairs = pairOrders.map((order, index) => {
+    const pair = index + 1;
+    return {
+      order,
+      baseline: runs[`baseline-${pair}`],
+      candidate: runs[`candidate-${pair}`],
+    };
+  });
   const timing = evaluateMatchedTiming({
     pairs,
     budget,
@@ -226,7 +245,7 @@ try {
 
   writeFileSync(
     join(root, "docs/performance/phase1-measured.json"),
-    JSON.stringify(runs["candidate-b"], null, 2) + "\n",
+    JSON.stringify(runs[`candidate-${budget.confirmationPairs}`], null, 2) + "\n",
   );
   writeFileSync(
     join(artifactDir, "matched-performance.json"),
@@ -250,6 +269,7 @@ try {
             {
               pairedDelta: value.pairedDelta,
               metricVerdicts: value.metricVerdicts,
+              metricEvidence: value.metricEvidence,
               orderVariance: value.orderVariance,
               verdict: value.verdict,
               comparisons: value.comparisons.map((comparison) => ({
@@ -276,7 +296,7 @@ try {
 
   if (report.verdict === "FAIL") {
     throw new Error(
-      `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
+      `matched performance regression exceeded ${report.toleranceMs} ms in a replicated majority of counterbalanced pairs for: ${report.failures.join(", ")}`,
     );
   }
   if (report.verdict === "INCONCLUSIVE") {

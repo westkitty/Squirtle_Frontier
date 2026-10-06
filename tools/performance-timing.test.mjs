@@ -17,7 +17,7 @@ const fixedWorkload = Object.freeze({
 const budget = {
   toleranceMs: 8.4,
   protectedWorkload: fixedWorkload,
-  confirmationPairs: 2,
+  confirmationPairs: 4,
   diagnosticWindows: 2,
   scenarios: {
     high: { medianMs: 33.4, p95Ms: 50.1 },
@@ -26,6 +26,13 @@ const budget = {
     squirtles: { medianMs: 16.8, p95Ms: 33.4 },
   },
 };
+
+const ORDERS = [
+  "baseline-candidate",
+  "candidate-baseline",
+  "candidate-baseline",
+  "baseline-candidate",
+];
 
 function sample(medianMs, p95Ms, windows = [[medianMs, p95Ms], [medianMs, p95Ms]]) {
   return {
@@ -53,6 +60,21 @@ function pair(order, baseline, candidate) {
   return { order, baseline, candidate };
 }
 
+function explicitPairs(entries) {
+  return entries.map(([baseline, candidate], index) =>
+    pair(ORDERS[index], baseline, candidate),
+  );
+}
+
+function balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate) {
+  return explicitPairs([
+    [firstBaseline, firstCandidate],
+    [secondBaseline, secondCandidate],
+    [secondBaseline, secondCandidate],
+    [firstBaseline, firstCandidate],
+  ]);
+}
+
 function run(pairs) {
   return evaluateMatchedTiming({
     pairs,
@@ -62,31 +84,23 @@ function run(pairs) {
   });
 }
 
-function balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate) {
-  return [
-    pair("baseline-candidate", firstBaseline, firstCandidate),
-    pair("candidate-baseline", secondBaseline, secondCandidate),
-  ];
-}
-
 test("equal counterbalanced measurements pass", () => {
   const same = evidence();
   assert.equal(run(balancedPairs(same, same, same, same)).verdict, "PASS");
 });
 
-test("small matched variation inside tolerance passes in both orders", () => {
+test("small matched variation inside tolerance passes in every pair", () => {
   const baseline = evidence();
   const candidate = evidence(41.7, 58.4);
   assert.equal(run(balancedPairs(baseline, candidate, baseline, candidate)).verdict, "PASS");
 });
 
-test("one unexplained breaching pair is inconclusive, not a pass", () => {
+test("two unexplained breaching pairs remain inconclusive rather than passing", () => {
   const baseline = evidence();
   const noisy = evidence(33.4, 66.8);
   const pairs = balancedPairs(baseline, noisy, baseline, baseline);
   const result = run(pairs);
-  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
-  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 0);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.breachCount, 2);
   assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "INCONCLUSIVE");
   assert.equal(result.scenarios.high.verdict, "INCONCLUSIVE");
   assert.equal(result.verdict, "INCONCLUSIVE");
@@ -96,37 +110,55 @@ test("one unexplained breaching pair is inconclusive, not a pass", () => {
   );
 });
 
-test("the same whole-run median regression in both execution orders fails", () => {
+test("replicated majority median regression fails", () => {
   const baseline = evidence();
   const candidate = evidence(50.1, 50.1);
-  const pairs = balancedPairs(baseline, candidate, baseline, candidate);
+  const clean = evidence();
+  const pairs = explicitPairs([
+    [baseline, candidate],
+    [baseline, candidate],
+    [baseline, candidate],
+    [baseline, clean],
+  ]);
   const result = run(pairs);
+  assert.equal(result.scenarios.high.metricEvidence.medianMs.breachCount, 3);
+  assert.equal(result.scenarios.high.metricEvidence.medianMs.requiredFailureCount, 3);
   assert.equal(result.scenarios.high.metricVerdicts.medianMs, "FAIL");
   assert.equal(result.verdict, "FAIL");
   assert.throws(
     () => assertMatchedTiming({ pairs, budget, baselineRevision: "base", candidateRevision: "head" }),
-    /both counterbalanced pairs/,
+    /replicated majority/,
   );
 });
 
-test("a replicated roughly one-frame p95 bucket regression fails in both orders", () => {
+test("one isolated p95 bucket breach is retained but does not establish a regression", () => {
   const baseline = evidence(33.4, 50.1);
-  const candidate = evidence(33.4, 66.8);
-  const result = run(balancedPairs(baseline, candidate, baseline, candidate));
-  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "FAIL");
-  assert.equal(result.verdict, "FAIL");
+  const noisy = evidence(33.4, 66.8);
+  const pairs = explicitPairs([
+    [baseline, noisy],
+    [baseline, baseline],
+    [baseline, baseline],
+    [baseline, baseline],
+  ]);
+  const result = run(pairs);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.breachCount, 1);
+  assert.deepEqual(result.scenarios.high.metricEvidence.p95Ms.deltas, [16.7, 0, 0, 0]);
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "PASS");
+  assert.equal(result.verdict, "PASS");
 });
 
-test("counterbalancing identifies monotonic runner drift when the sign flips with order", () => {
-  const firstBaseline = evidence(66.6, 100.0);
-  const firstCandidate = evidence(83.3, 116.7);
-  const secondCandidate = evidence(66.6, 100.0);
-  const secondBaseline = evidence(83.3, 116.7);
-  const result = run(
-    balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate),
-  );
-  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 16.7);
-  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, -16.7);
+test("counterbalancing identifies symmetric order drift when signs reverse", () => {
+  const fast = evidence(66.6, 100.0);
+  const slow = evidence(83.3, 116.7);
+  const pairs = explicitPairs([
+    [fast, slow],
+    [slow, fast],
+    [slow, fast],
+    [fast, slow],
+  ]);
+  const result = run(pairs);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.breachCount, 2);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.improvementCount, 2);
   assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "ORDER_VARIANCE");
   assert.equal(result.scenarios.high.orderVariance, true);
   assert.ok(result.orderSensitive.includes("high"));
@@ -135,34 +167,31 @@ test("counterbalancing identifies monotonic runner drift when the sign flips wit
 });
 
 test("sign reversal cannot pass when the counterbalanced delta still exceeds tolerance", () => {
-  const firstBaseline = evidence(66.6, 100.0);
-  const firstCandidate = evidence(83.3, 150.0);
-  const secondCandidate = evidence(66.6, 116.7);
-  const secondBaseline = evidence(83.3, 133.4);
-  const pairs = balancedPairs(
-    firstBaseline,
-    firstCandidate,
-    secondBaseline,
-    secondCandidate,
-  );
+  const baselineA = evidence(66.6, 100.0);
+  const candidateA = evidence(83.3, 150.0);
+  const baselineB = evidence(83.3, 133.4);
+  const candidateB = evidence(66.6, 116.7);
+  const pairs = balancedPairs(baselineA, candidateA, baselineB, candidateB);
   const result = run(pairs);
-  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 50);
-  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, -16.7);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.breachCount, 2);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.improvementCount, 2);
   assert.equal(result.scenarios.high.pairedDelta.p95Ms, 16.7);
   assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "INCONCLUSIVE");
   assert.equal(result.verdict, "INCONCLUSIVE");
 });
 
-test("a real regression survives moderate opposing order drift", () => {
-  const firstBaseline = evidence(66.6, 100.0);
-  const firstCandidate = evidence(83.3, 133.4);
-  const secondCandidate = evidence(83.3, 116.7);
-  const secondBaseline = evidence(66.6, 100.0);
-  const result = run(
-    balancedPairs(firstBaseline, firstCandidate, secondBaseline, secondCandidate),
-  );
-  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 33.4);
-  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, 16.7);
+test("a real regression survives one opposing outlier", () => {
+  const baseline = evidence(66.6, 100.0);
+  const candidate = evidence(83.3, 133.4);
+  const better = evidence(66.6, 83.3);
+  const pairs = explicitPairs([
+    [baseline, candidate],
+    [baseline, candidate],
+    [baseline, candidate],
+    [baseline, better],
+  ]);
+  const result = run(pairs);
+  assert.equal(result.scenarios.high.metricEvidence.p95Ms.breachCount, 3);
   assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "FAIL");
   assert.equal(result.verdict, "FAIL");
 });
@@ -196,28 +225,23 @@ test("matched timing rejects adaptive-resolution workload contamination", () => 
   const bothContaminated = evidence();
   bothContaminated.channelCut.workload = { ...candidate.channelCut.workload };
   assert.throws(
-    () =>
-      run(
-        balancedPairs(
-          bothContaminated,
-          bothContaminated,
-          baseline,
-          baseline,
-        ),
-      ),
+    () => run(balancedPairs(bothContaminated, bothContaminated, baseline, baseline)),
     /does not match the protected timing workload/,
   );
 });
 
-test("duplicate execution order is rejected instead of pretending to be independent confirmation", () => {
+test("unbalanced execution order is rejected instead of pretending to be counterbalanced", () => {
   const baseline = evidence();
   const candidate = evidence();
   assert.throws(
-    () => run([
-      pair("baseline-candidate", baseline, candidate),
-      pair("baseline-candidate", baseline, candidate),
-    ]),
-    /requires both baseline-candidate and candidate-baseline order/,
+    () =>
+      run([
+        pair("baseline-candidate", baseline, candidate),
+        pair("baseline-candidate", baseline, candidate),
+        pair("baseline-candidate", baseline, candidate),
+        pair("candidate-baseline", baseline, candidate),
+      ]),
+    /requires exactly 2 baseline-candidate and 2 candidate-baseline pairs/,
   );
 });
 

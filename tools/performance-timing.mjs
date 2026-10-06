@@ -89,8 +89,14 @@ function requireCounterbalancedPairs(pairs, confirmationPairs) {
   if (!Array.isArray(pairs) || pairs.length !== confirmationPairs) {
     throw new Error(`matched timing requires exactly ${confirmationPairs} independent confirmation pairs`);
   }
+  if (confirmationPairs < 4 || confirmationPairs % 2 !== 0) {
+    throw new Error("matched timing requires an even confirmationPairs value >= 4");
+  }
   const validOrders = new Set(["baseline-candidate", "candidate-baseline"]);
-  const seenOrders = new Set();
+  const orderCounts = new Map([
+    ["baseline-candidate", 0],
+    ["candidate-baseline", 0],
+  ]);
   for (const [index, pair] of pairs.entries()) {
     if (!pair?.baseline || !pair?.candidate) {
       throw new Error(`confirmation pair ${index + 1} requires baseline and candidate evidence`);
@@ -98,31 +104,64 @@ function requireCounterbalancedPairs(pairs, confirmationPairs) {
     if (!validOrders.has(pair.order)) {
       throw new Error(`confirmation pair ${index + 1} has invalid order: ${pair.order}`);
     }
-    seenOrders.add(pair.order);
+    orderCounts.set(pair.order, orderCounts.get(pair.order) + 1);
   }
-  if (!seenOrders.has("baseline-candidate") || !seenOrders.has("candidate-baseline")) {
-    throw new Error("matched timing requires both baseline-candidate and candidate-baseline order");
+  const requiredPerOrder = confirmationPairs / 2;
+  if (
+    orderCounts.get("baseline-candidate") !== requiredPerOrder ||
+    orderCounts.get("candidate-baseline") !== requiredPerOrder
+  ) {
+    throw new Error(
+      `matched timing requires exactly ${requiredPerOrder} baseline-candidate and ${requiredPerOrder} candidate-baseline pairs`,
+    );
   }
   return pairs;
 }
 
 function classifyMetric(comparisons, key, toleranceMs) {
   const deltas = comparisons.map((comparison) => comparison.delta[key]);
-  const over = deltas.filter((delta) => delta > toleranceMs).length;
-  const opposite = deltas.some((delta) => delta < -toleranceMs);
-  const counterbalancedDelta = roundMs(median(deltas));
-  if (over === deltas.length) return "FAIL";
-  if (over === 0) return "PASS";
-  if (opposite && counterbalancedDelta <= toleranceMs) return "ORDER_VARIANCE";
-  return "INCONCLUSIVE";
+  const breachCount = deltas.filter((delta) => delta > toleranceMs).length;
+  const improvementCount = deltas.filter((delta) => delta < -toleranceMs).length;
+  const requiredFailureCount = Math.floor(deltas.length / 2) + 1;
+  const splitCount = deltas.length / 2;
+  const pairedDelta = roundMs(median(deltas));
+
+  let verdict = "PASS";
+  if (breachCount >= requiredFailureCount) {
+    verdict = "FAIL";
+  } else if (breachCount === splitCount) {
+    verdict =
+      improvementCount === splitCount && pairedDelta <= toleranceMs
+        ? "ORDER_VARIANCE"
+        : "INCONCLUSIVE";
+  } else if (
+    breachCount > 0 &&
+    improvementCount > 0 &&
+    pairedDelta <= toleranceMs
+  ) {
+    verdict = "ORDER_VARIANCE";
+  }
+
+  return {
+    verdict,
+    breachCount,
+    improvementCount,
+    requiredFailureCount,
+    pairedDelta,
+    deltas,
+  };
 }
 
 export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candidateRevision }) {
   const toleranceMs = requireFinite(budget?.toleranceMs, "timing toleranceMs must be finite");
   const confirmationPairs = budget?.confirmationPairs;
   const diagnosticWindows = budget?.diagnosticWindows ?? 2;
-  if (!Number.isInteger(confirmationPairs) || confirmationPairs < 2) {
-    throw new Error("confirmationPairs must be an integer >= 2");
+  if (
+    !Number.isInteger(confirmationPairs) ||
+    confirmationPairs < 4 ||
+    confirmationPairs % 2 !== 0
+  ) {
+    throw new Error("confirmationPairs must be an even integer >= 4");
   }
   if (!Number.isInteger(diagnosticWindows) || diagnosticWindows < 1) {
     throw new Error("diagnosticWindows must be an integer >= 1");
@@ -193,8 +232,10 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
       };
     });
 
-    const medianVerdict = classifyMetric(comparisons, "medianMs", toleranceMs);
-    const p95Verdict = classifyMetric(comparisons, "p95Ms", toleranceMs);
+    const medianEvidence = classifyMetric(comparisons, "medianMs", toleranceMs);
+    const p95Evidence = classifyMetric(comparisons, "p95Ms", toleranceMs);
+    const medianVerdict = medianEvidence.verdict;
+    const p95Verdict = p95Evidence.verdict;
     const failed = medianVerdict === "FAIL" || p95Verdict === "FAIL";
     const ambiguous =
       !failed &&
@@ -211,13 +252,17 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
       historicalReference: budget.scenarios[label],
       toleranceMs,
       pairedDelta: {
-        medianMs: roundMs(median(comparisons.map((comparison) => comparison.delta.medianMs))),
-        p95Ms: roundMs(median(comparisons.map((comparison) => comparison.delta.p95Ms))),
+        medianMs: medianEvidence.pairedDelta,
+        p95Ms: p95Evidence.pairedDelta,
       },
       comparisons,
       metricVerdicts: {
         medianMs: medianVerdict,
         p95Ms: p95Verdict,
+      },
+      metricEvidence: {
+        medianMs: medianEvidence,
+        p95Ms: p95Evidence,
       },
       orderVariance,
       verdict,
@@ -251,7 +296,7 @@ export function assertMatchedTiming(args) {
   const report = evaluateMatchedTiming(args);
   if (report.failures.length > 0) {
     throw new Error(
-      `matched performance regression exceeded ${report.toleranceMs} ms in both counterbalanced pairs for: ${report.failures.join(", ")}`,
+      `matched performance regression exceeded ${report.toleranceMs} ms in a replicated majority of counterbalanced pairs for: ${report.failures.join(", ")}`,
     );
   }
   if (report.inconclusive.length > 0) {
