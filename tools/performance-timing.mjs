@@ -44,6 +44,17 @@ function workloadKey(workload) {
   return JSON.stringify(workload);
 }
 
+function requireSemanticStart(value, side) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${side} semanticStart is required`);
+  }
+  return value;
+}
+
+function semanticStartKey(value) {
+  return JSON.stringify(value);
+}
+
 function requireScenario(evidence, label, diagnosticWindows, side) {
   const reader = SCENARIO_READERS[label];
   if (!reader) throw new Error(`unknown performance scenario: ${label}`);
@@ -71,6 +82,10 @@ function requireScenario(evidence, label, diagnosticWindows, side) {
     p95Ms: requireFinite(scenario.p95Ms, `${side} ${label} p95Ms must be finite`),
     windows,
     workload: requireWorkload(scenario.workload, `${side} ${label}`),
+    semanticStart: requireSemanticStart(
+      scenario.semanticStart,
+      `${side} ${label}`,
+    ),
   };
 }
 
@@ -203,6 +218,14 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
           `pair ${index + 1} ${label} baseline/candidate workloads differ`,
         );
       }
+      if (
+        semanticStartKey(base.semanticStart) !==
+        semanticStartKey(next.semanticStart)
+      ) {
+        throw new Error(
+          `pair ${index + 1} ${label} baseline/candidate semantic starts differ`,
+        );
+      }
       if (workloadKey(base.workload) !== protectedWorkloadKey) {
         throw new Error(
           `pair ${index + 1} ${label} workload does not match the protected timing workload`,
@@ -217,6 +240,7 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
           p95Ms: base.p95Ms,
           windows: base.windows,
           workload: base.workload,
+          semanticStart: base.semanticStart,
         },
         candidate: {
           samples: next.samples,
@@ -224,6 +248,7 @@ export function evaluateMatchedTiming({ pairs, budget, baselineRevision, candida
           p95Ms: next.p95Ms,
           windows: next.windows,
           workload: next.workload,
+          semanticStart: next.semanticStart,
         },
         delta: {
           medianMs: roundMs(next.medianMs - base.medianMs),

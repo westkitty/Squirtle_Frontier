@@ -13,9 +13,74 @@ const evidence = {
   scenarios: [],
 };
 try {
-  const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
-  await page.goto(process.env.BASE_URL || "http://127.0.0.1:5173");
-  await page.waitForFunction(() => window.__SF?.loop.frames.length > 15);
+  const baseUrl = process.env.BASE_URL || "http://127.0.0.1:5173";
+  const openBenchmarkPage = async () => {
+    const next = await browser.newPage({ viewport: { width: 960, height: 640 } });
+    await next.goto(baseUrl);
+    await next.waitForFunction(() => window.__SF?.loop.frames.length > 15);
+    return next;
+  };
+  let page = await openBenchmarkPage();
+  const resetSemanticBenchmarkState = async () => {
+    await page.evaluate(() => {
+      const g = window.__SF;
+      const state = g.state;
+      state.elapsed = 0;
+      state.ecoRemainder = 0;
+      state.frontier.tick = 0;
+      state.frontier.bypass = 0;
+      state.frontier.channelErosion = 0;
+      state.frontier.heat = Array(16).fill(0);
+      state.frontier.fuel = Array(16).fill(1);
+      state.frontier.ash = Array(16).fill(0);
+      state.frontier.soaked = Array(16).fill(0);
+      state.frontier.history = [];
+      for (const node of state.watershed.nodes) {
+        node.blockage = node.id === "landslide" ? 0.95 : 0;
+        node.flow = 0;
+        node.wetness = 0;
+        node.contamination = 0;
+        node.sediment = 0;
+        node.seasonalModifier = 1;
+        node.vegetation = 0.3;
+        node.erosion = 0;
+        node.stage = 0;
+        node.active = false;
+        node.restoration = 0;
+      }
+      g.loop.reset();
+      g.loop.frames.length = 0;
+    });
+  };
+  const semanticStart = async () =>
+    page.evaluate(() => {
+      const g = window.__SF;
+      const wetland = g.state.watershed.nodes.find((node) => node.id === "wetland");
+      const weather = g.state.frontier.weather;
+      return {
+        place: g.state.place,
+        body: {
+          x: +g.body.x.toFixed(3),
+          z: +g.body.z.toFixed(3),
+          mode: g.body.mode,
+        },
+        elapsed: +g.state.elapsed.toFixed(3),
+        frontierTick: g.state.frontier.tick,
+        frontierStage: g.state.frontier.stage,
+        weather: {
+          type: weather.type,
+          rain: weather.rain,
+          wind: +weather.wind.toFixed(6),
+        },
+        wetland: {
+          flow: +wetland.flow.toFixed(6),
+          wetness: +wetland.wetness.toFixed(6),
+          contamination: +wetland.contamination.toFixed(6),
+          sediment: +wetland.sediment.toFixed(6),
+        },
+        activeSquirtles: g.squirtles.activeCount,
+      };
+    });
   const setFixedTimingQuality = async (quality) => {
     await page.click("#settings-toggle");
     await page.selectOption("#quality", quality);
@@ -27,8 +92,16 @@ try {
       { timeout: 10000 },
     );
   };
+  const reopenProtectedPage = async () => {
+    await page.context().close();
+    page = await openBenchmarkPage();
+    await resetSemanticBenchmarkState();
+    await setFixedTimingQuality("high");
+  };
+  await resetSemanticBenchmarkState();
   for (const quality of ["high", "low"]) {
     await setFixedTimingQuality(quality);
+    const scenarioStart = await semanticStart();
     await page.evaluate(() => {
       window.__SF.loop.frames.length = 0;
     });
@@ -75,7 +148,12 @@ try {
           : gl.getParameter(gl.RENDERER),
       };
     });
-    evidence.scenarios.push({ quality, viewport: "960x640", ...measured });
+    evidence.scenarios.push({
+      quality,
+      viewport: "960x640",
+      semanticStart: scenarioStart,
+      ...measured,
+    });
   }
   // Controlled A/B of the renderer-only adaptation in this same environment.
   const measure = async (label, { enableAdaptive }) => {
@@ -151,13 +229,14 @@ try {
   }
   // The adaptive-response experiment is diagnostic only. Protected timing must
   // return to one fixed full-detail workload before any matched comparison.
-  await setFixedTimingQuality("high");
+  await reopenProtectedPage();
   // A carved groove forces high tessellation on the chunk that holds it, which is
   // only one of nine streamed chunks. Both the "in it" and "looking at it from the
   // next chunk over" views are measured, because the second is where detail cost
   // can be paid for nothing.
   const measureScene = async (label) => {
     await page.waitForTimeout(1200);
+    const scenarioStart = await semanticStart();
     await page.evaluate(() => {
       window.__SF.loop.frames.length = 0;
     });
@@ -198,8 +277,9 @@ try {
         },
       };
     });
-    evidence.scenarios.push({ label, ...m });
-    return m;
+    const result = { ...m, semanticStart: scenarioStart };
+    evidence.scenarios.push({ label, ...result });
+    return result;
   };
   const lookAtTheCut = async (label, x, z, yaw) => {
     await page.evaluate(
@@ -236,6 +316,7 @@ try {
     12,
     Math.PI,
   );
+  await reopenProtectedPage();
   evidence.channelDistant = await lookAtTheCut(
     "channel-cut (viewed from the next chunk over)",
     -30,
@@ -243,6 +324,7 @@ try {
     Math.atan2(22, -20),
   );
 
+  await reopenProtectedPage();
   await page.evaluate(() => {
     const g = window.__SF;
     g.state.watershed.nodes[0].flow = 1;

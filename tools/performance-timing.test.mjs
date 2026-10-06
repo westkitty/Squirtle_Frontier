@@ -15,6 +15,17 @@ const fixedWorkload = Object.freeze({
   buffer: "960x640",
 });
 
+const fixedSemanticStart = Object.freeze({
+  place: "frontier",
+  body: { x: -10, z: 18, mode: "land" },
+  elapsed: 0,
+  frontierTick: 0,
+  frontierStage: 0,
+  weather: { type: "clear", rain: 0, wind: 0.5 },
+  wetland: { flow: 0, wetness: 0, contamination: 0, sediment: 0 },
+  activeSquirtles: 0,
+});
+
 const budget = {
   toleranceMs: 8.4,
   protectedWorkload: fixedWorkload,
@@ -39,6 +50,7 @@ function sample(medianMs, p95Ms, windows = [[medianMs, p95Ms], [medianMs, p95Ms]
   return {
     samples: 110,
     workload: { ...fixedWorkload },
+    semanticStart: JSON.parse(JSON.stringify(fixedSemanticStart)),
     medianMs,
     p95Ms,
     windows: windows.map(([median, p95]) => ({ medianMs: median, p95Ms: p95 })),
@@ -228,6 +240,16 @@ test("matched timing rejects adaptive-resolution workload contamination", () => 
   assert.throws(
     () => run(balancedPairs(bothContaminated, bothContaminated, baseline, baseline)),
     /does not match the protected timing workload/,
+  );
+});
+
+test("matched timing rejects semantic-start contamination", () => {
+  const baseline = evidence();
+  const candidate = evidence();
+  candidate.channelDistant.semanticStart.frontierTick = 1;
+  assert.throws(
+    () => run(balancedPairs(baseline, candidate, baseline, baseline)),
+    /baseline\/candidate semantic starts differ/,
   );
 });
 
