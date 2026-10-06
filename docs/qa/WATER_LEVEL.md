@@ -96,8 +96,11 @@ invisible and free, the other is visible and this pass's whole point.
 - **A pose that cannot hold.** Placing the body on dry slope beside the debris to spray it
   let gravity slide it out of the jet's 2.8 m range between pulses, so the loop looked
   stuck at `blockage 0.87`. The fixture pose is now the one the journey already used —
-  floating beside the debris — with the aim and range checks unchanged, so the repair is
-  still entirely input-driven.
+  floating beside the debris — with the aim and range checks unchanged. Jet activation,
+  aim and range are still exercised through the input path, but the browser script
+  repositions the body between pulses. This proves the repair mechanic under controlled
+  setup; it does **not** prove that a human can approach and hold that position through
+  ordinary locomotion.
 - **A pre-existing offset worth naming:** the painted shallows sit 1.5 cm above the surface
   and the wade line 5 cm below it, so a narrow band of ground looks wet and walks dry.
   This pass kept both numbers deliberately — moving them would have moved where the body
