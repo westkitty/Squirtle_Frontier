@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 36
-status: Body-first redesign authority frozen / legacy causal slice still runnable / implementation pending / full game incomplete
+revision: 37
+status: Body-first Phase 1 baseline complete / legacy causal slice still runnable / Phase 2 implementation pending / full game incomplete
 
 ## Purpose
 
@@ -150,6 +150,21 @@ Effective immediately:
 - No larger-map or new major-system expansion should occur until the body-first gate passes.
 
 Phase 0 of the redesign changes authority only. Runtime gameplay changes begin in later phases.
+
+
+## Body-first Phase 1 regression baseline — 2026-10-06
+
+- **PHASE 1 PASS.** This phase changes QA/test authority only; it does not implement Phase 2 gameplay changes.
+- Exact pre-redesign runtime baseline: `e3aeed88afc420d352200f2ec6a70f5f8d10296b` on `main`.
+- Fresh hosted verification run `37415356545` on that exact SHA: asset validation PASS; source/architecture/unit suite **269/269 PASS**; mutation suite **80/80 PASS**; production build PASS; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS; matched software-performance/resource proof PASS; shoreline capture PASS with **1.50 m** low-to-full long-axis movement; built production bundle PASS; validation artifact upload PASS.
+- GitHub Pages run `37415356560` on the same runtime SHA: PASS.
+- Durable Phase 1 evidence and classification live in `docs/qa/BODY_FIRST_BASELINE.md`: **23 PROTECTED_INFRASTRUCTURE**, **1 LEGACY_RUNTIME_TEMPORARY**, **13 REWRITE_WITH_REPLACEMENT**, **3 FIXTURE_ONLY_EVIDENCE**, **3 OBSOLETE_AUTHORITY**, **0 UNRESOLVED** ledger rows.
+- Whole-script browser classification: **1 HUMAN_SHAPED**, **5 FIXTURE_ASSISTED**, **6 SIMULATION_PROOF_ONLY**. Fixture use remains valid for deterministic simulation/setup proof; it may not be cited as evidence that a human can perform a bypassed control path.
+- QA authority corrections: `AGENTS.md` now names the current 269-test suite; `docs/qa/TEST_AUTHORITY.md` names the current 80-mutation baseline; `docs/qa/WATER_LEVEL.md` no longer calls the reposition-assisted repair journey entirely input-driven; `docs/qa/REACHES.md` marks Current Sense/named-reach diagnosis as legacy runtime evidence.
+- Evidence boundary remains explicit: Chromium/ANGLE SwiftShader timing is software-only regression evidence. Ten-minute human movement enjoyment, heard audio quality, real touch usability, representative Mac/mobile GPU performance, physical gamepad feel and post-Sense environmental readability remain **UNKNOWN**, not failed and not passed.
+- No runtime source, controls, movement tuning, Current Sense implementation, watershed simulation, dependencies or deployment behavior changed in Phase 1.
+- The next implementation phase may remove Current Sense and demote watershed diagnosis only after preserving or replacing any useful information through world-readable evidence. Larger-map or major-system expansion remains blocked by the human body-first gate.
+
 
 ## Current verified state (supersedes historical checkpoints below)
 
