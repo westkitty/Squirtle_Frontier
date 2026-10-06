@@ -77,9 +77,10 @@ function classifyMetric(comparisons, key, toleranceMs) {
   const deltas = comparisons.map((comparison) => comparison.delta[key]);
   const over = deltas.filter((delta) => delta > toleranceMs).length;
   const opposite = deltas.some((delta) => delta < -toleranceMs);
+  const counterbalancedDelta = roundMs(median(deltas));
   if (over === deltas.length) return "FAIL";
   if (over === 0) return "PASS";
-  if (opposite) return "ORDER_VARIANCE";
+  if (opposite && counterbalancedDelta <= toleranceMs) return "ORDER_VARIANCE";
   return "INCONCLUSIVE";
 }
 

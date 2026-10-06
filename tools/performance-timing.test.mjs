@@ -124,6 +124,25 @@ test("counterbalancing identifies monotonic runner drift when the sign flips wit
   assert.equal(result.verdict, "PASS");
 });
 
+test("sign reversal cannot pass when the counterbalanced delta still exceeds tolerance", () => {
+  const firstBaseline = evidence(66.6, 100.0);
+  const firstCandidate = evidence(83.3, 150.0);
+  const secondCandidate = evidence(66.6, 116.7);
+  const secondBaseline = evidence(83.3, 133.4);
+  const pairs = balancedPairs(
+    firstBaseline,
+    firstCandidate,
+    secondBaseline,
+    secondCandidate,
+  );
+  const result = run(pairs);
+  assert.equal(result.scenarios.high.comparisons[0].delta.p95Ms, 50);
+  assert.equal(result.scenarios.high.comparisons[1].delta.p95Ms, -16.7);
+  assert.equal(result.scenarios.high.pairedDelta.p95Ms, 16.7);
+  assert.equal(result.scenarios.high.metricVerdicts.p95Ms, "INCONCLUSIVE");
+  assert.equal(result.verdict, "INCONCLUSIVE");
+});
+
 test("a real regression survives moderate opposing order drift", () => {
   const firstBaseline = evidence(66.6, 100.0);
   const firstCandidate = evidence(83.3, 133.4);
