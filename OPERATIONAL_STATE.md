@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 35
-status: Early causal slice including Lab/offline return / approval gates waived / full game incomplete
+revision: 36
+status: Body-first redesign authority frozen / legacy causal slice still runnable / implementation pending / full game incomplete
 
 ## Purpose
 
@@ -29,9 +29,18 @@ Do not mutate either source repository while building this project unless the us
 
 The player is Squirtle, not a trainer.
 
-The frontier is large, persistent, ecological, and indifferent. Squirtle experiences it at creature scale. Water is simultaneously locomotion, navigation, sensory information, ecological infrastructure, and the primary means by which the player can understand and repair the world.
+**Squirtle Frontier is about being Squirtle in a living frontier.**
 
-The emotional target is awe through causal depth: the player returns to places and discovers that ecosystems, settlements, watercourses, trails, wildlife, and the Lab changed because of earlier actions.
+The controlling play hierarchy is:
+
+1. **Movement** — running, swimming, diving, shell-sliding and Water Jet must be enjoyable without an objective.
+2. **Encounter** — other Squirtles, wildlife, humans, structures, weather and environmental events give movement somewhere interesting to lead.
+3. **Curiosity** — the environment should create the question before UI explains the answer.
+4. **Consequence** — the world remembers what Squirtle did and expresses those changes physically.
+
+The simulation may remain sophisticated internally, but the player is not responsible for understanding, diagnosing, or maintaining the simulation. Hydrology, ecology, settlements, fire, wildlife and persistence are supporting machinery. They earn their place by making the frontier react to Squirtle.
+
+Water remains central to Squirtle's body and to the world's ecology, but **Current Sense and watershed diagnosis are no longer part of the target player contract**. The emotional target remains awe through causal depth: the player notices that a place is different because of earlier actions without needing a systems readout to explain why.
 
 ## Architectural decision
 
@@ -71,9 +80,13 @@ Adapt from Squirtle Lab:
 - The playable avatar is Squirtle.
 - Do not add a trainer/player-human avatar.
 - Do not turn Squirtle into a spell hotbar or generic character controller.
-- Movement must be body-specific: land locomotion, swimming/diving, shell slide, and water-jet propulsion must feel materially different.
-- Water simulation must be layered/semantic; do not implement global physically accurate fluid simulation.
-- Large-scale erosion must be staged/state-driven; do not implement global destructible voxel terrain.
+- Movement must be body-specific: land locomotion, swimming/diving, shell slide, and Water Jet must feel materially different and must be evaluated as play, not merely as passing mechanics.
+- **The body-first gate controls feature growth.** Do not add major systemic-world complexity while objective-free movement enjoyment remains unverified.
+- Environmental state must be legible primarily through the physical world. Text may reinforce or provide accessibility, but it must not be the only way to understand an important local condition.
+- Current Sense is a legacy runtime capability scheduled for removal. It is explicitly **not** protected against redesign, and no new feature may depend on it.
+- The watershed remains semantic/background infrastructure for now. Preserve its useful persistence and ecological consequences while removing the obligation for the player to diagnose or repair a graph.
+- Water simulation must remain layered/semantic; do not implement global physically accurate fluid simulation.
+- Large-scale erosion must remain staged/state-driven; do not implement global destructible voxel terrain.
 - Distant ecology remains aggregate simulation. Promote only important nearby actors to persistent individual identity.
 - Simulation scale and rendering scale must remain separate.
 - Squirtle-specific IP must stay behind a `PlayableCreature`/presentation boundary so the underlying game can support a clean original-character build later.
@@ -81,32 +94,29 @@ Adapt from Squirtle Lab:
 - No force push or history rewrite.
 - Do not claim performance, mobile viability, asset validity, visual QA, deployment, or gameplay feel without evidence.
 
-## Prototype gate
+## Body-first production gate
 
-Before broad production expansion, prove one representative watershed slice with:
+Before broad production expansion, prove one compact creature-scale slice in which the body is the game:
 
-- one small streamed region;
-- Squirtle land/swim/dive/shell-slide/water-jet locomotion;
-- creature-scale camera;
-- one settlement;
-- one stream/pond/cave network;
-- one predator/prey chain;
-- weather and fire;
-- Current Sense;
-- one repairable hydrology problem;
-- persistent ecological propagation;
-- one Lab habitat linked to frontier state;
-- one offline fast-forward return;
-- one Deep Record chamber;
+- one small streamed region with deliberate traversal composition;
+- Squirtle land/swim/dive/shell-slide/Water Jet locomotion;
+- creature-scale camera and reliable look/movement behavior;
+- at least one meaningful wildlife, human, or Squirtle encounter;
+- at least one environmental action whose persistent consequence can later be seen in the world;
+- background ecology/weather/fire/hydrology may drive consequences without becoming player homework;
+- one Lab/Deep Record path may remain as optional world content;
+- save/load and bounded offline return preserve the world;
 - desktop and mobile-class performance evidence.
 
 Production expansion is blocked until the slice demonstrates:
 
-1. Squirtle movement is pleasurable without objectives.
-2. Semantic hydrology convincingly drives visible local water behavior.
-3. Streaming remains stable with creature-scale microgeometry.
-4. Upstream changes propagate through ecology and visibly alter both frontier and Lab.
-5. Save/load and offline fast-forward preserve that causal chain.
+1. Squirtle movement is pleasurable for at least ten minutes without objectives.
+2. The player can understand important nearby world conditions without Current Sense or a quest checklist.
+3. Existing systems visibly react to physical player actions.
+4. Streaming/lifecycle/persistence remain stable under the new player paths.
+5. Human input/camera/audio/touch review and representative hardware performance evidence exist.
+
+Current Sense, named-reach diagnosis, the amber ripple, and watershed repair as an opening objective are **not** gate requirements.
 
 ## Performance principles
 
@@ -120,6 +130,26 @@ Production expansion is blocked until the slice demonstrates:
 - Lab and frontier must not remain simultaneously fully rendered.
 - Measure memory and renderer resource counts across repeated chunk/scene transitions.
 - Prefer stable 60 fps desktop and stable 30 fps mobile-class baseline over decorative excess.
+
+## Accepted body-first redesign — 2026-10-06
+
+The user explicitly accepted a body-first redesign after comparative and runtime gameplay audits.
+
+This decision supersedes earlier product directives that treated Current Sense, watershed diagnosis, or deliberate hydrological repair as protected player-facing pillars. The existing runtime still contains those features until later implementation phases remove or demote them; their current presence is implementation state, not design authority.
+
+Effective immediately:
+
+- Current Sense is scheduled for complete removal from controls, HUD/status, player-facing simulation diagnosis and discovery.
+- The semantic watershed is retained as background simulation/persistence unless later evidence shows that a smaller model is sufficient.
+- The watershed may influence the world; it may not dictate what the player must do.
+- Water Jet is authorized for a later redesign separating traversal intent from continuous environmental manipulation.
+- Shell-slide, step handling, camera behavior and movement continuity are authorized for feel-driven retuning even where old exact numeric contracts exist.
+- Environmental readability must replace Sense-only information before that information is removed.
+- Browser journeys that claim gameplay behavior must ultimately perform the claimed journey through player-available controls rather than fixture teleportation around the mechanic under test.
+- The Phase 1 ten-minute human movement gate is reinstated as the controlling expansion gate. Earlier permission to continue implementation did not constitute a pass.
+- No larger-map or new major-system expansion should occur until the body-first gate passes.
+
+Phase 0 of the redesign changes authority only. Runtime gameplay changes begin in later phases.
 
 ## Current verified state (supersedes historical checkpoints below)
 
@@ -138,13 +168,13 @@ Production expansion is blocked until the slice demonstrates:
 
 ## Remaining scope / completion truth
 
-Full project NOT finished. Major remaining work: world-scale terrain-derived watershed/alternate route topology, broader terrain/collision integration, traversable micro-route network, production wildlife/settlement behavior, richer Lab play, polished/accessible presentation and controls, robust concurrent storage, measured hardware FPS, asset/legal review for distribution, and full end-to-end causal/human QA. Current systems are bounded foundations, not sufficient evidence to claim excellent movement or final production completion.
+Full project NOT finished. Immediate remaining work is now ordered by the body-first redesign: preserve a regression baseline; retire obsolete Current Sense/watershed-as-objective contracts; remove Current Sense without losing world readability; demote hydrology to background consequence; separate Water Jet traversal from environmental manipulation; repair shell/step/momentum/camera feel; make water and shore transitions physically expressive; strengthen encounters and visible persistent consequences; rebuild the first ten minutes; then run human-shaped journeys, hardware performance checks and the ten-minute human movement gate. Larger-map and major-system expansion remain deferred. Existing simulation, persistence, ecology, Lab and Deep Record work are bounded foundations, not a reason to bypass movement quality.
 
 Evidence: `docs/qa/WORLD_SYSTEMS.md`, `docs/qa/world-browser.json`, `docs/qa/HABITAT_RETURN.md`, `docs/qa/habitat-browser.json`, performance and historical asset evidence.
 
 ## Historical checkpoints
 
-The entries below record earlier scope and blockers. Current verified state and explicit user authorization supersede them.
+The entries below record earlier scope and blockers. They remain historical evidence only. The 2026-10-06 body-first redesign above supersedes any historical directive to preserve Current Sense, make watershed repair the core player loop, or continue semantic-world expansion before the movement gate passes.
 
 ## Phase 1 bounded repair checkpoint
 
