@@ -902,7 +902,9 @@ async function boot() {
         if (state.place === "lab") {
           body.x = Math.max(-7.5, Math.min(7.5, body.x));
           body.z = Math.max(-7.5, Math.min(7.5, body.z));
-        } else if (state.place === "record") {
+        }
+        stepJetHit(jetHit, dt);
+        if (state.place === "record") {
           const r = Math.hypot(body.x, body.z);
           if (r > 3.4) {
             body.x *= 3.4 / r;
@@ -935,7 +937,6 @@ async function boot() {
           record.update(body, state.memory, strataHold, state.elapsed);
           renderRecordReadout(ledger);
         } else {
-          stepJetHit(jetHit, dt);
           applyWaterJet(state.watershed, body, dt, jetHit);
           applyWorldJet(state.frontier, body, dt, jetHit);
         }
