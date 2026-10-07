@@ -145,6 +145,27 @@ test("water jet triggers pressurized fluid surge on jet bus", () => {
   audio.dispose();
 });
 
+test("Jet-hit feedback adds a short fire hiss without allocating audio nodes", () => {
+  const { nodes } = setupMockAudioContext(),
+    audio = new Audio();
+  audio.unlock();
+  const b = createBody(0, 0, 0),
+    nodeCount = nodes.length,
+    hit = { serial: 1, kind: "fire", intensity: 1 };
+  b.hoseActive = true;
+  audio.update(b, { muted: false, volume: 1.0 }, { jetHit: hit });
+  assert.ok(audio.jetGain.gain.value > 0.35);
+  assert.equal(audio.jetFilter.frequency.value, 1420);
+  assert.equal(nodes.length, nodeCount, "hit feedback must reuse the existing graph");
+
+  audio.context.currentTime += 0.2;
+  audio.update(b, { muted: false, volume: 1.0 }, { jetHit: hit });
+  assert.equal(audio.jetGain.gain.value, 0.24);
+  assert.equal(audio.jetFilter.frequency.value, 560);
+  assert.equal(nodes.length, nodeCount);
+  audio.dispose();
+});
+
 test("dive mode activates submerged low-frequency cavern resonance and muffles surf", () => {
   setupMockAudioContext();
   const audio = new Audio();

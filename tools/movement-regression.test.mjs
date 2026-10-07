@@ -146,6 +146,27 @@ test("render budgets cap pixels on large/high-density screens without changing C
   assert.equal(pixelRatioFor("low", 960, 640), Math.sqrt(230400 / (960 * 640)));
 });
 
+test("Jet-hit camera punctuation is bounded and reduced-motion aware", () => {
+  const rig = new CreatureCamera(
+      new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+      { ...flat, obstacles: [] },
+    ),
+    body = createBody(0, 0, 0),
+    input = { lookX: 0, lookY: 0 },
+    full = { sensitivity: 1, invertY: false, reducedMotion: false },
+    reduced = { ...full, reducedMotion: true };
+  rig.noteJetHit({ serial: 1, intensity: 1 });
+  assert.ok(rig.jetHitRecoil > 0 && rig.jetHitRecoil <= 0.03);
+  const first = rig.jetHitRecoil;
+  rig.noteJetHit({ serial: 1, intensity: 1 });
+  assert.equal(rig.jetHitRecoil, first, "one serial may not retrigger camera contact");
+  rig.update(body, input, 1 / 60, full);
+  assert.ok(rig.jetHitRecoil < first && rig.jetHitRecoil > 0);
+  rig.noteJetHit({ serial: 2, intensity: 1 });
+  rig.update(body, input, 1 / 60, reduced);
+  assert.equal(rig.jetHitRecoil, 0, "reduced motion removes contact camera punctuation");
+});
+
 test("fast shell slide widens camera FOV and extends boom distance dynamically", () => {
   const env = { ...flat, obstacles: [] };
   const rig = new CreatureCamera(

@@ -26,6 +26,7 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.fireSmoke.geometry, fx.geo);
   assert.equal(fx.rain.geometry, fx.geo);
   assert.equal(fx.jet.geometry, fx.geo);
+  assert.equal(fx.jetImpact.geometry, fx.geo);
   assert.equal(fx.wake.geometry, fx.geo);
   assert.equal(fx.splash.geometry, fx.geo);
   assert.equal(fx.slideDust.geometry, fx.geo);
@@ -82,6 +83,36 @@ test("Water Hose stream follows camera aim and reaches 2.8m", () => {
     `hose stream should align with camera aim, dot product was ${dot.toFixed(3)}`,
   );
 
+  fx.dispose();
+});
+
+test("unified Jet-hit event renders local contact spray and fire steam for a bounded lifetime", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent),
+    state = createMockState(),
+    body = createBody(0, 0, 0),
+    hit = {
+      serial: 1,
+      kind: "fire",
+      x: 3,
+      y: 0.5,
+      z: -2,
+      intensity: 1,
+    };
+  fx.update(state, body, { jetHit: hit, effectScale: 1 });
+  assert.equal(fx.jetImpact.visible, true);
+  assert.equal(fx.jetImpact.count, 12);
+  const mat = new THREE.Matrix4(),
+    pos = new THREE.Vector3();
+  fx.jetImpact.getMatrixAt(0, mat);
+  pos.setFromMatrixPosition(mat);
+  assert.ok(Math.hypot(pos.x - hit.x, pos.z - hit.z) < 0.5);
+  assert.ok(fx.jetImpactMat.opacity > 0.5);
+
+  state.elapsed += 0.2;
+  fx.update(state, body, { jetHit: hit, effectScale: 1 });
+  assert.equal(fx.jetImpact.visible, false);
+  assert.equal(fx.jetImpact.count, 0);
   fx.dispose();
 });
 
@@ -379,6 +410,7 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
     fx.fireSmoke,
     fx.rain,
     fx.jet,
+    fx.jetImpact,
     fx.wake,
     fx.splash,
     fx.slideDust,
@@ -484,6 +516,7 @@ test("effect batch roots keep static object matrices while instance buffers anim
     fx.fireSmoke,
     fx.rain,
     fx.jet,
+    fx.jetImpact,
     fx.wake,
     fx.splash,
     fx.slideDust,
