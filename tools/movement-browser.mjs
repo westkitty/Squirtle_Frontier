@@ -93,6 +93,12 @@ try {
   });
   await page.keyboard.up("KeyE");
   await mark("ascent");
+  // The earlier underwater burst owns a real 1.1 s gameplay cooldown. Fast
+  // ascents can reach swim mode before it expires, so the second tap must wait
+  // for the same readiness a player would have rather than assuming wall time.
+  await page.waitForFunction(() => window.__SF.body.jetCooldown <= 0.001, null, {
+    timeout: 30000,
+  });
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.jetPressTime > 0);
   await page.keyboard.up("Space");
