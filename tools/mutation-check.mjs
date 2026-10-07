@@ -266,10 +266,24 @@ const MUTATIONS = [
       "    const isResting = false;",
   },
   {
-    what: "water jet fails to activate hydrodynamic surge on jet voice",
+    what: "water jet burst and hose fail to activate hydrodynamic pressure voice",
     file: "src/audio.js",
-    from: "    const jetLevel = body.jetTime > 0 ? 0.38 : 0;",
+    from: "    const jetLevel = body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0;",
     to: "    const jetLevel = 0;",
+  },
+  {
+    what: "holding Water Jet never transitions from pending tap to Water Hose",
+    file: "src/player/squirtle-controller.js",
+    from:
+      "    if (!b.hoseActive && b.jetPressTime >= JET_HOLD_THRESHOLD)\n      b.hoseActive = true;",
+    to:
+      "    if (false && b.jetPressTime >= JET_HOLD_THRESHOLD)\n      b.hoseActive = true;",
+  },
+  {
+    what: "releasing a Water Hose also fires the traversal burst",
+    file: "src/player/squirtle-controller.js",
+    from: "        !wasHose &&\n        b.jetPressTime > 0 &&",
+    to: "        true &&\n        b.jetPressTime > 0 &&",
   },
   {
     what: "dive mode fails to activate submerged cavern sub-drone",
@@ -310,21 +324,21 @@ const MUTATIONS = [
     to: "    this.wetTrail.count = 0;",
   },
   {
-    what: "water jet fails to emit forward pressurized particle stream",
+    what: "Water Hose fails to emit its forward pressurized particle stream",
     file: "src/player/world-effects.js",
-    from: "    if (body.jetTime > 0) {",
-    to: "    if (false && body.jetTime > 0) {",
+    from: "    if (body.hoseActive) {",
+    to: "    if (false && body.hoseActive) {",
   },
   {
     what: "aquatic surface wake fails to generate ripples while moving through water",
     file: "src/player/world-effects.js",
-    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0) {",
+    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0 && !body.hoseActive) {",
     to: "    if (false) {",
   },
   {
-    what: "Water Jet incorrectly overlaps the ordinary swim wake",
+    what: "Water Jet burst or Hose incorrectly overlaps the ordinary swim wake",
     file: "src/player/world-effects.js",
-    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0) {",
+    from: "    if (inWater && speed > 0.25 && body.jetTime <= 0 && !body.hoseActive) {",
     to: "    if (inWater && speed > 0.25) {",
   },
   {
