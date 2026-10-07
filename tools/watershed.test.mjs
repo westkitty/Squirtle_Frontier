@@ -74,6 +74,7 @@ import {
   applyWaterJet,
   DEBRIS_SITE,
 } from "../src/simulation/water-interaction.js";
+import { createJetHitEvent } from "../src/simulation/jet-hit.js";
 test("optional debris interaction requires a nearby active Water Hose aimed at the obstruction", () => {
   const w = new Watershed(),
     b = {
@@ -86,9 +87,15 @@ test("optional debris interaction requires a nearby active Water Hose aimed at t
       hoseAimY: 0,
       hoseAimZ: -1,
     };
-  assert.equal(applyWaterJet(w, { ...b, hoseActive: false }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, { ...b, hoseAimZ: 1 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, { ...b, z: 50 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, b, 1 / 60), true);
+  const hit = createJetHitEvent();
+  assert.equal(applyWaterJet(w, { ...b, hoseActive: false }, 1 / 60, hit), false);
+  assert.equal(applyWaterJet(w, { ...b, hoseAimZ: 1 }, 1 / 60, hit), false);
+  assert.equal(applyWaterJet(w, { ...b, z: 50 }, 1 / 60, hit), false);
+  assert.equal(hit.serial, 0, "misses must not manufacture hit feedback");
+  assert.equal(applyWaterJet(w, b, 1 / 60, hit), true);
   assert.ok(w.nodes[1].blockage < 0.95);
+  assert.equal(hit.serial, 1);
+  assert.equal(hit.kind, "debris");
+  assert.equal(hit.active, true);
+  assert.ok(hit.intensity > 0.9);
 });
