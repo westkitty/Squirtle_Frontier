@@ -26,6 +26,7 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.fireSmoke.geometry, fx.geo);
   assert.equal(fx.rain.geometry, fx.geo);
   assert.equal(fx.jet.geometry, fx.geo);
+  assert.equal(fx.jetImpact.geometry, fx.geo);
   assert.equal(fx.wake.geometry, fx.geo);
   assert.equal(fx.splash.geometry, fx.geo);
   assert.equal(fx.slideDust.geometry, fx.geo);
@@ -82,6 +83,26 @@ test("Water Hose stream follows camera aim and reaches 2.8m", () => {
     `hose stream should align with camera aim, dot product was ${dot.toFixed(3)}`,
   );
 
+  fx.dispose();
+});
+
+test("unified Hose hit creates world-space contact particles at the event point", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent),
+    state = createMockState(),
+    body = createBody(0, 0, 0),
+    hit = { active: true, kind: "fire", x: 4, y: 1.2, z: -3, intensity: 0.8, serial: 2 };
+  fx.update(state, body, { jetHit: hit, effectScale: 1 });
+  assert.equal(fx.jetImpact.visible, true);
+  assert.ok(fx.jetImpact.count >= 8);
+  const mat = new THREE.Matrix4();
+  fx.jetImpact.getMatrixAt(0, mat);
+  const p = new THREE.Vector3().setFromMatrixPosition(mat);
+  assert.ok(Math.hypot(p.x - hit.x, p.z - hit.z) < 0.5);
+  assert.ok(p.y >= hit.y);
+  fx.update(state, body, { jetHit: { active: false }, effectScale: 1 });
+  assert.equal(fx.jetImpact.count, 0);
+  assert.equal(fx.jetImpact.visible, false);
   fx.dispose();
 });
 

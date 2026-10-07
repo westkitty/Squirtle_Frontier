@@ -272,6 +272,28 @@ test("camera accepts rate-based controller look and widens for fast travel and W
 });
 
 
+test("Hose hit gives bounded camera confirmation and reduced motion suppresses it", () => {
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    flat,
+  );
+  const body = createBody(0, 0, 0),
+    settings = {
+      sensitivity: 1,
+      invertY: false,
+      reducedMotion: false,
+      jetHit: { active: true, intensity: 1 },
+    };
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.ok(rig.jetHitRecoil > 0 && rig.jetHitRecoil <= 0.055);
+  const kickedFov = rig.camera.fov;
+  settings.reducedMotion = true;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.equal(rig.jetHitRecoil, 0);
+  assert.ok(kickedFov >= 55);
+  assert.equal(rig.camera.fov, 55);
+});
+
 test("Water Hose temporarily permits a steeper downward camera pitch", () => {
   const rig = new CreatureCamera(
     new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),

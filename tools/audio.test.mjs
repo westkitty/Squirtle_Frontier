@@ -101,6 +101,7 @@ test("audio initializes master bus and sub-voices with single AudioContext", () 
   assert.ok(audio.context !== null, "unlock must create AudioContext");
   assert.ok(audio.masterGain !== null, "master gain must exist");
   assert.ok(audio.jetGain !== null, "jet voice must exist");
+  assert.ok(audio.hitGain !== null, "hose contact voice must exist");
   assert.ok(audio.surfGain !== null, "surf voice must exist");
   assert.ok(audio.subGain !== null, "sub-drone voice must exist");
   assert.ok(audio.locoGain !== null, "locomotion voice must exist");
@@ -137,10 +138,20 @@ test("water jet triggers pressurized fluid surge on jet bus", () => {
   assert.ok(audio.jetGain.gain.value >= 0.2 && audio.jetGain.gain.value < 0.3);
   assert.equal(audio.jetFilter.frequency.value, 560);
 
-  // Releasing the hose restores silence on the shared pressure voice.
+  // Contact is a separate response: hot targets hiss brighter than the hose bed.
+  audio.update(
+    b,
+    { muted: false, volume: 1.0 },
+    { jetHit: { active: true, kind: "fire", intensity: 0.8 } },
+  );
+  assert.ok(audio.hitGain.gain.value > 0.1);
+  assert.equal(audio.hitFilter.frequency.value, 2700);
+
+  // Releasing the hose and losing contact restores silence on both pressure voices.
   b.hoseActive = false;
-  audio.update(b, { muted: false, volume: 1.0 });
+  audio.update(b, { muted: false, volume: 1.0 }, { jetHit: { active: false } });
   assert.equal(audio.jetGain.gain.value, 0, "jet gain must return to 0 when inactive");
+  assert.equal(audio.hitGain.gain.value, 0, "contact voice must return to 0 off target");
 
   audio.dispose();
 });

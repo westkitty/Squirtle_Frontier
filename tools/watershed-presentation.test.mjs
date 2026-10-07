@@ -13,6 +13,18 @@ test("ordinary watershed presentation keeps the physical obstruction without dia
 
   view.update(state.watershed, body);
   assert.equal(view.debris.count, 9);
+  const dry = new THREE.Matrix4();
+  view.debris.getMatrixAt(0, dry);
+  view.update(state.watershed, body, {
+    active: true,
+    kind: "debris",
+    intensity: 1,
+    serial: 3,
+  });
+  const struck = new THREE.Matrix4();
+  view.debris.getMatrixAt(0, struck);
+  assert.notDeepEqual(struck.elements, dry.elements, "hit boulders must visibly twitch");
+  assert.ok(view.material.roughness < 1, "hosed debris must read wet at contact");
   assert.equal("ripple" in view, false);
   assert.equal("flowMotes" in view, false);
   assert.equal("reachLines" in view, false);
@@ -20,6 +32,7 @@ test("ordinary watershed presentation keeps the physical obstruction without dia
   state.watershed.clearDebris("landslide", 0.1);
   state.watershed.clearDebris("landslide", 0.1);
   view.update(state.watershed, body);
+  assert.equal(view.material.roughness, 1, "debris dries back to ordinary material off contact");
   assert.ok(view.debris.count > 0 && view.debris.count < 9);
 
   while (state.watershed.nodes[1].blockage > 0)

@@ -12,6 +12,7 @@ import { deepHistory } from "../src/simulation/deep-history.js";
 import { Watershed } from "../src/simulation/watershed.js";
 import { advanceOffline, save, load } from "../src/persistence.js";
 import { applyWorldJet } from "../src/simulation/water-interaction.js";
+import { createJetHit } from "../src/player/jet-hit.js";
 test("weather/fire regional clock is exact online/offline across block boundaries", () => {
   for (const n of [179, 180, 181, 601]) {
     const a = new WorldState(),
@@ -180,11 +181,15 @@ test("Water Hose aimed at burnt ground rinses ash and prevents storm contaminati
   body.hoseAimY = 0;
   body.hoseAimZ = 1;
 
-  // 1. Direct aimed Water Hose rinses ash and cools heat
-  applyWorldJet(frontier, body, 0.5);
+  // 1. Direct aimed Water Hose rinses ash, cools heat, and emits one shared hit record.
+  const hit = createJetHit();
+  applyWorldJet(frontier, body, 0.5, hit);
   assert.ok(frontier.heat[0] < 0.6, "water jet must cool fire heat");
   assert.ok(frontier.soaked[0] > 0, "water jet must soak ground");
   assert.ok(frontier.ash[0] < 0.8, "water jet must rinse away ash");
+  assert.equal(hit.active, true);
+  assert.equal(hit.kind, "fire");
+  assert.ok(Math.hypot(hit.x - site.x, hit.z - site.z) < 1e-9);
 
   // 2. Unaimed Water Hose fails to hit site
   const ashBefore = frontier.ash[0];
