@@ -141,7 +141,7 @@ Execute validation using the repository's **actual scripts** from `package.json`
 | **Tier 4: Production Build** | `npm run build` | Verifies production Vite bundle compilation without errors. |
 | **Tier 5: Core Journey** | `BROWSER_BUNDLED=1 npm run browser` | **Primary protective gameplay journey:** land run → shell slide → bank water entry → swimming → dive → boost → ascent → surface launch → camera drag → settings/reduced-motion → save/reload → wet trail → 12 chunk returns → 30 asset cycles → zero teardown. |
 | **Tier 6: Subsystem Journeys** | `BROWSER_BUNDLED=1 npm run <journey>` | `browser:watershed`, `browser:habitat`, `browser:world`, `browser:recovery`, `browser:channel`, `browser:wildlife`, `browser:squirtles`, `browser:a11y`, `browser:gamepad`, `browser:multitab`. |
-| **Tier 7: Performance & Stability** | `BROWSER_BUNDLED=1 npm run perf` | Measures frame times, 360-frame settled stability, chunk cycling, adaptive A/B, and zero teardown. |
+| **Tier 7: Performance & Stability** | `BROWSER_BUNDLED=1 npm run perf` | Measures matched synchronous update+render work duration under a controlled fixed-step workload, plus 360-frame settled stability, chunk cycling, adaptive A/B, and zero teardown. |
 | **Tier 8: Visual Geometry** | `node tools/shoreline-capture.mjs` | Verifies physical 1.50 m shoreline movement between low and full water levels. |
 | **Tier 9: Built Bundle Proof** | `BROWSER_BUNDLED=1 npm run browser:dist` | Boots and verifies static production `dist/` bundle with real movement, persistence, and teardown. |
 

@@ -2,7 +2,7 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 40
+revision: 41
 status: Body-first Phase 2 delivered and verified on main / full game incomplete
 
 ## Purpose
@@ -199,24 +199,26 @@ Phase 0 of the redesign changes authority only. Runtime gameplay changes begin i
 
 ## Body-first Phase 2 final delivery closure — 2026-10-06
 
-- **PHASE 2 DELIVERED AND VERIFIED ON `main`.** Runtime/harness closure candidate `35f0221b64d713427502d67bde557dc74b7aa887`; matched control `2b2dedd2b2187f0735608e1d9e95507257506cf8`; retained validation branch `phase2-sense-watershed-demotion` remains at `3e535b4b422f766fde2c2bfc93627ecbe11f89fa` as historical evidence.
-- Final hosted Verify run `37528649129` on `35f0221b64d713427502d67bde557dc74b7aa887`: assets PASS; source/architecture/unit suite **273/273 PASS**; mutation suite **80/80 PASS**; production build PASS; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS; matched performance PASS; shoreline capture PASS with **1.50 m** low-to-full long-axis movement; built production bundle PASS; evidence upload PASS.
-- GitHub Pages run `37528649169` on the same SHA: **PASS**.
-- No Phase 2 gameplay/render regression was established. The repeated red performance gate was a measurement-system problem with four independently demonstrated confounders:
+- **PHASE 2 DELIVERED AND VERIFIED ON `main`.** Runtime/harness closure candidate `8cd554b4f62ad82a8351fbdac91d7a643bd742d8`; matched control `2b2dedd2b2187f0735608e1d9e95507257506cf8`; retained validation branch `phase2-sense-watershed-demotion` remains at `3e535b4b422f766fde2c2bfc93627ecbe11f89fa` as historical evidence.
+- Final hosted Verify run `37557382463` on `8cd554b4f62ad82a8351fbdac91d7a643bd742d8`: assets PASS; source/architecture/unit suite **273/273 PASS**; mutation suite **80/80 PASS**; production build PASS; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS; matched performance PASS; shoreline capture PASS with **1.50 m** low-to-full long-axis movement; built production bundle PASS; evidence upload PASS.
+- GitHub Pages run `37557382498` on the same SHA: **PASS**.
+- No Phase 2 gameplay/render regression was established. The repeated red performance gate was a measurement-system problem with five independently demonstrated confounders:
   1. the original matched harness always ran baseline before candidate, conflating candidate cost with runner/order drift;
   2. protected scenes inherited adaptive-resolution state from an earlier diagnostic A/B, allowing unlike pixel workloads to be compared;
   3. the sampler waited for at least 120 frames and then sliced from frame 10 onward, allowing scheduler overshoot to produce unequal 110/111-frame comparisons;
-  4. under slow SwiftShader RAF, the production loop could execute a variable number of fixed simulation updates before each rendered frame, so baseline/candidate timing changed the amount of simulation work being measured and could also advance weather/watershed state differently before later scenes.
+  4. under slow SwiftShader RAF, the production loop could execute a variable number of fixed simulation updates before each rendered frame, so baseline/candidate timing changed the amount of simulation work being measured and could also advance weather/watershed state differently before later scenes;
+  5. even after fixed semantic state and fixed simulation cadence, RAF interval still included browser/vsync/runner scheduling idle. The same runtime could therefore pass once and later show whole-frame 16.7–83 ms p95 deltas on a docs-only descendant.
 - The final harness repair is intentionally controlled rather than permissive: **the 8.4 ms per-pair threshold remains unchanged**; protected timing uses high quality, adaptive resolution disabled, adaptive value 1, pixel ratio 1 and a 960×640 buffer; every protected scene records and compares semantic start state; each measured RAF executes exactly **one 1/60 simulation update plus one render** in the test-only wrapper; every sample uses exactly **10 warm-up + 110 measured frames**; four balanced counterbalanced pairs are retained in full.
+- The protected timing metric is now the synchronous **update(1/60) + render work duration** measured inside each RAF callback. RAF scheduling/vsync idle is excluded from the matched regression statistic. This preserves the game work being compared while removing runner scheduling latency that the candidate does not control.
 - Four-pair adjudication requires a replicated majority (**3/4**) above 8.4 ms for FAIL; a 2/4 split is INCONCLUSIVE unless it is symmetric sign-reversing order variance with the central paired delta inside tolerance. No bad sample is discarded and no favorable run is cherry-picked.
-- Final controlled Chromium/ANGLE SwiftShader matrix, median/p95 in ms:
-  - **high** — pair deltas median **[0, 0, 0, 0]**, p95 **[0, +0.1, -33.1, -33.2]**; paired delta **0.0/-16.5**; PASS.
-  - **channelCut** — pair deltas median **[0, 0, 0, 0]**, p95 **[+33.4, 0, -33.4, -0.1]**; paired delta **0.0/0.0**; **ORDER_VARIANCE**, scenario PASS.
-  - **channelDistant** — pair deltas median **[0, 0, 0, 0]**, p95 **[0, +16.6, 0, 0]**; paired delta **0.0/0.0**; one isolated breach, PASS.
-  - **squirtles** — pair deltas median **[0, 0, 0, -0.1]**, p95 **[-0.1, -16.6, 0, -16.5]**; paired delta **0.0/-8.3**; PASS.
-- Final matched verdict: **PASS; failures []; inconclusive []; order-sensitive [channelCut]**. The order-sensitive result is retained explicitly as SwiftShader runner-order variance rather than erased.
-- The final successful repair changed only performance-proof tooling/tests after the Phase 2 gameplay implementation. Movement, Water Jet, map, terrain design and unrelated systems were not redesigned to obtain green CI.
-- Evidence boundary remains unchanged: headless Chromium/ANGLE SwiftShader is relative regression evidence, **not** representative hardware/mobile FPS. Ten-minute human movement enjoyment, physical touch feel, physical gamepad feel, heard audio quality, representative Mac/mobile GPU performance and overall first-ten-minutes gameplay quality remain **UNKNOWN**, not PASS.
+- Final controlled Chromium/ANGLE SwiftShader synchronous-work matrix, median/p95 deltas in ms:
+  - **high** — pair median deltas **[-0.2, 0.0, -0.2, -0.1]**, p95 **[-0.9, +0.5, -0.3, +0.8]**; paired delta **-0.2/+0.1**; PASS.
+  - **channelCut** — pair median deltas **[-0.1, +0.1, -0.1, -0.1]**, p95 **[-0.3, -0.1, -0.6, +0.2]**; paired delta **-0.1/-0.2**; PASS.
+  - **channelDistant** — pair median deltas **[-0.1, 0.0, -0.1, 0.0]**, p95 **[-0.2, +0.5, +0.2, +0.4]**; paired delta **0.0/+0.3**; PASS.
+  - **squirtles** — pair median deltas **[+0.5, +0.4, +0.5, -0.4]**, p95 **[+0.4, +0.1, -0.1, -0.3]**; paired delta **+0.5/0.0**; PASS.
+- Final matched verdict: **PASS; failures []; inconclusive []; order-sensitive []**. All protected deltas are well below the unchanged 8.4 ms threshold.
+- The successful repair changed only performance-proof tooling/tests after the Phase 2 gameplay implementation. Movement, Water Jet, map, terrain design and unrelated systems were not redesigned to obtain green CI.
+- Evidence boundary remains unchanged: headless Chromium/ANGLE SwiftShader synchronous-work timing is relative regression evidence, **not** representative hardware/mobile FPS or frame pacing. Ten-minute human movement enjoyment, physical touch feel, physical gamepad feel, heard audio quality, representative Mac/mobile GPU performance and overall first-ten-minutes gameplay quality remain **UNKNOWN**, not PASS.
 - Phase 2 is closed. The next body-first phase may proceed, but larger-map / major-system expansion remains blocked by the human movement gate.
 
 ## Current verified state (supersedes historical checkpoints below)
