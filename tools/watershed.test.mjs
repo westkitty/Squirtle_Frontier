@@ -74,17 +74,20 @@ import {
   applyWaterJet,
   DEBRIS_SITE,
 } from "../src/simulation/water-interaction.js";
-test("optional debris interaction requires a nearby active jet aimed at the obstruction", () => {
+test("optional debris interaction requires a nearby active Water Hose aimed at the obstruction", () => {
   const w = new Watershed(),
     b = {
       x: DEBRIS_SITE.x,
       z: DEBRIS_SITE.z + 2,
       y: 0,
       yaw: Math.PI,
-      jetTime: 0.2,
+      hoseActive: true,
+      hoseAimX: 0,
+      hoseAimY: 0,
+      hoseAimZ: -1,
     };
-  assert.equal(applyWaterJet(w, { ...b, jetTime: 0 }, 1 / 60), false);
-  assert.equal(applyWaterJet(w, { ...b, yaw: 0 }, 1 / 60), false);
+  assert.equal(applyWaterJet(w, { ...b, hoseActive: false }, 1 / 60), false);
+  assert.equal(applyWaterJet(w, { ...b, hoseAimZ: 1 }, 1 / 60), false);
   assert.equal(applyWaterJet(w, { ...b, z: 50 }, 1 / 60), false);
   assert.equal(applyWaterJet(w, b, 1 / 60), true);
   assert.ok(w.nodes[1].blockage < 0.95);

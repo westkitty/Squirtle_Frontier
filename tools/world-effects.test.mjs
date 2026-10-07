@@ -37,21 +37,24 @@ test("WorldEffects reuses single ConeGeometry across all particle systems for ze
   assert.equal(fx.group.parent, null);
 });
 
-test("Water Jet stream activates pressurized particle stream reaching 2.8m along forward yaw", () => {
+test("Water Hose stream follows camera aim and reaches 2.8m", () => {
   const parent = new THREE.Group();
   const fx = new WorldEffects(parent);
   const state = createMockState();
   const body = createBody(5, 5, 1);
-  body.yaw = Math.PI / 4; // 45 degrees
+  body.yaw = Math.PI / 4;
 
-  // 1. Idle / no jet
-  body.jetTime = 0;
+  // 1. Idle / no hose
+  body.hoseActive = false;
   fx.update(state, body);
   assert.equal(fx.jet.visible, false);
   assert.equal(fx.jet.count, 0);
 
-  // 2. Active jet impulse
-  body.jetTime = 0.35;
+  // 2. Active hose, aimed 45 degrees in camera space
+  body.hoseActive = true;
+  body.hoseAimX = Math.SQRT1_2;
+  body.hoseAimY = 0;
+  body.hoseAimZ = Math.SQRT1_2;
   fx.update(state, body);
   assert.equal(fx.jet.visible, true);
   assert.equal(fx.jet.count, 24);
@@ -70,13 +73,13 @@ test("Water Jet stream activates pressurized particle stream reaching 2.8m along
     `furthest jet particle should reach ~2.8m, was ${horizontalDist.toFixed(2)}`,
   );
 
-  // Trajectory should align with forward yaw direction (sin(yaw), cos(yaw))
-  const forwardX = Math.sin(body.yaw);
-  const forwardZ = Math.cos(body.yaw);
+  // Trajectory should align with camera-derived hose direction.
+  const forwardX = body.hoseAimX;
+  const forwardZ = body.hoseAimZ;
   const dot = (dx * forwardX + dz * forwardZ) / horizontalDist;
   assert.ok(
     dot > 0.95,
-    `jet stream should align forward along yaw, dot product was ${dot.toFixed(3)}`,
+    `hose stream should align with camera aim, dot product was ${dot.toFixed(3)}`,
   );
 
   fx.dispose();
@@ -124,6 +127,11 @@ test("Aquatic surface wake generates concentric ripples only when swimming or mo
   assert.equal(fx.wake.visible, false);
   assert.equal(fx.wake.count, 0);
   body.jetTime = 0;
+  body.hoseActive = true;
+  fx.update(state, body, { water });
+  assert.equal(fx.wake.visible, false, "Water Hose must not stack the ordinary swim wake");
+  assert.equal(fx.wake.count, 0);
+  body.hoseActive = false;
   fx.update(state, body, { water });
 
   // Check that wake ripple sits precisely at water surface height
@@ -390,7 +398,7 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
   state.frontier.weather.rain = 1;
   body.mode = "swim";
   body.vx = 4;
-  body.jetTime = 0.2;
+  body.hoseActive = true;
   fx.update(state, body, {
     water: { level: 0.5 },
     effectScale: 1,
@@ -405,7 +413,7 @@ test("animated instanced effects use dynamic draw buffers and presentation densi
   });
   assert.ok(fx.jet.count < fullJet && fx.jet.count >= 8);
   assert.ok(fx.rain.count < fullRain);
-  assert.equal(body.jetTime, 0.2, "visual density may not alter Jet state");
+  assert.equal(body.hoseActive, true, "visual density may not alter Hose state");
   fx.dispose();
 });
 

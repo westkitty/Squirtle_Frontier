@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createBody } from "../src/player/body-state.js";
-import { stepBody } from "../src/player/squirtle-controller.js";
+import { JET_HOLD_THRESHOLD, stepBody } from "../src/player/squirtle-controller.js";
 const input = (extra = {}) => ({
   x: 0,
   z: 0,
@@ -69,19 +69,45 @@ test("slide retains momentum, responds to slope and recovers on release", () => 
   tick(c, input({ slide: true }), downhill);
   assert.ok(c.z > 0);
 });
-test("jet launches, is bounded and returns safely to land", () => {
+test("tap Water Jet bursts on release, is bounded and returns safely to land", () => {
   const b = createBody(0, 0, 0);
   b.yaw = 0;
   stepBody(b, input({ jet: true }), flat, 1 / 60);
+  assert.equal(b.jetCooldown, 0, "press alone must not launch before tap/hold intent is known");
+  assert.equal(b.jetTime, 0);
+  stepBody(b, input(), flat, 1 / 60);
   assert.ok(b.vz > 7);
   assert.ok(b.y > 0);
   assert.ok(b.jetCooldown > 1);
-  const cooldown = b.jetCooldown;
-  stepBody(b, input({ jet: true }), flat, 1 / 60);
-  assert.ok(b.jetCooldown < cooldown);
+  assert.ok(b.jetTime > 0);
   tick(b, input(), flat, 3);
   assert.equal(b.y, 0);
   assert.equal(b.mode, "land");
+});
+
+test("holding Water Jet becomes a camera-aimed hose without traversal launch", () => {
+  const b = createBody(0, 0, 0);
+  b.yaw = 0;
+  const held = input({ jet: true, jetAimX: 1, jetAimY: -0.2, jetAimZ: 0 });
+  for (let elapsed = 0; elapsed < JET_HOLD_THRESHOLD + 0.05; elapsed += 1 / 60)
+    stepBody(b, held, flat, 1 / 60);
+  assert.equal(b.hoseActive, true);
+  assert.equal(b.jetCooldown, 0);
+  assert.equal(b.jetTime, 0);
+  assert.ok(b.yaw > 0.2, "body should visibly turn toward camera hose intent");
+  stepBody(b, input(), flat, 1 / 60);
+  assert.equal(b.hoseActive, false);
+  assert.equal(b.jetCooldown, 0, "releasing a hose must not also fire a burst");
+  assert.equal(b.jetTime, 0);
+});
+
+test("cancelled Jet input cannot turn a pending tap into an accidental burst", () => {
+  const b = createBody(0, 0, 0);
+  stepBody(b, input({ jet: true }), flat, 1 / 60);
+  stepBody(b, input({ cancelActions: true }), flat, 1 / 60);
+  assert.equal(b.jetTime, 0);
+  assert.equal(b.jetCooldown, 0);
+  assert.equal(b.hoseActive, false);
 });
 test("rock collision resolves separation and reflects incoming slide velocity", () => {
   const env = { ...flat, obstacles: [{ x: 0, z: 1, radius: 0.3, height: 2 }] },

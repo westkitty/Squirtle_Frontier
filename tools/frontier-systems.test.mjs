@@ -164,7 +164,7 @@ test("record access is spatial/depth gated and actual swim physics reaches histo
   assert.equal(scene.children.length, 0);
 });
 
-test("Water Jet aimed at burnt ground rinses ash and prevents storm contamination", () => {
+test("Water Hose aimed at burnt ground rinses ash and prevents storm contamination", () => {
   const frontier = new FrontierSystems(1337);
   const site = fireSite(0);
   frontier.heat[0] = 0.6;
@@ -175,17 +175,20 @@ test("Water Jet aimed at burnt ground rinses ash and prevents storm contaminatio
   // site.x is 12, site.z is -8
   const body = createBody(site.x, site.z - 1.2, 0);
   body.yaw = 0; // facing +Z direction (toward site.z)
-  body.jetTime = 0.35;
+  body.hoseActive = true;
+  body.hoseAimX = 0;
+  body.hoseAimY = 0;
+  body.hoseAimZ = 1;
 
-  // 1. Direct aimed Water Jet rinses ash and cools heat
+  // 1. Direct aimed Water Hose rinses ash and cools heat
   applyWorldJet(frontier, body, 0.5);
   assert.ok(frontier.heat[0] < 0.6, "water jet must cool fire heat");
   assert.ok(frontier.soaked[0] > 0, "water jet must soak ground");
   assert.ok(frontier.ash[0] < 0.8, "water jet must rinse away ash");
 
-  // 2. Unaimed water jet (facing opposite direction Math.PI) fails to hit site
+  // 2. Unaimed Water Hose fails to hit site
   const ashBefore = frontier.ash[0];
-  body.yaw = Math.PI; // facing south away from site
+  body.hoseAimZ = -1;
   applyWorldJet(frontier, body, 0.5);
   assert.equal(frontier.ash[0], ashBefore, "unaimed jet must not affect ash");
 });

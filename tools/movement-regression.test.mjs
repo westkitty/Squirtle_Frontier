@@ -75,6 +75,7 @@ test("ground snapping excludes cliffs and intentional jet launch", () => {
   assert.ok(b.y > -0.1);
   const launch = createBody(0, 0, 0);
   stepBody(launch, controls({ jet: true }), flat, 1 / 60);
+  stepBody(launch, controls({}), flat, 1 / 60);
   assert.ok(launch.y > 0);
   assert.equal(launch.grounded, false);
 });
@@ -270,6 +271,22 @@ test("camera accepts rate-based controller look and widens for fast travel and W
   assert.ok(rig.camera.fov >= 58, "Water Jet should read as a stronger speed event");
 });
 
+
+test("Water Hose temporarily permits a steeper downward camera pitch", () => {
+  const rig = new CreatureCamera(
+    new THREE.PerspectiveCamera(55, 1.5, 0.04, 100),
+    flat,
+  );
+  const body = createBody(0, 0, 0);
+  const settings = { sensitivity: 1, invertY: false, reducedMotion: false };
+  body.hoseActive = true;
+  rig.pitch = 1;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.ok(rig.pitch > 0.85);
+  body.hoseActive = false;
+  rig.update(body, { lookX: 0, lookY: 0 }, 1 / 60, settings);
+  assert.ok(rig.pitch <= 0.85);
+});
 
 test("aquatic camera banks with turns and looks along vertical travel while reduced motion stays quiet", () => {
   const rig = new CreatureCamera(

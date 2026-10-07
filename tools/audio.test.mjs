@@ -130,8 +130,15 @@ test("water jet triggers pressurized fluid surge on jet bus", () => {
   assert.ok(audio.jetGain.gain.value > 0.3, "jet surge gain must ramp up during water jet");
   assert.ok(audio.jetFilter.frequency.value > 450, "jet filter frequency must sweep upward");
 
-  // Jet expiry restores silence on jet voice
+  // Holding the same control becomes a lower, sustained hose pressure voice.
   b.jetTime = 0;
+  b.hoseActive = true;
+  audio.update(b, { muted: false, volume: 1.0 });
+  assert.ok(audio.jetGain.gain.value >= 0.2 && audio.jetGain.gain.value < 0.3);
+  assert.equal(audio.jetFilter.frequency.value, 560);
+
+  // Releasing the hose restores silence on the shared pressure voice.
+  b.hoseActive = false;
   audio.update(b, { muted: false, volume: 1.0 });
   assert.equal(audio.jetGain.gain.value, 0, "jet gain must return to 0 when inactive");
 
