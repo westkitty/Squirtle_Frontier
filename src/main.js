@@ -741,6 +741,10 @@ async function boot() {
         z: 0,
         slide: false,
         jet: false,
+        jetAimX: 0,
+        jetAimY: 0,
+        jetAimZ: -1,
+        cancelActions: false,
         dive: false,
         ascend: false,
         run: false,
@@ -881,6 +885,11 @@ async function boot() {
         movementControls.z = world.z;
         movementControls.slide = controls.slide;
         movementControls.jet = controls.jet;
+        const hoseAimCos = Math.cos(rig.pitch);
+        movementControls.jetAimX = Math.sin(rig.yaw) * hoseAimCos;
+        movementControls.jetAimY = -Math.sin(rig.pitch);
+        movementControls.jetAimZ = Math.cos(rig.yaw) * hoseAimCos;
+        movementControls.cancelActions = controls.cancelActions;
         movementControls.dive = controls.dive;
         movementControls.ascend = controls.ascend;
         movementControls.run = controls.run;
@@ -1062,7 +1071,7 @@ async function boot() {
         if (body.mode === "swim" || body.mode === "dive")
           showHint(
             "swim",
-            "Water changes your body: Q dives, E rises, and Space sends Water Jet.",
+            "Water changes your body: Q dives, E rises, tap Space to burst, hold Space to hose.",
           );
         if (
           state.place === "frontier" &&

@@ -1,8 +1,47 @@
 // Body-state authority: no Three.js, imported nodes, material names or animation dependencies.
 import { clamp } from "../rng.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
+export const JET_HOLD_THRESHOLD = 0.18;
 export function stepBody(b, input, env, dt) {
   const wasGrounded = b.grounded;
+  const jetWasHeld = !!b.jetHeld;
+  const jetDown = !!input.jet;
+  let triggerJetBurst = false;
+  if (input.cancelActions) {
+    b.jetHeld = false;
+    b.jetPressTime = 0;
+    b.hoseActive = false;
+  } else if (jetDown) {
+    if (!jetWasHeld) b.jetPressTime = 0;
+    b.jetPressTime += dt;
+    const aimX = Number(input.jetAimX),
+      aimY = Number(input.jetAimY),
+      aimZ = Number(input.jetAimZ),
+      aimLength = Math.hypot(aimX, aimY, aimZ);
+    if (Number.isFinite(aimLength) && aimLength > 0.001) {
+      b.hoseAimX = aimX / aimLength;
+      b.hoseAimY = aimY / aimLength;
+      b.hoseAimZ = aimZ / aimLength;
+    } else {
+      b.hoseAimX = Math.sin(b.yaw);
+      b.hoseAimY = 0;
+      b.hoseAimZ = Math.cos(b.yaw);
+    }
+    if (!b.hoseActive && b.jetPressTime >= JET_HOLD_THRESHOLD)
+      b.hoseActive = true;
+    b.jetHeld = true;
+  } else {
+    if (jetWasHeld) {
+      const wasHose = b.hoseActive;
+      triggerJetBurst =
+        !wasHose &&
+        b.jetPressTime > 0 &&
+        b.jetPressTime < JET_HOLD_THRESHOLD;
+    }
+    b.jetHeld = false;
+    b.jetPressTime = 0;
+    b.hoseActive = false;
+  }
   const slidePressed = !!input.slide && !b.slideHeld;
   b.slideHeld = !!input.slide;
   b.jetCooldown = Math.max(0, b.jetCooldown - dt);
@@ -29,7 +68,14 @@ export function stepBody(b, input, env, dt) {
       b.mode = "slide";
     } else b.mode = "land";
   } else if (!immersed) b.mode = "air";
-  if (moving || input.jet || input.slide || !b.grounded || b.mode !== "land") {
+  if (
+    moving ||
+    input.jet ||
+    triggerJetBurst ||
+    input.slide ||
+    !b.grounded ||
+    b.mode !== "land"
+  ) {
     b.resting = false;
   }
   const aquatic = b.mode === "swim" || b.mode === "dive";
@@ -38,6 +84,14 @@ export function stepBody(b, input, env, dt) {
     const target = Math.atan2(input.x, input.z),
       delta = Math.atan2(Math.sin(target - b.yaw), Math.cos(target - b.yaw));
     b.yaw += delta * (1 - Math.exp(-(b.mode === "slide" ? 5 : 12) * dt));
+  }
+  if (b.hoseActive) {
+    const horizontalAim = Math.hypot(b.hoseAimX, b.hoseAimZ);
+    if (horizontalAim > 0.001) {
+      const target = Math.atan2(b.hoseAimX, b.hoseAimZ),
+        delta = Math.atan2(Math.sin(target - b.yaw), Math.cos(target - b.yaw));
+      b.yaw += delta * (1 - Math.exp(-10 * dt));
+    }
   }
   if (b.mode === "slide") {
     b.vx -= floor.dx * 12 * dt;
@@ -76,7 +130,7 @@ export function stepBody(b, input, env, dt) {
       dt,
     );
   }
-  if (input.jet && b.jetCooldown <= 0) {
+  if (triggerJetBurst && b.jetCooldown <= 0) {
     b.jetCooldown = 1.1;
     b.jetTime = 0.36;
     b.vx += Math.sin(b.yaw) * 7.8;

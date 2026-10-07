@@ -81,6 +81,7 @@ export class Input {
     this.pointers = new Map();
     this.canvas = canvas;
     this.suppressed = false;
+    this.cancelActions = false;
     this.modality = "keyboard";
     this.controller = { connected: false, name: "" };
     canvas.tabIndex = 0;
@@ -116,6 +117,7 @@ export class Input {
       "gamepaddisconnected",
       () => {
         this.controller = { connected: false, name: "" };
+        this.cancelActions = true;
         if (this.modality === "gamepad") this.modality = "keyboard";
       },
       options,
@@ -235,6 +237,8 @@ export class Input {
   }
 
   sample() {
+    const cancelActions = this.cancelActions;
+    this.cancelActions = false;
     if (this.suppressed)
       return {
         x: 0,
@@ -246,6 +250,7 @@ export class Input {
         dive: false,
         ascend: false,
         recenter: false,
+        cancelActions,
       };
     const pad = this.readGamepad();
     let x =
@@ -269,6 +274,7 @@ export class Input {
       dive: this.keys.has("KeyQ") || this.actions.dive || pad.dive,
       ascend: this.keys.has("KeyE") || this.actions.ascend || pad.ascend,
       recenter: this.keys.has("KeyV") || pad.recenter,
+      cancelActions,
     };
   }
 
@@ -297,6 +303,7 @@ export class Input {
   }
 
   clear() {
+    this.cancelActions = true;
     this.keys.clear();
     this.actions = {};
     this.stick = { x: 0, z: 0 };

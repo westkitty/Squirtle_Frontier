@@ -104,7 +104,7 @@ export class CreatureCamera {
           settings.sensitivity *
           (settings.invertY ? -1 : 1),
       -0.35,
-      0.85,
+      body.hoseActive ? 1.05 : 0.85,
     );
 
     const speed = Math.hypot(body.vx, body.vz);
