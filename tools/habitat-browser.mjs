@@ -58,7 +58,7 @@ try {
     `a blocked wetland must render a sparse reed band, got ${report.frontierReedsBefore}`,
   );
 
-  // Repair is real input from here on: the same aimed-jet play browser:watershed
+  // Repair is real input from here on: the same held-Hose path browser:watershed
   // proves, on the debris shore. The body drifts, so each pulse re-finds its footing.
   const place = async (x, z, y, mode, grounded) => {
     await page.evaluate(
@@ -76,6 +76,8 @@ try {
           mode,
           grounded,
         });
+        g.rig.yaw = Math.PI;
+        g.rig.pitch = 0;
         g.rig.initial = true;
       },
       [x, z, y, mode, grounded],
@@ -83,6 +85,7 @@ try {
     await page.waitForTimeout(400);
   };
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   let cleared = false;
   for (let attempt = 0; attempt < 90 && !cleared; attempt++) {
     await place(-6, 14, -0.22, "swim", false);
@@ -92,7 +95,7 @@ try {
       )) < 1e-6;
   }
   await page.keyboard.up("Space");
-  await page.waitForFunction(() => window.__SF.body.jetTime === 0, null, {
+  await page.waitForFunction(() => window.__SF.body.hoseActive === false, null, {
     timeout: 15000,
   });
   report.blockageCleared = await page.evaluate(
@@ -100,7 +103,7 @@ try {
   );
   assert.ok(
     cleared,
-    `aimed jetting has to clear the landslide, left ${report.blockageCleared}`,
+    `aimed hosing has to clear the landslide, left ${report.blockageCleared}`,
   );
 
   // The player saves through the real control, then is away for half an hour: the

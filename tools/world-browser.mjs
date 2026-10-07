@@ -31,11 +31,15 @@ try {
       vy: 0,
       vz: 0,
     });
+    g.rig.yaw = Math.PI;
+    g.rig.pitch = 0;
+    g.rig.initial = true;
   });
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(() => window.__SF.state.frontier.bypass > 0.02);
   await page.keyboard.up("Space");
-  await page.waitForFunction(() => window.__SF.body.jetTime === 0);
+  await page.waitForFunction(() => window.__SF.body.hoseActive === false);
   evidence.bypass = await page.evaluate(
     () => window.__SF.state.frontier.bypass,
   );
@@ -53,8 +57,12 @@ try {
       vz: 0,
       vy: 0,
     });
+    g.rig.yaw = Math.PI;
+    g.rig.pitch = 0;
+    g.rig.initial = true;
   });
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(() => window.__SF.state.frontier.soaked[0] > 0.05);
   await page.keyboard.up("Space");
   evidence.suppression = await page.evaluate(() => ({

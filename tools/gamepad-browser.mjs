@@ -91,6 +91,16 @@ try {
     b.value = 1;
     window.__SF_TEST_GAMEPAD.timestamp++;
   });
+  await page.waitForFunction(() => window.__SF.body.jetPressTime > 0, null, {
+    timeout: 30000,
+  });
+  await page.evaluate(() => {
+    const b = window.__SF_TEST_GAMEPAD.buttons[0];
+    b.pressed = false;
+    b.touched = false;
+    b.value = 0;
+    window.__SF_TEST_GAMEPAD.timestamp++;
+  });
   await page.waitForFunction(() => window.__SF.body.jetCooldown > 0, null, {
     timeout: 30000,
   });
@@ -98,12 +108,6 @@ try {
     cooldown: window.__SF.body.jetCooldown,
     jetTime: window.__SF.body.jetTime,
   }));
-  await page.evaluate(() => {
-    const b = window.__SF_TEST_GAMEPAD.buttons[0];
-    b.pressed = false;
-    b.touched = false;
-    b.value = 0;
-  });
 
   await page.evaluate(() => {
     const g = window.__SF;

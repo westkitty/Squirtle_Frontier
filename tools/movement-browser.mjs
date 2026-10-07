@@ -49,9 +49,10 @@ try {
   await page.screenshot({ path: "artifacts/phase1-slide.png" });
   await page.keyboard.up("KeyC");
   await page.keyboard.down("Space");
-  await page.waitForFunction(() => window.__SF.body.jetCooldown > 0);
-  await mark("land Water Jet");
+  await page.waitForFunction(() => window.__SF.body.jetPressTime > 0);
   await page.keyboard.up("Space");
+  await page.waitForFunction(() => window.__SF.body.jetCooldown > 0);
+  await mark("land Water Jet burst");
   // Walk physically from bank into water, not by setting the movement state.
   await page.keyboard.down("KeyD");
   await page.keyboard.down("ShiftLeft");
@@ -82,9 +83,10 @@ try {
   await mark("dive");
   await page.screenshot({ path: "artifacts/phase1-dive.png" });
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.jetPressTime > 0);
+  await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.jetTime > 0.1);
   await mark("underwater boost");
-  await page.keyboard.up("Space");
   await page.keyboard.down("KeyE");
   await page.waitForFunction(() => window.__SF.body.mode === "swim", null, {
     timeout: 30000,
@@ -92,9 +94,10 @@ try {
   await page.keyboard.up("KeyE");
   await mark("ascent");
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.jetPressTime > 0);
+  await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.y > 0.1);
   await mark("surface launch");
-  await page.keyboard.up("Space");
   await page.mouse.move(480, 300);
   await page.mouse.down();
   await page.mouse.move(650, 345, { steps: 5 });

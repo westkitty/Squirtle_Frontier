@@ -64,6 +64,7 @@ try {
   await page.screenshot({ path: "artifacts/watershed-obstruction-before.png" });
 
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(
     () => window.__SF.state.watershed.nodes[1].blockage < 0.94,
   );
@@ -87,12 +88,15 @@ try {
         mode: "swim",
         grounded: false,
       });
+      g.rig.yaw = Math.PI;
+      g.rig.pitch = 0;
       g.rig.initial = true;
     });
     await page.waitForTimeout(120);
   };
 
   await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   let cleared = false;
   for (let attempt = 0; attempt < 90 && !cleared; attempt++) {
     await aimAtDebris();
@@ -102,7 +106,7 @@ try {
       )) < 1e-6;
   }
   await page.keyboard.up("Space");
-  await page.waitForFunction(() => window.__SF.body.jetTime === 0, null, {
+  await page.waitForFunction(() => window.__SF.body.hoseActive === false, null, {
     timeout: 15000,
   });
   evidence.blockageCleared = await page.evaluate(
