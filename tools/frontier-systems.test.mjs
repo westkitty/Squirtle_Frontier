@@ -198,6 +198,25 @@ test("Water Hose aimed at burnt ground rinses ash and prevents storm contaminati
   assert.equal(frontier.ash[0], ashBefore, "unaimed jet must not affect ash");
 });
 
+test("Water Hose washes ash after flame is gone and reports ash contact", () => {
+  const frontier = new FrontierSystems(1337),
+    site = fireSite(0),
+    body = createBody(site.x, site.z - 1.2, 0),
+    hit = createJetHit();
+  frontier.heat[0] = 0;
+  frontier.ash[0] = 0.8;
+  frontier.soaked[0] = 0;
+  body.yaw = 0;
+  body.hoseActive = true;
+  body.hoseAimX = 0;
+  body.hoseAimY = 0;
+  body.hoseAimZ = 1;
+  applyWorldJet(frontier, body, 0.25, hit);
+  assert.ok(frontier.ash[0] < 0.8);
+  assert.ok(frontier.soaked[0] > 0);
+  assert.equal(hit.kind, "ash");
+});
+
 test("6-hour offline fast-forward maintains finite bounded scalars and history limit", () => {
   const s = new WorldState();
   // 6 hours = 21,600 ticks

@@ -1,6 +1,7 @@
 // Body-state authority: no Three.js, imported nodes, material names or animation dependencies.
 import { clamp } from "../rng.js";
 const approach = (a, b, rate, dt) => a + (b - a) * (1 - Math.exp(-rate * dt));
+// Provisional disambiguation value: hardware playtesting owns the final threshold.
 export const JET_HOLD_THRESHOLD = 0.18;
 export function stepBody(b, input, env, dt) {
   const wasGrounded = b.grounded;

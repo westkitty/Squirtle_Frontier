@@ -85,6 +85,15 @@ test("tap Water Jet bursts on release, is bounded and returns safely to land", (
   assert.equal(b.mode, "land");
 });
 
+test("Jet Burst adds thrust without erasing incoming lateral momentum", () => {
+  const b = createBody(0, 0, 1);
+  Object.assign(b, { grounded: false, mode: "air", vx: 3, vz: 0, yaw: 0 });
+  stepBody(b, input({ jet: true }), flat, 1 / 60);
+  stepBody(b, input(), flat, 1 / 60);
+  assert.ok(b.vx > 2.7, "burst must preserve most incoming lateral momentum");
+  assert.ok(b.vz > 7, "burst must add strong forward propulsion");
+});
+
 test("holding Water Jet becomes a camera-aimed hose without traversal launch", () => {
   const b = createBody(0, 0, 0);
   b.yaw = 0;
