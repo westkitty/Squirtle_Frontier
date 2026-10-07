@@ -444,8 +444,8 @@ const MUTATIONS = [
   {
     what: "water jet fails to rinse ash from fire site",
     file: "src/simulation/water-interaction.js",
-    from: "      if (frontier.ash[i] > 0)\n        frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8);",
-    to: "      if (false && frontier.ash[i] > 0)\n        frontier.ash[i] = Math.max(0, frontier.ash[i] - dt * 0.8);",
+    from: "      if (ashBefore > 0)\n        frontier.ash[i] = Math.max(0, ashBefore - dt * 0.8);",
+    to: "      if (false && ashBefore > 0)\n        frontier.ash[i] = Math.max(0, ashBefore - dt * 0.8);",
   },
   {
     what: "offline fast-forward fails to advance regional tick",
