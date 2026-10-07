@@ -47,6 +47,10 @@ import {
   applyWorldJet,
   DEBRIS_SITE,
 } from "./simulation/water-interaction.js";
+import {
+  createJetHitEvent,
+  resetJetHitEvent,
+} from "./simulation/jet-hit.js";
 import { WatershedPresentation } from "./player/watershed-presentation.js";
 import {
   HabitatView,
@@ -120,6 +124,7 @@ async function boot() {
         ? labHeight(state.player.x, state.player.z)
         : heightAt(state.player.x, state.player.z),
     );
+    const jetHit = createJetHitEvent();
     const frontierGroup = new THREE.Group();
     scene.add(frontierGroup);
     const streaming = new Streaming(frontierGroup, state),
@@ -754,6 +759,7 @@ async function boot() {
         isShaking: false,
         effectScale: 1,
         channelFlow: 0,
+        jetHit,
       },
       labEnvironment = { windStrength: 0.08, wetness: 0 },
       audioContext = {
@@ -769,6 +775,7 @@ async function boot() {
         wildlifeDistance: 999,
         canopyCover: 0,
         place: "frontier",
+        jetHit,
       },
       cameraSettings = {
         sensitivity: Settings.values.sensitivity,
@@ -894,6 +901,7 @@ async function boot() {
         movementControls.ascend = controls.ascend;
         movementControls.run = controls.run;
         stepBody(body, movementControls, env, dt);
+        resetJetHitEvent(jetHit);
         if (state.place === "lab") {
           body.x = Math.max(-7.5, Math.min(7.5, body.x));
           body.z = Math.max(-7.5, Math.min(7.5, body.z));
@@ -930,8 +938,8 @@ async function boot() {
           record.update(body, state.memory, strataHold, state.elapsed);
           renderRecordReadout(ledger);
         } else {
-          applyWaterJet(state.watershed, body, dt);
-          applyWorldJet(state.frontier, body, dt);
+          applyWaterJet(state.watershed, body, dt, jetHit);
+          applyWorldJet(state.frontier, body, dt, jetHit);
         }
         // A reading is earned in the shaft or not at all: leaving must not bank progress
         // toward logging a band that was never stood in.
@@ -1037,7 +1045,7 @@ async function boot() {
           );
         }
         if (state.place === "frontier")
-          watershedView.update(state.watershed, body);
+          watershedView.update(state.watershed, body, jetHit, dt);
         const wetland = state.watershed.nodes[2],
           sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),
           contamination = THREE.MathUtils.clamp(
@@ -1182,6 +1190,7 @@ async function boot() {
         cameraSettings.sensitivity = Settings.values.sensitivity;
         cameraSettings.invertY = Settings.values.invertY;
         cameraSettings.reducedMotion = Settings.motionReduced;
+        rig.noteJetHit(jetHit);
         rig.update(body, input.consumeLook(), cameraDt, cameraSettings);
         const cameraEnv =
             state.place === "record"
@@ -1443,6 +1452,7 @@ async function boot() {
       creature,
       rig,
       input,
+      jetHit,
       region,
       adaptive,
       enterPlace,
