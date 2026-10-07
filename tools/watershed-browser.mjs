@@ -68,6 +68,18 @@ try {
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(
+    () =>
+      window.__SF.jetHit.serial > 0 &&
+      window.__SF.jetHit.kind === "debris" &&
+      window.__SF.stats().performance.effects.jetImpact > 0,
+  );
+  evidence.jetHit = await page.evaluate(() => ({
+    serial: window.__SF.jetHit.serial,
+    kind: window.__SF.jetHit.kind,
+    particles: window.__SF.stats().performance.effects.jetImpact,
+    debrisPulse: window.__SF.stats().effects.obstruction,
+  }));
+  await page.waitForFunction(
     () => window.__SF.state.watershed.nodes[1].blockage < 0.94,
   );
   await page.keyboard.up("Space");

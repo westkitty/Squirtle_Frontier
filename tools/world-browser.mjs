@@ -37,6 +37,17 @@ try {
   });
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === true);
+  await page.waitForFunction(
+    () =>
+      window.__SF.jetHit.serial > 0 &&
+      window.__SF.jetHit.kind === "ground" &&
+      window.__SF.stats().performance.effects.jetImpact > 0,
+  );
+  evidence.bypassHit = await page.evaluate(() => ({
+    serial: window.__SF.jetHit.serial,
+    kind: window.__SF.jetHit.kind,
+    particles: window.__SF.stats().performance.effects.jetImpact,
+  }));
   await page.waitForFunction(() => window.__SF.state.frontier.bypass > 0.02);
   await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === false);
@@ -61,14 +72,26 @@ try {
     g.rig.pitch = 0;
     g.rig.initial = true;
   });
+  const hitSerialBeforeFire = await page.evaluate(() => window.__SF.jetHit.serial);
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === true);
+  await page.waitForFunction(
+    (serial) =>
+      window.__SF.jetHit.serial > serial &&
+      window.__SF.jetHit.kind === "fire" &&
+      window.__SF.stats().performance.effects.jetImpact > 0,
+    hitSerialBeforeFire,
+  );
   await page.waitForFunction(() => window.__SF.state.frontier.soaked[0] > 0.05);
   await page.keyboard.up("Space");
   evidence.suppression = await page.evaluate(() => ({
     heat: window.__SF.state.frontier.heat[0],
     soaked: window.__SF.state.frontier.soaked[0],
+    hitKind: window.__SF.jetHit.kind,
+    hitParticles: window.__SF.stats().performance.effects.jetImpact,
   }));
+  assert.equal(evidence.suppression.hitKind, "fire");
+  assert.ok(evidence.suppression.hitParticles > 0);
   await page.screenshot({ path: "artifacts/world-fire.png" });
   // The memory panel remains about places and witnessed events, not a live
   // hydrology instrument. Named-reach telemetry is deliberately absent.
