@@ -63,6 +63,10 @@ export class Audio {
     this.ambientGain = null;
     this.ambientFilter = null;
     this.ambientState = { level: 0, frequency: 0, q: 0 };
+    this.lastJetHitSerial = 0;
+    this.jetHitAt = -10;
+    this.jetHitKind = "";
+    this.jetHitIntensity = 0;
   }
   get gain() {
     return this.masterGain;
@@ -248,10 +252,35 @@ export class Audio {
     // Master volume target
     this.masterGain.gain.setTargetAtTime(volume, now, 0.05);
 
-    // 1. Water Jet burst / Water Hose pressure voice
-    const jetLevel = body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0;
+    // 1. Water Jet burst / Water Hose pressure voice. Contact reuses the same
+    // persistent graph as a short hiss/thump accent; no per-hit AudioNodes are made.
+    const hit = contextInfo.jetHit,
+      hitSerial = Number(hit?.serial) || 0;
+    if (hitSerial > 0 && hitSerial !== this.lastJetHitSerial) {
+      this.lastJetHitSerial = hitSerial;
+      this.jetHitAt = now;
+      this.jetHitKind = String(hit?.kind || "");
+      this.jetHitIntensity = Math.max(
+        0,
+        Math.min(1, Number(hit?.intensity) || 0),
+      );
+    }
+    const jetHitAge = now - this.jetHitAt,
+      hitAccent =
+        jetHitAge >= 0 && jetHitAge < 0.18
+          ? (0.07 + this.jetHitIntensity * 0.09) *
+            (1 - jetHitAge / 0.18)
+          : 0,
+      jetLevel =
+        (body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0) + hitAccent;
     this.jetGain.gain.setTargetAtTime(jetLevel, now, 0.04);
-    if (body.hoseActive) {
+    if (hitAccent > 0) {
+      this.jetFilter.frequency.setTargetAtTime(
+        this.jetHitKind === "fire" ? 1420 : 980,
+        now,
+        0.025,
+      );
+    } else if (body.hoseActive) {
       this.jetFilter.frequency.setTargetAtTime(560, now, 0.05);
     } else if (body.jetTime > 0) {
       this.jetFilter.frequency.setTargetAtTime(

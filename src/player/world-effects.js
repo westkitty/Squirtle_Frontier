@@ -67,6 +67,26 @@ export class WorldEffects {
     this.jet.visible = false;
     this.group.add(this.jet);
 
+    this.jetImpactMat = new THREE.MeshBasicMaterial({
+      color: 0xcdf5ff,
+      transparent: true,
+      opacity: 0.68,
+      depthWrite: false,
+    });
+    this.jetImpact = new THREE.InstancedMesh(this.geo, this.jetImpactMat, 12);
+    this.jetImpact.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.jetImpact.frustumCulled = false;
+    this.jetImpact.count = 0;
+    this.jetImpact.visible = false;
+    this.group.add(this.jetImpact);
+    this.jetImpactSerial = 0;
+    this.jetImpactUntil = -Infinity;
+    this.jetImpactX = 0;
+    this.jetImpactY = 0;
+    this.jetImpactZ = 0;
+    this.jetImpactKind = "";
+    this.jetImpactIntensity = 0;
+
     this.wakeMat = new THREE.MeshBasicMaterial({
       color: 0x90e6f7,
       transparent: true,
@@ -314,6 +334,7 @@ export class WorldEffects {
       this.fireSmoke,
       this.rain,
       this.jet,
+      this.jetImpact,
       this.wake,
       this.splash,
       this.slideDust,
@@ -515,6 +536,63 @@ export class WorldEffects {
     } else {
       this.jet.count = 0;
       this.jet.visible = false;
+    }
+
+    // Jet contact feedback: the interaction event owns where contact occurred, while
+    // this presentation cache gives a single hit enough lifetime to be legible.
+    const jetHit = options?.jetHit,
+      hitSerial = Number(jetHit?.serial) || 0;
+    if (hitSerial > 0 && hitSerial !== this.jetImpactSerial) {
+      this.jetImpactSerial = hitSerial;
+      this.jetImpactUntil = state.elapsed + 0.18;
+      this.jetImpactX = Number(jetHit.x) || 0;
+      this.jetImpactY = Number(jetHit.y) || 0;
+      this.jetImpactZ = Number(jetHit.z) || 0;
+      this.jetImpactKind = String(jetHit.kind || "");
+      this.jetImpactIntensity = THREE.MathUtils.clamp(
+        Number(jetHit.intensity) || 0,
+        0,
+        1,
+      );
+    }
+    const hitRemaining = this.jetImpactUntil - state.elapsed;
+    if (hitRemaining > 0) {
+      const life = THREE.MathUtils.clamp(hitRemaining / 0.18, 0, 1),
+        steam = this.jetImpactKind === "fire",
+        base = steam ? 12 : 9;
+      this.jetImpact.visible = true;
+      this.jetImpact.count = Math.max(4, Math.round(base * effectScale));
+      this.jetImpactMat.color.set(
+        steam
+          ? 0xe8f4ef
+          : this.jetImpactKind === "ash"
+            ? 0xbad4d4
+            : 0xcdf5ff,
+      );
+      this.jetImpactMat.opacity = (0.3 + this.jetImpactIntensity * 0.5) * life;
+      for (let i = 0; i < this.jetImpact.count; i++) {
+        const angle = i * 2.39996 + state.elapsed * (steam ? 3.2 : 9.5),
+          spread = (1 - life) * (steam ? 0.45 : 0.3) + (i % 3) * 0.035,
+          rise = steam
+            ? (1 - life) * (0.35 + (i % 4) * 0.08)
+            : Math.sin(angle * 1.7) * 0.08 * life;
+        this.dummy.position.set(
+          this.jetImpactX + Math.cos(angle) * spread,
+          this.jetImpactY + rise,
+          this.jetImpactZ + Math.sin(angle) * spread,
+        );
+        this.dummy.rotation.set(0, angle, 0);
+        const size =
+          (steam ? 0.04 : 0.025) +
+          (1 - life) * (steam ? 0.08 : 0.035);
+        this.dummy.scale.set(size, size * (steam ? 2.4 : 1.6), size);
+        this.dummy.updateMatrix();
+        this.jetImpact.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.jetImpact.instanceMatrix.needsUpdate = true;
+    } else {
+      this.jetImpact.count = 0;
+      this.jetImpact.visible = false;
     }
 
     // 2. Aquatic surface wake: expanding concentric ripples during swimming/sliding in water
@@ -814,6 +892,7 @@ export class WorldEffects {
       rainRipples: this.rainRipples.count,
       underwaterMotes: this.underwaterMotes.count,
       jet: this.jet.count,
+      jetImpact: this.jetImpact.count,
       wake: this.wake.count,
       splash: this.splash.count,
       foam: this.streamFoam.count,
@@ -827,6 +906,8 @@ export class WorldEffects {
   dispose() {
     this.jet.dispose();
     this.jetMat.dispose();
+    this.jetImpact.dispose();
+    this.jetImpactMat.dispose();
     this.wake.dispose();
     this.wakeMat.dispose();
     this.splash.dispose();

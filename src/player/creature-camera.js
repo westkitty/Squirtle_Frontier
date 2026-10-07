@@ -44,6 +44,8 @@ export class CreatureCamera {
     this.pitch = 0.26;
     this.initial = true;
     this.impactRecoil = 0;
+    this.jetHitRecoil = 0;
+    this.lastJetHitSerial = 0;
     this.lastBodyYaw = null;
     this.roll = 0;
     this.verticalLead = 0;
@@ -51,6 +53,15 @@ export class CreatureCamera {
     this.desired = new THREE.Vector3();
     this.probe = new THREE.Vector3();
     this.movementVector = { x: 0, z: 0 };
+  }
+  noteJetHit(hit) {
+    const serial = Number(hit?.serial) || 0;
+    if (serial <= 0 || serial === this.lastJetHitSerial) return;
+    this.lastJetHitSerial = serial;
+    this.jetHitRecoil = Math.max(
+      this.jetHitRecoil,
+      0.01 + Math.min(1, Number(hit?.intensity) || 0) * 0.02,
+    );
   }
   constrain(from, to, blockers) {
     let fraction = 1;
@@ -132,8 +143,10 @@ export class CreatureCamera {
         this.impactRecoil = Math.min(0.08, body.impact * 0.12);
       }
       this.impactRecoil = THREE.MathUtils.damp(this.impactRecoil, 0, 14, dt);
+      this.jetHitRecoil = THREE.MathUtils.damp(this.jetHitRecoil, 0, 18, dt);
     } else {
       this.impactRecoil = 0;
+      this.jetHitRecoil = 0;
     }
 
     const slideBoost =
@@ -152,7 +165,11 @@ export class CreatureCamera {
 
     this.target.set(
       body.x + leadX,
-      body.y + 0.32 - this.impactRecoil + this.verticalLead,
+      body.y +
+        0.32 -
+        this.impactRecoil -
+        this.jetHitRecoil +
+        this.verticalLead,
       body.z + leadZ,
     );
     this.desired.set(
