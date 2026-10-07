@@ -282,8 +282,9 @@ const MUTATIONS = [
   {
     what: "releasing a Water Hose also fires the traversal burst",
     file: "src/player/squirtle-controller.js",
-    from: "        !wasHose &&\n        b.jetPressTime > 0 &&",
-    to: "        true &&\n        b.jetPressTime > 0 &&",
+    from:
+      "      triggerJetBurst =\n        !wasHose &&\n        b.jetPressTime > 0 &&\n        b.jetPressTime < JET_HOLD_THRESHOLD;",
+    to: "      triggerJetBurst = b.jetPressTime > 0;",
   },
   {
     what: "dive mode fails to activate submerged cavern sub-drone",

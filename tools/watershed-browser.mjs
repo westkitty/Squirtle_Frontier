@@ -51,6 +51,8 @@ try {
       mode: "swim",
       grounded: false,
     });
+    g.rig.yaw = Math.PI;
+    g.rig.pitch = 0;
     g.rig.initial = true;
   });
   await page.waitForFunction(() => window.__SF.stats().effects.obstruction === 9);
@@ -112,7 +114,7 @@ try {
   evidence.blockageCleared = await page.evaluate(
     () => window.__SF.state.watershed.nodes[1].blockage,
   );
-  assert.ok(cleared, `aimed jetting left blockage ${evidence.blockageCleared}`);
+  assert.ok(cleared, `aimed hosing left blockage ${evidence.blockageCleared}`);
   await page.waitForFunction(() => window.__SF.stats().effects.obstruction === 0);
   evidence.obstructionAfter = await page.evaluate(
     () => window.__SF.stats().effects.obstruction,
