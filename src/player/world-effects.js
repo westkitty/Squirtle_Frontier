@@ -67,6 +67,19 @@ export class WorldEffects {
     this.jet.visible = false;
     this.group.add(this.jet);
 
+    this.jetImpactMat = new THREE.MeshBasicMaterial({
+      color: 0xd7f6ff,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+    });
+    this.jetImpact = new THREE.InstancedMesh(this.geo, this.jetImpactMat, 12);
+    this.jetImpact.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.jetImpact.frustumCulled = false;
+    this.jetImpact.count = 0;
+    this.jetImpact.visible = false;
+    this.group.add(this.jetImpact);
+
     this.wakeMat = new THREE.MeshBasicMaterial({
       color: 0x90e6f7,
       transparent: true,
@@ -314,6 +327,7 @@ export class WorldEffects {
       this.fireSmoke,
       this.rain,
       this.jet,
+      this.jetImpact,
       this.wake,
       this.splash,
       this.slideDust,
@@ -515,6 +529,47 @@ export class WorldEffects {
     } else {
       this.jet.count = 0;
       this.jet.visible = false;
+    }
+
+    // Unified Hose-hit feedback: one world-space contact event feeds splash/steam.
+    const jetHit = options?.jetHit;
+    if (jetHit?.active) {
+      const intensity = THREE.MathUtils.clamp(Number(jetHit.intensity) || 0, 0, 1),
+        fireHit = jetHit.kind === "fire",
+        ashHit = jetHit.kind === "ash",
+        countBase = 5 + Math.round(intensity * 7);
+      this.jetImpact.visible = true;
+      this.jetImpact.count = Math.max(4, Math.round(countBase * effectScale));
+      this.jetImpactMat.opacity = 0.42 + intensity * 0.42;
+      this.jetImpactMat.color.set(
+        fireHit ? 0xf0fbff : ashHit ? 0xbfd9d4 : jetHit.kind === "mud" ? 0x88b4ad : 0xc7eff8,
+      );
+      for (let i = 0; i < this.jetImpact.count; i++) {
+        const phase =
+            (((state.elapsed * (fireHit ? 5.6 : 4.2) +
+              i / this.jetImpact.count +
+              (jetHit.serial % 7) * 0.07) %
+              1) +
+              1) %
+            1,
+          angle = i * 2.39996 + jetHit.serial * 0.31,
+          radius = (0.035 + phase * 0.2) * (0.65 + intensity * 0.6),
+          rise = phase * (fireHit ? 0.48 : 0.24),
+          size = (0.025 + (1 - phase) * 0.045) * (0.7 + intensity * 0.45);
+        this.dummy.position.set(
+          jetHit.x + Math.cos(angle) * radius,
+          jetHit.y + rise,
+          jetHit.z + Math.sin(angle) * radius,
+        );
+        this.dummy.rotation.set(angle * 0.3, angle, 0);
+        this.dummy.scale.set(size, size * (fireHit ? 2.4 : 1.5), size);
+        this.dummy.updateMatrix();
+        this.jetImpact.setMatrixAt(i, this.dummy.matrix);
+      }
+      this.jetImpact.instanceMatrix.needsUpdate = true;
+    } else {
+      this.jetImpact.count = 0;
+      this.jetImpact.visible = false;
     }
 
     // 2. Aquatic surface wake: expanding concentric ripples during swimming/sliding in water
@@ -814,6 +869,7 @@ export class WorldEffects {
       rainRipples: this.rainRipples.count,
       underwaterMotes: this.underwaterMotes.count,
       jet: this.jet.count,
+      jetHit: this.jetImpact.count,
       wake: this.wake.count,
       splash: this.splash.count,
       foam: this.streamFoam.count,
@@ -827,6 +883,8 @@ export class WorldEffects {
   dispose() {
     this.jet.dispose();
     this.jetMat.dispose();
+    this.jetImpact.dispose();
+    this.jetImpactMat.dispose();
     this.wake.dispose();
     this.wakeMat.dispose();
     this.splash.dispose();

@@ -44,6 +44,8 @@ export class Audio {
     this.noiseSource = null;
     this.jetGain = null;
     this.jetFilter = null;
+    this.hitGain = null;
+    this.hitFilter = null;
     this.surfGain = null;
     this.surfFilter = null;
     this.subGain = null;
@@ -113,6 +115,16 @@ export class Audio {
       this.jetGain.gain.value = 0;
       this.jetFilter.connect(this.jetGain);
       this.jetGain.connect(this.masterGain);
+
+      // 1b. Hose contact voice: the same persistent noise source becomes splash/steam.
+      this.hitFilter = this.context.createBiquadFilter();
+      this.hitFilter.type = "bandpass";
+      this.hitFilter.Q.value = 1.5;
+      this.hitFilter.frequency.value = 1200;
+      this.hitGain = this.context.createGain();
+      this.hitGain.gain.value = 0;
+      this.hitFilter.connect(this.hitGain);
+      this.hitGain.connect(this.masterGain);
 
       // 2. Aquatic surf & surface swimming displacement voice
       this.surfFilter = this.context.createBiquadFilter();
@@ -202,6 +214,7 @@ export class Audio {
 
       // Connect shared noise source to noise-driven filter paths
       this.noiseSource.connect(this.jetFilter);
+      this.noiseSource.connect(this.hitFilter);
       this.noiseSource.connect(this.surfFilter);
       this.noiseSource.connect(this.locoFilter);
       this.noiseSource.connect(this.flutterFilter);
@@ -259,6 +272,26 @@ export class Audio {
         now,
         0.05,
       );
+    }
+
+    const jetHit = contextInfo.jetHit,
+      hitIntensity = jetHit?.active
+        ? Math.max(0, Math.min(1, Number(jetHit.intensity) || 0))
+        : 0,
+      hitLevel = jetHit?.active
+        ? hitIntensity * (jetHit.kind === "fire" ? 0.18 : 0.12)
+        : 0;
+    this.hitGain.gain.setTargetAtTime(hitLevel, now, 0.025);
+    if (jetHit?.active) {
+      const frequency =
+        jetHit.kind === "fire"
+          ? 2700
+          : jetHit.kind === "debris"
+            ? 820
+            : jetHit.kind === "ash"
+              ? 1550
+              : 1250;
+      this.hitFilter.frequency.setTargetAtTime(frequency, now, 0.035);
     }
 
     // 2. Aquatic surf & surface swimming displacement
@@ -426,6 +459,8 @@ export class Audio {
     this.wildOsc?.disconnect();
     this.jetFilter?.disconnect();
     this.jetGain?.disconnect();
+    this.hitFilter?.disconnect();
+    this.hitGain?.disconnect();
     this.surfFilter?.disconnect();
     this.surfGain?.disconnect();
     this.subFilter?.disconnect();
@@ -448,5 +483,7 @@ export class Audio {
     this.masterGain = null;
     this.ambientFilter = null;
     this.ambientGain = null;
+    this.hitFilter = null;
+    this.hitGain = null;
   }
 }

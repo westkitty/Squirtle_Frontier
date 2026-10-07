@@ -38,22 +38,47 @@ export class WatershedPresentation {
     };
     this.material.customProgramCacheKey = () => "frontier-debris-boulder-v1";
     this.debris = new THREE.InstancedMesh(this.geometry, this.material, 9);
+    this.debris.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.group.add(this.debris);
-    const dummy = new THREE.Object3D();
+    this.dummy = new THREE.Object3D();
+    this.baseX = new Float32Array(9);
+    this.baseY = new Float32Array(9);
+    this.baseZ = new Float32Array(9);
     for (let i = 0; i < 9; i++) {
       const x = DEBRIS_SITE.x + ((i % 3) - 1) * 0.38,
-        z = DEBRIS_SITE.z + (Math.floor(i / 3) - 1) * 0.36;
-      dummy.position.set(x, Math.max(-0.15, heightAt(x, z)) + 0.2, z);
-      dummy.updateMatrix();
-      this.debris.setMatrixAt(i, dummy.matrix);
+        z = DEBRIS_SITE.z + (Math.floor(i / 3) - 1) * 0.36,
+        y = Math.max(-0.15, heightAt(x, z)) + 0.2;
+      this.baseX[i] = x;
+      this.baseY[i] = y;
+      this.baseZ[i] = z;
+      this.dummy.position.set(x, y, z);
+      this.dummy.updateMatrix();
+      this.debris.setMatrixAt(i, this.dummy.matrix);
     }
   }
 
-  update(watershed, body) {
-    const node = watershed.nodes[1];
+  update(watershed, body, jetHit = null) {
+    const node = watershed.nodes[1],
+      hit = jetHit?.active && jetHit.kind === "debris",
+      hitStrength = hit ? Math.max(0, Math.min(1, jetHit.intensity || 0)) : 0;
     this.group.visible =
       Math.hypot(body.x - DEBRIS_SITE.x, body.z - DEBRIS_SITE.z) < 55;
     this.debris.count = Math.ceil((node.blockage / 0.95) * 9);
+    this.material.color.set(hit ? 0x71685d : 0x88745a);
+    this.material.roughness = hit ? 0.72 : 1;
+    for (let i = 0; i < this.debris.count; i++) {
+      const phase = jetHit ? jetHit.serial * 0.7 + i * 1.9 : i,
+        twitch = hit ? Math.sin(phase) * 0.045 * hitStrength : 0;
+      this.dummy.position.set(
+        this.baseX[i] + twitch,
+        this.baseY[i] + Math.abs(twitch) * 0.45,
+        this.baseZ[i] - twitch * 0.55,
+      );
+      this.dummy.rotation.set(hit ? twitch * 1.4 : 0, phase * 0.05, hit ? -twitch : 0);
+      this.dummy.updateMatrix();
+      this.debris.setMatrixAt(i, this.dummy.matrix);
+    }
+    this.debris.instanceMatrix.needsUpdate = true;
   }
 
   dispose() {

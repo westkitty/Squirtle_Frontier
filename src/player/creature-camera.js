@@ -44,6 +44,7 @@ export class CreatureCamera {
     this.pitch = 0.26;
     this.initial = true;
     this.impactRecoil = 0;
+    this.jetHitRecoil = 0;
     this.lastBodyYaw = null;
     this.roll = 0;
     this.verticalLead = 0;
@@ -136,11 +137,21 @@ export class CreatureCamera {
       this.impactRecoil = 0;
     }
 
+    const hitTarget =
+      !settings.reducedMotion && settings.jetHit?.active
+        ? THREE.MathUtils.clamp((settings.jetHit.intensity || 0) * 0.055, 0, 0.055)
+        : 0;
+    this.jetHitRecoil = settings.reducedMotion
+      ? 0
+      : Math.max(
+          THREE.MathUtils.damp(this.jetHitRecoil, 0, 15, dt),
+          hitTarget,
+        );
     const slideBoost =
       inSlide && !settings.reducedMotion
         ? 0.35 + Math.min(speed, 5.0) * 0.07
         : 0;
-    const distance = 2.1 + slideBoost;
+    const distance = 2.1 + slideBoost + this.jetHitRecoil;
 
     // Athletic slight look-ahead along travel velocity when sliding/sprinting
     const lead =
@@ -198,6 +209,7 @@ export class CreatureCamera {
       } else if (speed > 3) {
         fov = 55 + Math.min(2.4, (speed - 3) * 0.9);
       }
+      fov += this.jetHitRecoil * 20;
       const next = THREE.MathUtils.damp(this.camera.fov, fov, 8, dt);
       if (Math.abs(this.camera.fov - next) > 0.001) {
         this.camera.fov = next;
