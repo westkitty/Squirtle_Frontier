@@ -24,20 +24,18 @@ try {
       loop.__matchedFixedStepInstalled = true;
       loop.__matchedPaused = false;
       loop.frame = function matchedFixedStepFrame(now) {
-        const raw =
-          this.last === null ? 0 : Math.max(0, (now - this.last) / 1000);
         this.last = now;
         this.accumulator = 0;
         if (this.__matchedPaused) {
           this.render();
           return;
         }
+        const workStart = performance.now();
         this.update(1 / 60);
         this.render();
-        if (raw > 0) {
-          this.frames.push(raw * 1000);
-          if (this.frames.length > 600) this.frames.shift();
-        }
+        const workMs = performance.now() - workStart;
+        this.frames.push(workMs);
+        if (this.frames.length > 600) this.frames.shift();
       };
       loop.reset();
       loop.frames.length = 0;

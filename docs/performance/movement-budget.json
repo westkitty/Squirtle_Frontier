@@ -1,5 +1,5 @@
 {
-  "environment": "Chromium 140 / ANGLE SwiftShader at 960x640; relative regression evidence only, not hardware or mobile FPS",
+  "environment": "Chromium 140 / ANGLE SwiftShader at 960x640; relative synchronous update+render work evidence only; excludes RAF scheduling/vsync and is not hardware or mobile FPS",
   "baselineRevision": "2b2dedd2b2187f0735608e1d9e95507257506cf8",
   "toleranceMs": 8.4,
   "confirmationPairs": 4,

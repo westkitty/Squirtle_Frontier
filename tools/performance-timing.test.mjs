@@ -295,6 +295,21 @@ test("protected windows are fixed and malformed evidence fails explicitly", () =
     /startMatchedSample/,
     "measurement must resume from the pinned state through one controlled start path",
   );
+  assert.match(
+    samplerSource,
+    /const workStart = performance\.now\(\);/,
+    "matched timing must measure synchronous update+render work rather than RAF interval",
+  );
+  assert.match(
+    samplerSource,
+    /const workMs = performance\.now\(\) - workStart;/,
+    "matched timing must derive each sample from measured work duration",
+  );
+  assert.match(
+    samplerSource,
+    /this\.frames\.push\(workMs\);/,
+    "matched timing samples must store work duration, excluding scheduler idle",
+  );
 
   const malformed = evidence();
   malformed.scenarios[0].windows = [{ medianMs: 33.4, p95Ms: 50.1 }];
