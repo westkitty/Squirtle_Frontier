@@ -350,6 +350,12 @@ const MUTATIONS = [
     to: "    if (false && jetHit?.active) {",
   },
   {
+    what: "mud Hose contact fails to darken the ground",
+    file: "src/player/world-effects.js",
+    from: "    if (jetHit?.active && jetHit.kind === \"mud\") {",
+    to: "    if (false && jetHit?.kind === \"mud\") {",
+  },
+  {
     what: "aquatic surface wake fails to generate ripples while moving through water",
     file: "src/player/world-effects.js",
     from: "    if (inWater && speed > 0.25 && body.jetTime <= 0 && !body.hoseActive) {",

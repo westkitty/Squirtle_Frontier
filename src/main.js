@@ -1486,6 +1486,7 @@ async function boot() {
         effects: {
           jet: effects?.jet?.count ?? 0,
           jetHit: effects?.jetImpact?.count ?? 0,
+          wetPatch: effects?.jetWetPatch?.visible ? 1 : 0,
           spray: scenery?.pool?.count ?? 0,
           wake: effects?.wake?.count ?? 0,
           splash: effects?.splash?.count ?? 0,

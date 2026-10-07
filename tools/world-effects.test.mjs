@@ -106,6 +106,23 @@ test("unified Hose hit creates world-space contact particles at the event point"
   fx.dispose();
 });
 
+test("mud Hose contact darkens a reusable ground patch and fades after contact", () => {
+  const parent = new THREE.Group(),
+    fx = new WorldEffects(parent),
+    state = createMockState(),
+    body = createBody(0, 0, 0),
+    hit = { active: true, kind: "mud", x: 2, y: 0.1, z: 3, intensity: 0.6, serial: 4 };
+  fx.update(state, body, { jetHit: hit, effectScale: 1 });
+  assert.equal(fx.jetWetPatch.visible, true);
+  assert.ok(fx.jetWetPatchMat.opacity > 0.3);
+  assert.ok(Math.abs(fx.jetWetPatch.position.x - 2) < 1e-9);
+  assert.ok(Math.abs(fx.jetWetPatch.position.z - 3) < 1e-9);
+  state.elapsed += 1.3;
+  fx.update(state, body, { jetHit: { active: false }, effectScale: 1 });
+  assert.equal(fx.jetWetPatch.visible, false);
+  fx.dispose();
+});
+
 test("Aquatic surface wake generates concentric ripples only when swimming or moving in water", () => {
   const parent = new THREE.Group();
   const fx = new WorldEffects(parent);

@@ -42,11 +42,13 @@ try {
     () =>
       window.__SF.jetHit.active &&
       window.__SF.jetHit.kind === "mud" &&
-      window.__SF.stats().effects.jetHit > 0,
+      window.__SF.stats().effects.jetHit > 0 &&
+      window.__SF.stats().effects.wetPatch === 1,
   );
   evidence.bypassFeedback = await page.evaluate(() => ({
     kind: window.__SF.jetHit.kind,
     particles: window.__SF.stats().effects.jetHit,
+    wetPatch: window.__SF.stats().effects.wetPatch,
   }));
   await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === false);

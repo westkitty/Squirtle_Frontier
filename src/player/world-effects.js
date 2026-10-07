@@ -80,6 +80,20 @@ export class WorldEffects {
     this.jetImpact.visible = false;
     this.group.add(this.jetImpact);
 
+    this.jetWetPatchGeo = new THREE.CircleGeometry(0.26, 12);
+    this.jetWetPatchMat = new THREE.MeshBasicMaterial({
+      color: 0x4c6257,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    this.jetWetPatch = new THREE.Mesh(this.jetWetPatchGeo, this.jetWetPatchMat);
+    this.jetWetPatch.rotation.x = -Math.PI / 2;
+    this.jetWetPatch.visible = false;
+    this.jetWetPatchUntil = -Infinity;
+    this.group.add(this.jetWetPatch);
+
     this.wakeMat = new THREE.MeshBasicMaterial({
       color: 0x90e6f7,
       transparent: true,
@@ -572,6 +586,21 @@ export class WorldEffects {
       this.jetImpact.visible = false;
     }
 
+    // Mud darkens where the Hose lands; one reusable patch fades after contact.
+    if (jetHit?.active && jetHit.kind === "mud") {
+      this.jetWetPatch.position.set(jetHit.x, jetHit.y + 0.012, jetHit.z);
+      this.jetWetPatchUntil = state.elapsed + 1.2;
+    }
+    const wetPatchLife = this.jetWetPatchUntil - state.elapsed;
+    if (wetPatchLife > 0) {
+      this.jetWetPatch.visible = true;
+      const life = THREE.MathUtils.clamp(wetPatchLife / 1.2, 0, 1);
+      this.jetWetPatchMat.opacity = 0.12 + life * 0.24;
+      this.jetWetPatch.scale.setScalar(0.82 + (1 - life) * 0.28);
+    } else {
+      this.jetWetPatch.visible = false;
+    }
+
     // 2. Aquatic surface wake: expanding concentric ripples during swimming/sliding in water
     const water = options?.water;
     const inWater = !!water && body.y <= water.level + 0.15;
@@ -870,6 +899,7 @@ export class WorldEffects {
       underwaterMotes: this.underwaterMotes.count,
       jet: this.jet.count,
       jetHit: this.jetImpact.count,
+      wetPatch: this.jetWetPatch.visible ? 1 : 0,
       wake: this.wake.count,
       splash: this.splash.count,
       foam: this.streamFoam.count,
@@ -885,6 +915,8 @@ export class WorldEffects {
     this.jetMat.dispose();
     this.jetImpact.dispose();
     this.jetImpactMat.dispose();
+    this.jetWetPatchGeo.dispose();
+    this.jetWetPatchMat.dispose();
     this.wake.dispose();
     this.wakeMat.dispose();
     this.splash.dispose();
