@@ -268,8 +268,41 @@ const MUTATIONS = [
   {
     what: "water jet burst and hose fail to activate hydrodynamic pressure voice",
     file: "src/audio.js",
-    from: "    const jetLevel = body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0;",
-    to: "    const jetLevel = 0;",
+    from:
+      "      jetLevel =\n        (body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0) + hitAccent;",
+    to: "      jetLevel = hitAccent;",
+  },
+  {
+    what: "Jet-hit events stop advancing their subscriber serial",
+    file: "src/simulation/jet-hit.js",
+    from: "    event.serial++;",
+    to: "    event.serial += 0;",
+  },
+  {
+    what: "Jet-hit contact never becomes visible particles or steam",
+    file: "src/player/world-effects.js",
+    from: "    if (hitSerial > 0 && hitSerial !== this.jetImpactSerial) {",
+    to: "    if (false && hitSerial > 0 && hitSerial !== this.jetImpactSerial) {",
+  },
+  {
+    what: "Jet-hit contact loses its camera punctuation",
+    file: "src/player/creature-camera.js",
+    from:
+      "    this.jetHitRecoil = Math.max(\n      this.jetHitRecoil,\n      0.01 + Math.min(1, Number(hit?.intensity) || 0) * 0.02,\n    );",
+    to: "    this.jetHitRecoil = 0;",
+  },
+  {
+    what: "Jet-hit fire contact loses its short audio hiss",
+    file: "src/audio.js",
+    from: "      this.jetHitAt = now;",
+    to: "      this.jetHitAt = -10;",
+  },
+  {
+    what: "Jet-hit debris contact no longer makes the obstruction twitch",
+    file: "src/player/watershed-presentation.js",
+    from:
+      "      this.hitPulse = Math.max(\n        this.hitPulse,\n        0.55 + Math.min(1, Number(jetHit.intensity) || 0) * 0.45,\n      );",
+    to: "      this.hitPulse = 0;",
   },
   {
     what: "holding Water Jet never transitions from pending tap to Water Hose",
