@@ -1453,6 +1453,8 @@ async function boot() {
       adaptive,
       enterPlace,
       habitat,
+      watershedView,
+      jetHit,
       // Journeys assert what the Lab actually renders; the frontier view is `habitat`.
       labView: () => lab,
       wildlife,
@@ -1482,6 +1484,7 @@ async function boot() {
         },
         effects: {
           jet: effects?.jet?.count ?? 0,
+          jetHit: effects?.jetImpact?.count ?? 0,
           spray: scenery?.pool?.count ?? 0,
           wake: effects?.wake?.count ?? 0,
           splash: effects?.splash?.count ?? 0,

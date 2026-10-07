@@ -272,6 +272,13 @@ const MUTATIONS = [
     to: "    const jetLevel = 0;",
   },
   {
+    what: "Hose contact fails to publish the shared debris hit event",
+    file: "src/simulation/water-interaction.js",
+    from:
+      "  markJetHit(hit, \"debris\", DEBRIS_SITE.x, y + 0.2, DEBRIS_SITE.z, 0.9);",
+    to: "  void hit;",
+  },
+  {
     what: "holding Water Jet never transitions from pending tap to Water Hose",
     file: "src/player/squirtle-controller.js",
     from:
@@ -285,6 +292,12 @@ const MUTATIONS = [
     from:
       "      triggerJetBurst =\n        !wasHose &&\n        b.jetPressTime > 0 &&\n        b.jetPressTime < JET_HOLD_THRESHOLD;",
     to: "      triggerJetBurst = b.jetPressTime > 0;",
+  },
+  {
+    what: "Hose target contact produces no hit audio",
+    file: "src/audio.js",
+    from: "      hitLevel = jetHit?.active",
+    to: "      hitLevel = false",
   },
   {
     what: "dive mode fails to activate submerged cavern sub-drone",
@@ -329,6 +342,12 @@ const MUTATIONS = [
     file: "src/player/world-effects.js",
     from: "    if (body.hoseActive) {",
     to: "    if (false && body.hoseActive) {",
+  },
+  {
+    what: "unified Hose contact particles never render",
+    file: "src/player/world-effects.js",
+    from: "    if (jetHit?.active) {",
+    to: "    if (false && jetHit?.active) {",
   },
   {
     what: "aquatic surface wake fails to generate ripples while moving through water",
@@ -397,6 +416,12 @@ const MUTATIONS = [
     to: "      if (body.impact > 0.04) {\n        this.impactRecoil = 0;\n      }",
   },
   {
+    what: "Hose target contact produces no bounded camera confirmation",
+    file: "src/player/creature-camera.js",
+    from: "      !settings.reducedMotion && settings.jetHit?.active",
+    to: "      false && settings.jetHit?.active",
+  },
+  {
     what: "read strata fail to illuminate with mineral patina",
     file: "src/player/deep-record.js",
     from: "      } else if (isRead) {",
@@ -407,6 +432,12 @@ const MUTATIONS = [
     file: "src/player/deep-record.js",
     from: "      if (isHolding) {",
     to: "      if (false && isHolding) {",
+  },
+  {
+    what: "debris ignores the shared Hose hit instead of twitching and darkening",
+    file: "src/player/watershed-presentation.js",
+    from: "      hit = jetHit?.active && jetHit.kind === \"debris\",",
+    to: "      hit = false,",
   },
   {
     what: "water jet fails to rinse ash from fire site",

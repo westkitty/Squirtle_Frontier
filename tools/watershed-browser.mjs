@@ -70,6 +70,19 @@ try {
   await page.waitForFunction(
     () => window.__SF.state.watershed.nodes[1].blockage < 0.94,
   );
+  await page.waitForFunction(
+    () =>
+      window.__SF.jetHit.active &&
+      window.__SF.jetHit.kind === "debris" &&
+      window.__SF.stats().effects.jetHit > 0 &&
+      window.__SF.watershedView.material.roughness < 1,
+  );
+  evidence.hitFeedback = await page.evaluate(() => ({
+    kind: window.__SF.jetHit.kind,
+    particles: window.__SF.stats().effects.jetHit,
+    debrisRoughness: window.__SF.watershedView.material.roughness,
+  }));
+  await page.screenshot({ path: "artifacts/watershed-hose-hit.png" });
   await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.jetTime === 0);
   evidence.blockageBeforeClear = await page.evaluate(

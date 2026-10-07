@@ -108,6 +108,36 @@ try {
     cooldown: window.__SF.body.jetCooldown,
     jetTime: window.__SF.body.jetTime,
   }));
+  await page.waitForFunction(
+    () => window.__SF.body.jetCooldown === 0 && window.__SF.body.jetTime === 0,
+    null,
+    { timeout: 30000 },
+  );
+  await page.evaluate(() => {
+    const b = window.__SF_TEST_GAMEPAD.buttons[0];
+    b.pressed = true;
+    b.touched = true;
+    b.value = 1;
+    window.__SF_TEST_GAMEPAD.timestamp++;
+  });
+  await page.waitForFunction(() => window.__SF.body.hoseActive === true, null, {
+    timeout: 30000,
+  });
+  evidence.hose = await page.evaluate(() => ({
+    active: window.__SF.body.hoseActive,
+    cooldown: window.__SF.body.jetCooldown,
+    jetTime: window.__SF.body.jetTime,
+  }));
+  assert.equal(evidence.hose.cooldown, 0);
+  assert.equal(evidence.hose.jetTime, 0);
+  await page.evaluate(() => {
+    const b = window.__SF_TEST_GAMEPAD.buttons[0];
+    b.pressed = false;
+    b.touched = false;
+    b.value = 0;
+    window.__SF_TEST_GAMEPAD.timestamp++;
+  });
+  await page.waitForFunction(() => window.__SF.body.hoseActive === false);
 
   await page.evaluate(() => {
     const g = window.__SF;
@@ -128,7 +158,7 @@ try {
   }));
   assert.deepEqual(evidence.errors, []);
   console.log(
-    "Synthetic standard gamepad drove movement, look, Water Jet, modality UI and camera recenter through the live browser loop.",
+    "Synthetic standard gamepad drove movement, look, Jet Burst, held Water Hose, modality UI and camera recenter through the live browser loop.",
   );
 } finally {
   await writeFile(

@@ -38,6 +38,16 @@ try {
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(() => window.__SF.state.frontier.bypass > 0.02);
+  await page.waitForFunction(
+    () =>
+      window.__SF.jetHit.active &&
+      window.__SF.jetHit.kind === "mud" &&
+      window.__SF.stats().effects.jetHit > 0,
+  );
+  evidence.bypassFeedback = await page.evaluate(() => ({
+    kind: window.__SF.jetHit.kind,
+    particles: window.__SF.stats().effects.jetHit,
+  }));
   await page.keyboard.up("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === false);
   evidence.bypass = await page.evaluate(
@@ -64,6 +74,17 @@ try {
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.hoseActive === true);
   await page.waitForFunction(() => window.__SF.state.frontier.soaked[0] > 0.05);
+  await page.waitForFunction(
+    () =>
+      window.__SF.jetHit.active &&
+      window.__SF.jetHit.kind === "fire" &&
+      window.__SF.stats().effects.jetHit > 0,
+  );
+  evidence.fireFeedback = await page.evaluate(() => ({
+    kind: window.__SF.jetHit.kind,
+    particles: window.__SF.stats().effects.jetHit,
+  }));
+  await page.screenshot({ path: "artifacts/world-fire-hose-hit.png" });
   await page.keyboard.up("Space");
   evidence.suppression = await page.evaluate(() => ({
     heat: window.__SF.state.frontier.heat[0],
