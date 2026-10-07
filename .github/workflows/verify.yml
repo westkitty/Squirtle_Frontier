@@ -2,7 +2,7 @@ name: Verify Squirtle Frontier
 
 on:
   push:
-    branches: [main, phase3-water-jet-intent]
+    branches: [main, phase4-water-jet-intent]
   workflow_dispatch:
 
 permissions:
