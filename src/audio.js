@@ -248,10 +248,12 @@ export class Audio {
     // Master volume target
     this.masterGain.gain.setTargetAtTime(volume, now, 0.05);
 
-    // 1. Water Jet surge
-    const jetLevel = body.jetTime > 0 ? 0.38 : 0;
+    // 1. Water Jet burst / Water Hose pressure voice
+    const jetLevel = body.hoseActive ? 0.24 : body.jetTime > 0 ? 0.38 : 0;
     this.jetGain.gain.setTargetAtTime(jetLevel, now, 0.04);
-    if (body.jetTime > 0) {
+    if (body.hoseActive) {
+      this.jetFilter.frequency.setTargetAtTime(560, now, 0.05);
+    } else if (body.jetTime > 0) {
       this.jetFilter.frequency.setTargetAtTime(
         450 + (1 - body.jetTime / 0.36) * 350,
         now,

@@ -480,15 +480,17 @@ export class WorldEffects {
     if (this.channelStage !== state.frontier.stage)
       this.rebuildChannel(state.frontier.stage);
 
-    // 1. Water Jet stream: pressurized aquatic propulsion forward from snout
-    if (body.jetTime > 0) {
+    // 1. Water Hose stream: camera intention drives a continuous pressurized stream.
+    if (body.hoseActive) {
       this.jet.visible = true;
       this.jet.count = Math.max(8, Math.round(24 * effectScale));
-      const snoutX = body.x + Math.sin(body.yaw) * 0.28,
+      const aimLength = Math.hypot(body.hoseAimX, body.hoseAimY, body.hoseAimZ),
+        dirX = aimLength > 0.001 ? body.hoseAimX / aimLength : Math.sin(body.yaw),
+        dirY = aimLength > 0.001 ? body.hoseAimY / aimLength : 0,
+        dirZ = aimLength > 0.001 ? body.hoseAimZ / aimLength : Math.cos(body.yaw),
+        snoutX = body.x + Math.sin(body.yaw) * 0.28,
         snoutY = body.y + 0.22,
-        snoutZ = body.z + Math.cos(body.yaw) * 0.28,
-        dirX = Math.sin(body.yaw),
-        dirZ = Math.cos(body.yaw);
+        snoutZ = body.z + Math.cos(body.yaw) * 0.28;
       for (let i = 0; i < this.jet.count; i++) {
         const dist = (i / Math.max(1, this.jet.count - 1)) * 2.8,
           spread = dist * 0.1,
@@ -497,7 +499,7 @@ export class WorldEffects {
           turbY = (Math.sin(i * 5.1 + state.elapsed * 30) - 0.2) * spread * 0.5;
         this.dummy.position.set(
           snoutX + dirX * dist + turbX,
-          snoutY + turbY,
+          snoutY + dirY * dist + turbY,
           snoutZ + dirZ * dist + turbZ,
         );
         this.dummy.rotation.set(0, body.yaw, 0);
@@ -519,7 +521,7 @@ export class WorldEffects {
     const water = options?.water;
     const inWater = !!water && body.y <= water.level + 0.15;
     const speed = Math.hypot(body.vx, body.vz);
-    if (inWater && speed > 0.25 && body.jetTime <= 0) {
+    if (inWater && speed > 0.25 && body.jetTime <= 0 && !body.hoseActive) {
       this.wake.visible = true;
       const wakeBase = Math.max(
         4,

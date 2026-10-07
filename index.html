@@ -74,8 +74,8 @@
         <p>
           Move through the frontier as Squirtle. Dive to the centre of the Lab
           basin to enter the Deep Record; stand still inside a band of strata to
-          log it. Water Jet can move you, suppress fire, and push on some physical
-          obstacles. There is no quest checklist: follow slopes, shorelines,
+          log it. Tap Water Jet for a movement burst; hold it for a Water Hose that
+          suppresses fire and pushes on some physical obstacles. There is no quest checklist: follow slopes, shorelines,
           animals, other Squirtles, weather, and whatever changes around you.
         </p>
         <dl>
@@ -87,8 +87,8 @@
           <dd>Look around</dd>
           <dt>C · hold</dt>
           <dd>Shell slide</dd>
-          <dt>Space · hold</dt>
-          <dd>Water Jet</dd>
+          <dt>Space · tap / hold</dt>
+          <dd>Jet Burst / Water Hose</dd>
           <dt>R / doorway button</dt>
           <dd>
             Enter or leave the Listening Basin at the stone doorway on the
@@ -105,7 +105,7 @@
           ability buttons.
         </p>
         <p>
-          Controller: left stick moves, right stick looks. A = Jet, B = Shell,
+          Controller: left stick moves, right stick looks. Tap/hold A = Jet Burst/Hose, B = Shell,
           Y = interact, LB/RB = dive/rise, RT or L3 = run.
         </p>
         <p class="small">
@@ -234,13 +234,13 @@
           </div>
         </div>
         <div class="jet-readout">
-          <span>WATER JET</span
+          <span>JET BURST</span
           ><meter
             id="jet"
             min="0"
             max="1"
             value="1"
-            aria-label="Water Jet readiness"
+            aria-label="Jet Burst readiness"
           ></meter
           ><kbd id="jet-key">SPACE</kbd>
         </div>
@@ -256,9 +256,9 @@
           ><button
             class="jet-button"
             data-action="jet"
-            aria-label="Hold for Water Jet"
+            aria-label="Tap for Jet Burst; hold for Water Hose"
           >
-            Jet ↗
+            Jet / Hose
           </button>
         </div>
       </div>

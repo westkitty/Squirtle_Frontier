@@ -28,7 +28,7 @@ Vite binds to `0.0.0.0:5173` and accepts Arena preview hosts.
 | Move / run        | WASD or arrows / Shift | Left stick / Run          |
 | Look              | Drag world             | Drag world                |
 | Shell-slide       | Hold C                 | Hold Shell                |
-| Water Jet         | Hold Space             | Hold Jet                  |
+| Jet Burst / Hose  | Tap / hold Space       | Tap / hold Jet            |
 | Dive / rise       | Hold Q / E             | Hold Dive / Rise          |
 | Enter / leave Lab | R near doorway         | Contextual doorway button |
 
