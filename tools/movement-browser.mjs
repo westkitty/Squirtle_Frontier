@@ -93,6 +93,9 @@ try {
   });
   await page.keyboard.up("KeyE");
   await mark("ascent");
+  await page.waitForFunction(() => window.__SF.body.jetCooldown === 0, null, {
+    timeout: 30000,
+  });
   await page.keyboard.down("Space");
   await page.waitForFunction(() => window.__SF.body.jetPressTime > 0);
   await page.keyboard.up("Space");
