@@ -42,6 +42,7 @@ import { resolveAttentionTarget } from "./player/creature-attention.js";
 import { CreatureCamera } from "./player/creature-camera.js";
 import { fillObstaclesAt, region } from "./player/movement-region.js";
 import { MovementScenery } from "./player/movement-scenery.js";
+import { createJetHit, stepJetHit } from "./player/jet-hit.js";
 import {
   applyWaterJet,
   applyWorldJet,
@@ -749,11 +750,13 @@ async function boot() {
         ascend: false,
         run: false,
       },
+      jetHit = createJetHit(),
       effectsOptions = {
         water: null,
         isShaking: false,
         effectScale: 1,
         channelFlow: 0,
+        jetHit,
       },
       labEnvironment = { windStrength: 0.08, wetness: 0 },
       audioContext = {
@@ -769,11 +772,13 @@ async function boot() {
         wildlifeDistance: 999,
         canopyCover: 0,
         place: "frontier",
+        jetHit,
       },
       cameraSettings = {
         sensitivity: Settings.values.sensitivity,
         invertY: Settings.values.invertY,
         reducedMotion: Settings.motionReduced,
+        jetHit,
       },
       actionLabels = {
         enter: "Enter basin",
@@ -930,8 +935,9 @@ async function boot() {
           record.update(body, state.memory, strataHold, state.elapsed);
           renderRecordReadout(ledger);
         } else {
-          applyWaterJet(state.watershed, body, dt);
-          applyWorldJet(state.frontier, body, dt);
+          stepJetHit(jetHit, dt);
+          applyWaterJet(state.watershed, body, dt, jetHit);
+          applyWorldJet(state.frontier, body, dt, jetHit);
         }
         // A reading is earned in the shaft or not at all: leaving must not bank progress
         // toward logging a band that was never stood in.
@@ -1037,7 +1043,7 @@ async function boot() {
           );
         }
         if (state.place === "frontier")
-          watershedView.update(state.watershed, body);
+          watershedView.update(state.watershed, body, jetHit);
         const wetland = state.watershed.nodes[2],
           sediment = THREE.MathUtils.clamp(wetland.sediment ?? 0, 0, 1),
           contamination = THREE.MathUtils.clamp(
