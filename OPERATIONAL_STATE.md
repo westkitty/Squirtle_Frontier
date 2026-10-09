@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 41
-status: Body-first Phase 2 delivered and verified on main / full game incomplete
+revision: 42
+status: Body-first Phase 4 merge-cleared / full game incomplete
 
 ## Purpose
 
@@ -130,6 +130,24 @@ Current Sense, named-reach diagnosis, the amber ripple, and watershed repair as 
 - Lab and frontier must not remain simultaneously fully rendered.
 - Measure memory and renderer resource counts across repeated chunk/scene transitions.
 - Prefer stable 60 fps desktop and stable 30 fps mobile-class baseline over decorative excess.
+
+## Body-first Phase 4 merge-clearance — 2026-10-07
+
+- **PHASE 4 MERGE-CLEARED ON THE VALIDATION BRANCH.** The retained branch is still named `phase3-water-jet-intent` for historical reasons; the plan authority identifies this work as Phase 4. Verified gameplay head: `1f4550ea0082d4b5f1c9b13222d7e5ae90dba980`. `main` remains at Phase 2 until delivery.
+- Water Jet now has two body-specific intentions on the same control. A short press released before the **0.18 s** hold threshold fires the existing traversal burst after release; a sustained press becomes a continuous Water Hose. Input cancellation/blur/menu cleanup cannot manufacture a burst.
+- Hose manipulation follows camera intent without adding a reticle. Squirtle turns toward the hose direction; hose use temporarily permits a steeper downward camera pitch for nearby manipulation. Releasing a Hose does not also fire a traversal burst.
+- Environmental manipulation is Hose-only. Debris, bypass/ground wetting, fire cooling/soaking and ash rinsing no longer ride on the traversal burst contract.
+- One reusable `Jet-hit` event record now carries contact kind, position, intensity and target index from simulation to presentation. It advances a serial only on real contact and is reset/reused rather than allocated each fixed step.
+- The shared hit event drives synchronized physical feedback: debris instances visibly twitch, bounded contact spray/steam appears at the hit point, the existing Jet audio graph adds a short pressure/hiss accent without per-hit AudioNodes, and the camera receives a small contact recoil that is removed by Reduced Motion. No HUD reticle or diagnostic hit marker was added.
+- Browser journeys now prove the new contract through player controls: tap/release traversal Jet, held Hose manipulation, gamepad tap semantics, debris clearing, bypass/ground contact, fire suppression and live Jet-hit presentation evidence. The Core Movement journey also waits for the real **1.1 s gameplay Jet cooldown** before demanding a second surface-launch tap; the earlier CI timeout was a stale journey timing assumption, not a gameplay cooldown bypass.
+- Mutation authority was migrated to the new intent/hit contracts. A red run on `44479e9a6aee10abf3ea8ead4b5e8bcc76ffea33` exposed one stale ash-rinse mutation anchor plus the Core Movement cooldown assumption; the ash mutation was repaired without gameplay changes, and the journey was repaired in `1f4550ea...`.
+- Hosted Verify run **37692449524** on exact head `1f4550ea...`: asset validation PASS; architecture/unit suite **281/281 PASS**; mutation suite **87/87 PASS**; production build PASS; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys PASS; built production bundle PASS; validation evidence upload PASS.
+- Matched same-runner performance against baseline `2b2dedd2b2187f0735608e1d9e95507257506cf8` PASS with no failures, inconclusive scenarios or order-sensitive exceptions. Paired median/p95 deltas in ms: **high +0.1/0.0**, **channelCut 0.0/+0.3**, **channelDistant 0.0/+0.5**, **squirtles 0.0/-0.3**; all remain far inside the unchanged **8.4 ms** threshold.
+- Shoreline proof remains PASS: low-to-full long-axis visible shoreline movement **1.50 m**.
+- Independent Big Mac exact-head verification also passed the source/architecture/unit suite **281/281** and the complete Core Movement/save-reload/12-chunk-return/30-asset-cycle/touch journey using Brave. This is supplementary proof, not replacement for hosted authority.
+- Evidence boundary remains strict: ten-minute human objective-free movement enjoyment, physical touch feel, physical gamepad feel, heard audio quality, representative Mac/mobile real-GPU performance and overall first-ten-minutes gameplay quality remain **UNKNOWN**, not PASS.
+- Phase 4 is therefore merge-cleared. The next body-first phase is the planned **shell-slide / step handling / momentum / camera feel** pass. Larger-map and major-system expansion remain blocked by the human movement gate.
+- Branch-only Verify triggering used during development is removed in this closure revision; normal Verify scope returns to `main`. Final delivery still requires Verify and Pages on the containing `main` revision.
 
 ## Accepted body-first redesign — 2026-10-06
 
