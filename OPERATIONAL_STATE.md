@@ -2,8 +2,8 @@
 
 project_id: squirtle-frontier
 project_name: Squirtle Frontier
-revision: 42
-status: Body-first Phase 4 merge-cleared / full game incomplete
+revision: 43
+status: Body-first Phase 4 delivered and verified on main / full game incomplete
 
 ## Purpose
 
@@ -130,6 +130,18 @@ Current Sense, named-reach diagnosis, the amber ripple, and watershed repair as 
 - Lab and frontier must not remain simultaneously fully rendered.
 - Measure memory and renderer resource counts across repeated chunk/scene transitions.
 - Prefer stable 60 fps desktop and stable 30 fps mobile-class baseline over decorative excess.
+
+## Body-first Phase 4 final delivery closure — 2026-10-08
+
+- **PHASE 4 DELIVERED AND VERIFIED ON `main`.** Containing delivery revision: `0e9be2fd97cb7e0e8068a70fb4de39e97325ec41`. The retained validation branch `phase3-water-jet-intent` is historical despite its legacy name.
+- Hosted Verify run **37868990331** on that exact `main` SHA PASS: asset validation; architecture/unit **281/281**; mutation **87/87**; production build; Core Movement, Habitat, World, Recovery, Channel, Wildlife, Squirtle population, Accessibility, Gamepad, Multitab and Watershed browser journeys; matched performance; shoreline capture; built production bundle; evidence upload.
+- GitHub Pages run **37868990335** on the same exact SHA PASS, including production build, artifact upload and deployment.
+- Final matched performance versus baseline `2b2dedd2b2187f0735608e1d9e95507257506cf8` returned PASS with no failures, inconclusive scenarios or order-sensitive exceptions. Paired median/p95 deltas in ms: **high 0.0/+0.1**, **channelCut 0.0/-0.1**, **channelDistant 0.0/0.0**, **squirtles -0.1/-0.4**. The unchanged **8.4 ms** regression threshold was not widened.
+- Final shoreline proof PASS: visible low-to-full long-axis movement remains **1.50 m**.
+- The delivered gameplay contract is therefore: tap/release Jet = traversal burst; hold Jet = camera-aimed continuous Water Hose for environmental manipulation; real Hose contacts emit one reusable hit event that drives physical target response, local particles/steam, audio accent and reduced-motion-aware camera punctuation. No reticle or replacement diagnostic mode was introduced.
+- The prior red evidence was validation-authority drift, not a hidden runtime regression: one stale ash-rinse mutation anchor and one Core Movement journey that demanded a second Jet before the real **1.1 s** cooldown was ready. Both were repaired without weakening gameplay or performance thresholds.
+- Human evidence remains bounded as **UNKNOWN**: ten-minute objective-free movement enjoyment, physical touch/gamepad feel, heard audio quality, representative Mac/mobile real-GPU performance and overall first-ten-minutes gameplay quality have not been promoted to PASS by headless evidence.
+- Phase 4 is closed. Continue in body-first order with the planned **shell-slide / step handling / momentum / camera feel** phase. Larger-map and major-system expansion remain blocked by the human movement gate.
 
 ## Body-first Phase 4 merge-clearance — 2026-10-07
 
